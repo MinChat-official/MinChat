@@ -41,7 +41,6 @@ task<Copy>("release") {
 
 	destinationDir = buildDir.resolve("libs")
 
-	project.subprojects.mapNotNull {
-		it.tasks.find { it is Jar }?.outputs
-	}.forEach(::from)
+	from("$buildDir/client/build/libs/*.jar")
+	from("$buildDir/backend/build/libs/*.jar")
 }

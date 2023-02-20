@@ -17,9 +17,9 @@ jobs:
           chmod +x ./gradlew
           ./gradlew release
         
-      - name: Upload the artifact
+      - name: Upload the artifacts
         uses: actions/upload-artifact@v2
         with:
           name: ${{ github.event.repository.name }}-zipped
-          path: mod-src/build/libs/*-any-platform.jar
+          path: build/libs/*.jar
         

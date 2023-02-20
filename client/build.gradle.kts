@@ -7,7 +7,7 @@ val mindustryVersion: String by rootProject
 val ktorVersion: String by rootProject
 
 dependencies {
-	implementation(project("common"))
+	implementation(project(":common"))
 
 	implementation("com.github.mnemotechnician", "mkui", "master-SNAPSHOT")
 

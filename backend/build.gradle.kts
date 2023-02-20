@@ -8,7 +8,7 @@ val exposedVersion: String by rootProject
 val picocliVersion: String by rootProject
 
 dependencies {
-	implementation(project("common"))
+	implementation(project(":common"))
 	
 	implementation("org.jetbrains.kotlinx", "kotlinx-datetime", "0.4.0")
 

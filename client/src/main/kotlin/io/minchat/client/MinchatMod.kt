@@ -1,6 +1,7 @@
 package io.minchat.client
 
 import arc.*
+import arc.util.*
 import arc.scene.ui.*
 import mindustry.mod.*
 import mindustry.game.*
@@ -8,6 +9,7 @@ import mindustry.ui.*
 import mindustry.ui.dialogs.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
+import kotlinx.coroutines.*
 
 class MinchatMod : Mod() {
 	val info = """
