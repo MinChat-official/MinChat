@@ -1,0 +1,11 @@
+name: "minchat"
+description: '''
+WIP global mindustry chat
+'''
+displayName: "MinChat Official"
+author: "Mnemotechnician"
+minGameVersion: "137"
+version: "v0.0.0-prealpha"
+
+main: "io.minchat.client.MinchatMod"
+hidden: true
