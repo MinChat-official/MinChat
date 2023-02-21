@@ -6,4 +6,6 @@ import io.minchat.server.modules.MinchatServerModule
 class Context(
 	val server: ApplicationEngine,
 	val modules: List<MinchatServerModule>
-)
+) {
+	val application by server::application
+}

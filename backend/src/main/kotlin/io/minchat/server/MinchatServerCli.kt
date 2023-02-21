@@ -40,13 +40,13 @@ open class MinchatLauncher : Runnable {
 	var excludedModules = listOf<String>()
 
 	override fun run() = runBlocking {
-		Log.info { "Launching a MinChat server on port $port" }
+		Log.info { "Launching a MinChat server on port $port." }
 
 		val modules = listOf(
 			UserModule()
 		).filter { it.name !in excludedModules }
 
-		val server = embeddedServer(Netty) {
+		val server = embeddedServer(Netty, port = port) {
 			modules.forEach {
 				it.onLoad(this)
 			}
@@ -57,10 +57,13 @@ open class MinchatLauncher : Runnable {
 			modules = modules
 		)
 
+		server.start(wait = false)
+
 		modules.forEach { it.afterLoad(context) }
 
-		server.start(wait = true)
-
-		Unit
+		// Keep waiting until the server terminates
+		Log.info { "MinChat server is running. Awaiting termination." }
+		server.stopServerOnCancellation().join()
+		Log.info { "Good night." }
 	}
 }

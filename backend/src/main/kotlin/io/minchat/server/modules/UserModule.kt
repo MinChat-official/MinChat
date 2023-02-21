@@ -6,12 +6,19 @@ import io.ktor.server.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.minchat.server.*
+import io.minchat.common.Route
 
 class UserModule : MinchatServerModule() {
 	override fun Application.onLoad() {
 		routing {
-			get("/user") {
+			get(Route.User.fetch) {
 				call.respond("This is unfinished...")
+			}
+			get(Route.User.login) {
+				call.respond("TODO...")
+			}
+			post(Route.User.register) {
+				call.respond("TODO!")
 			}
 		}
 	}
