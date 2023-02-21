@@ -1,4 +1,4 @@
-package io.minchat.server
+package io.minchat.server.util
 
 import java.io.*
 import java.time.format.DateTimeFormatter

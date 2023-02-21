@@ -17,8 +17,14 @@ jobs:
           chmod +x ./gradlew
           ./gradlew release
         
-      - name: Upload the artifacts
+      - name: Upload the client artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ github.event.repository.name }}-zipped
-          path: "{client,backend}/build/libs/*.jar"
+          name: ${{ github.event.repository.name }}-client-mod
+          path: client/build/libs/*.jar
+
+      - name: Upload the server artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.event.repository.name }}-backend-server
+          path: backend/build/libs/*.jar
