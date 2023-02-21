@@ -34,13 +34,3 @@ allprojects {
 		}
 	}
 }
-
-task<Copy>("release") {
-	dependsOn(":client:release")
-	dependsOn(":backend:jar")
-
-	destinationDir = buildDir.resolve("libs")
-
-	from("$buildDir/client/build/libs/*.jar")
-	from("$buildDir/backend/build/libs/*.jar")
-}
