@@ -25,7 +25,8 @@ dependencies {
 	implementation("io.ktor", "ktor-serialization-kotlinx-json", ktorVersion)
 	implementation("io.ktor", "ktor-server-status-pages", ktorVersion)
 
-	implementation("at.favre.lib", "bcrypt", "0.10.2")
+	implementation("org.mindrot", "jbcrypt", "0.4")
+
 }
 
 tasks.jar {

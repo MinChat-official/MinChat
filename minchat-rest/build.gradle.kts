@@ -9,5 +9,5 @@ dependencies {
 
 	implementation("io.ktor", "ktor-client-core", ktorVersion)
 
-	implementation("at.favre.lib", "bcrypt", "0.10.2")
+	implementation("org.mindrot", "jbcrypt", "0.4")
 }

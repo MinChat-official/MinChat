@@ -1,8 +1,8 @@
 package io.minchat.rest.service
 
-import at.favre.lib.crypto.bcrypt.BCrypt
 import io.ktor.client.*
 import io.minchat.rest.MinChatAccount
+import org.mindrot.jbcrypt.BCrypt
 
 class UserService(
 	val client: HttpClient,
@@ -22,6 +22,7 @@ class UserService(
 	fun hashPasswordLocal(password: String) = run {
 		if (password.length !in 8..40) error("Password must be 8..40 characters long!")
 
-		BCrypt.withDefaults().hashToString(11, password.toCharArray())
+		val salt = BCrypt.gensalt(11)
+		BCrypt.hashpw(password, salt)
 	}
 }
