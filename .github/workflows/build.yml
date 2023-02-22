@@ -15,7 +15,7 @@ jobs:
       - name: Compile the mod
         run: |
           chmod +x ./gradlew
-          ./gradlew release
+          ./gradlew jar release
         
       - name: Upload the client artifact
         uses: actions/upload-artifact@v2
