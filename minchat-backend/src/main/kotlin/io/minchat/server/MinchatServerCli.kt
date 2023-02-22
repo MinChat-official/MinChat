@@ -2,11 +2,14 @@ package io.minchat.server
 
 import kotlin.system.exitProcess
 import kotlinx.coroutines.*
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.minchat.server.modules.*
 import io.minchat.server.util.Log
 import picocli.CommandLine
@@ -47,6 +50,13 @@ open class MinchatLauncher : Runnable {
 		).filter { it.name !in excludedModules }
 
 		val server = embeddedServer(Netty, port = port) {
+			install(ContentNegotiation)
+			install(StatusPages) {
+				exception<Throwable> { call, cause ->
+					call.respondText(text = "500: $cause" , status = HttpStatusCode.InternalServerError)
+				}
+			}
+
 			modules.forEach {
 				it.onLoad(this)
 			}

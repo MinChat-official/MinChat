@@ -1,2 +1,4 @@
 rootProject.name = "minchat"
-include("client", "backend", "common")
+arrayOf("client", "backend", "common", "rest").forEach {
+	include("minchat-$it")
+}

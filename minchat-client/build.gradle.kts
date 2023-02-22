@@ -7,7 +7,8 @@ val mindustryVersion: String by rootProject
 val ktorVersion: String by rootProject
 
 dependencies {
-	implementation(project(":common"))
+	implementation(project(":minchat-common"))
+	implementation(project(":minchat-rest"))
 
 	implementation("com.github.mnemotechnician", "mkui", "master-SNAPSHOT")
 
@@ -59,7 +60,6 @@ task("jarAndroid") {
 			if (it % 2 == 0) "--classpath" else dependencies.elementAt(it / 2)
 		}
 		
-		//dexing. As a result of this process, a .dex file will be added to the jar file. This requires d8 tool in your $PATH
 		exec {
 			workingDir("$buildDir/libs")
 			commandLine("d8", *dependenciesStr, "--min-api", "14", "--output", "${jarName}-android.jar", "${jarName}-desktop.jar")

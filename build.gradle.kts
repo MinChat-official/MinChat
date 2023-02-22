@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	kotlin("jvm") version "1.8.0"
 	kotlin("kapt") version "1.8.0"
+	kotlin("plugin.serialization") version "1.8.0"
 }
 
 val ktorVersion: String by project
@@ -18,6 +19,7 @@ allprojects {
 	}
 
 	dependencies {
+		implementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", "1.3.2")
 	}
 
 	tasks.withType<JavaCompile> {

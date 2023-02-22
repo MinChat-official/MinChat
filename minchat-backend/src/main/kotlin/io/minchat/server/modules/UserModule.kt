@@ -14,7 +14,7 @@ class UserModule : MinchatServerModule() {
 			get(Route.User.fetch) {
 				call.respond("This is unfinished...")
 			}
-			get(Route.User.login) {
+			post(Route.User.login) {
 				call.respond("TODO...")
 			}
 			post(Route.User.register) {

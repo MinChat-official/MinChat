@@ -18,8 +18,8 @@ object Route {
 		val delete = to("delete")
 
 		protected fun to(subroute: String) = when {
-			subroute.isEmpty() -> "/$name"
-			else -> "/$name/$subroute"
+			subroute.isEmpty() -> "/api/$name"
+			else -> "/api/$name/$subroute"
 		}
 	}
 }

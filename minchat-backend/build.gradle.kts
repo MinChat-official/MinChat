@@ -8,7 +8,7 @@ val exposedVersion: String by rootProject
 val picocliVersion: String by rootProject
 
 dependencies {
-	implementation(project(":common"))
+	implementation(project(":minchat-common"))
 	
 	implementation("org.jetbrains.kotlinx", "kotlinx-datetime", "0.4.0")
 
@@ -21,6 +21,11 @@ dependencies {
 
 	implementation("io.ktor", "ktor-server-core", ktorVersion)
         implementation("io.ktor", "ktor-server-netty", ktorVersion)
+	implementation("io.ktor", "ktor-server-content-negotiation", ktorVersion)
+	implementation("io.ktor", "ktor-serialization-kotlinx-json", ktorVersion)
+	implementation("io.ktor", "ktor-server-status-pages", ktorVersion)
+
+	implementation("at.favre.lib", "bcrypt", "0.10.2")
 }
 
 tasks.jar {
