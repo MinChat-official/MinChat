@@ -15,20 +15,26 @@ object Log {
 		}
 	
 	/** A java DateTimeFormatter used to format the log timestamps. */
-	val timeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+	val timeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
 	val timezone = TimeZone.currentSystemDefault()
 	/** Control sequence introducer. */
 	val csi = "\u001B["
 
-	val logDir = run {
-		val root = File(System.getProperty("user.home")).resolve("minchat").ensureDir()
+	/** The base directory in which a "log" direvtory will be created. Must be initialised statically. */
+	lateinit var baseLogDir: File
+	val logDir by lazy {
+		val root = baseLogDir.ensureDir()
 		root.resolve("log").ensureDir()
 	}
-	val stacktraceDir = logDir.resolve("stacktrace").ensureDir()
-	val currentLogFile = run {
+	val stacktraceDir by lazy { 
+		logDir.resolve("stacktrace").ensureDir() 
+	}
+	val currentLogFile by lazy {
 		logDir.resolve("log-${currentTimestamp()}.txt")
 	}
-	var currentLogWriter = currentLogFile.printWriter()
+	val currentLogWriter by lazy {
+		currentLogFile.printWriter()
+	}
 
 	inline fun log(logLevel: LogLevel, crossinline message: () -> String) {
 		if (logLevel.level < level.level) return

@@ -6,8 +6,5 @@ import kotlinx.serialization.Serializable
 data class Channel(
 	val id: Long,
 	val name: String,
-	val discriminator: Int,
-
-	val lastMessageTimestamp: Long,
-	val creationTimestamp: Long
+	val description: String,
 )

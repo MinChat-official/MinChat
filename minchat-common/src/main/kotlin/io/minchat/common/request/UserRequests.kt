@@ -29,9 +29,8 @@ class UserRegisterRequest(
 
 @Serializable
 data class UserModifyRequest(
-	val id: Long,
 	val token: String,
-	val newUsername: String
+	val newUsername: String?
 ) {
 	@Serializable
 	data class Response(
@@ -41,6 +40,5 @@ data class UserModifyRequest(
 
 @Serializable
 data class UserDeleteRequest(
-	val id: Long,
 	val token: String
 )

@@ -1,10 +1,16 @@
-package io.minchat.server
+package io.minchat.server.databases
 
+import io.minchat.common.entity.*
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.dao.*
-import org.jetbrains.exposed.dao.id.*
 
-object Channels  : LongIdTable() {
+object Channels : MinchatEntityTable<Channel>() {
 	val name = varchar("name", 64)
 	val description = varchar("description", 512)
+
+	override fun createEntity(row: ResultRow) =
+		Channel(
+			id = row[Channels.id].value,
+			name = row[Channels.name],
+			description = row[Channels.description]
+		)
 }

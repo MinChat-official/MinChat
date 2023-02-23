@@ -1,6 +1,7 @@
 plugins {
 	kotlin("jvm") version "1.8.0"
 	kotlin("kapt") version "1.8.0"
+	kotlin("plugin.serialization") version "1.8.0"
 }
 
 val ktorVersion: String by rootProject
@@ -18,6 +19,7 @@ dependencies {
 	implementation("org.jetbrains.exposed", "exposed-core", exposedVersion)
 	implementation("org.jetbrains.exposed", "exposed-dao", exposedVersion)
 	implementation("org.jetbrains.exposed", "exposed-jdbc", exposedVersion)
+	implementation("com.h2database", "h2", "2.1.214")  
 
 	implementation("io.ktor", "ktor-server-core", ktorVersion)
         implementation("io.ktor", "ktor-server-netty", ktorVersion)

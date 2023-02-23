@@ -7,6 +7,7 @@ data class User(
 	val id: Long,
 	val username: String,
 	val discriminator: Int,
+	val isAdmin: Boolean,
 
 	val lastMessageTimestamp: Long,
 	val creationTimestamp: Long
