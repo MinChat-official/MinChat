@@ -65,7 +65,7 @@ class AuthModule : MinchatServerModule() {
 
 				val response = transaction {
 					// ensure the name is vacant
-					if (Users.select { Users.username eq data.username }.empty()) {
+					if (Users.select { Users.username eq data.username }.empty().not()) {
 						call.response.status(HttpStatusCode(401,
 							"This username is already taken. Accounts with identical namss are not yet supported."))
 						return@transaction null
@@ -85,7 +85,7 @@ class AuthModule : MinchatServerModule() {
 						it[Users.passwordHash] = hashedHash
 						it[token] = userToken
 						
-						it[discriminator] = (System.nanoTime() xor 0xAAAA).toInt() % 10000
+						it[discriminator] = abs(System.nanoTime() xor 0xAAAA).toInt() % 10000
 
 						it[creationTimestamp] = System.currentTimeMillis()
 						it[lastLoginTimestamp] = System.currentTimeMillis()

@@ -6,7 +6,7 @@ import org.jetbrains.exposed.dao.*
 
 object Users : MinchatEntityTable<User>() {
 	val username = varchar("name", 64)
-	val passwordHash = varchar("password", 184 / 8)
+	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
 	val isAdmin = bool("admin").default(false)
 
