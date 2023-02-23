@@ -6,10 +6,11 @@ import io.ktor.server.response.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
-import io.minchat.server.databases.Users
 import io.minchat.common.Constants
 import io.minchat.common.Route
 import io.minchat.common.request.*
+import io.minchat.server.databases.Users
+import io.minchat.server.util.*
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.math.*
@@ -31,12 +32,9 @@ class AuthModule : MinchatServerModule() {
 							// for now, I have to prevent users from having identical namws
 							// later, I should allow them but require email or other kind of auth
 							BCrypt.checkpw(data.passwordHash, it[Users.passwordHash])
-						}
-						?: run {
-							call.response.status(HttpStatusCode(401,
-								"Incorrect login or password"))
-							return@transaction null
-						}
+						} 
+						?: accessDenied("Incorrect login or password")
+
 					val user = Users.createEntity(userRow)
 
 					Users.update({ Users.id eq user.id }) {
@@ -47,7 +45,7 @@ class AuthModule : MinchatServerModule() {
 						user = user,
 						token = userRow[Users.token]
 					)
-				} ?: return@post
+				}
 
 				call.respond(response)
 			}
@@ -57,18 +55,14 @@ class AuthModule : MinchatServerModule() {
 
 				val complexity = Constants.hashComplexityPre
 				if (data.passwordHash.startsWith("\$2a$complexity")) {
-					call.response.status(HttpStatusCode(400, 
-						"The password must be hashed with BCrypt and use a complexity of $complexity."))
-					return@post
+					illegalInput("The password must be hashed with BCrypt and use a complexity of $complexity.")
 				}
 
 
 				val response = transaction {
 					// ensure the name is vacant
 					if (Users.select { Users.username eq data.username }.empty().not()) {
-						call.response.status(HttpStatusCode(401,
-							"This username is already taken. Accounts with identical namss are not yet supported."))
-						return@transaction null
+						illegalInput("This username is already taken. Accounts with identical namss are not yet supported.")
 					}
 
 					val salt = BCrypt.gensalt(13)
@@ -94,11 +88,9 @@ class AuthModule : MinchatServerModule() {
 					UserRegisterRequest.Response(userToken, Users.createEntity(userRow))
 				} ?: return@post
 				
-				call.respond(response)
-			}
+				Log.info { "A new user has registered: ${response.user.tag}" }
 
-			get("test") {
-				call.respond(io.minchat.common.entity.User(1, "heis", 2829, false, 922992, 393939))
+				call.respond(response)
 			}
 		}
 	}

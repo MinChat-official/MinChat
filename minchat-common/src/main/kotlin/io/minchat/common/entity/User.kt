@@ -11,4 +11,6 @@ data class User(
 
 	val lastMessageTimestamp: Long,
 	val creationTimestamp: Long
-)
+) {
+	val tag get() = "$username#$discriminator"
+}

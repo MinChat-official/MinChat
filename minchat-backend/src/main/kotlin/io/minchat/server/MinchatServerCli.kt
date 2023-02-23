@@ -74,14 +74,28 @@ open class MinchatLauncher : Runnable {
 				json()
 			}
 			install(StatusPages) {
-				exception<BadRequestException> { call, cause ->
-					call.respondText(text = "400: $cause", status = HttpStatusCode.BadRequest)
-				}
-				exception<IllegalAccessException> { call, cause ->
-					call.respondText(text = "403: $cause", status = HttpStatusCode.Forbidden)
-				}
 				exception<Throwable> { call, cause ->
-					call.respondText(text = "500: $cause" , status = HttpStatusCode.InternalServerError)
+					val message = cause.message.takeIf { !it.isBlankOrNull() }?.let { ": $it" }.orEmpty()
+
+					when (cause) {
+						is BadRequestException> -> call.respondText(
+							text = "400$message", status = HttpStatusCode.BadRequest)
+
+						is IllegalInputException -> call.respondText(
+							text = "Illegal input (400)$message", status = HttpStatusCode.BadRequest)
+
+						is AccessDeniedException -> call.respondText(
+							text = "Access denied (403)$message", status = HttpStatusCode.Forbidden)
+
+						is EntityNotFoundException -> call.respondText(
+							text = "Entity not found (404)$message", status = HttpStatusCode.Forbidden)
+
+						else -> {
+							Log.error(cause) { "Exception thrown when processing $call" }
+							call.respondText(text = "500: An abnormal exception was thrown while processing the request.",
+								status = HttpStatusCode.InternalServerError)
+						}
+					}
 				}
 			}
 

@@ -20,11 +20,13 @@ class UserModule : MinchatServerModule() {
 				transaction {
 					Users.getByIdOrNull(id)
 				}?.let { call.respond(it) } ?: run {
-					call.response.status(HttpStatusCode.NotFound)
+					notFound("user $id")
 				}
 			}
 			post(Route.User.edit) {
-				TODO()
+				val data = call.receive<UserModifyRequest>()
+
+				
 			}
 			post(Route.User.delete) {
 				TODO()
