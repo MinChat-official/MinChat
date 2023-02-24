@@ -9,13 +9,15 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.minchat.server.databases.*
 import io.minchat.server.modules.*
-import io.minchat.server.util.Log
+import io.minchat.server.util.*
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import picocli.CommandLine
@@ -75,10 +77,10 @@ open class MinchatLauncher : Runnable {
 			}
 			install(StatusPages) {
 				exception<Throwable> { call, cause ->
-					val message = cause.message.takeIf { !it.isBlankOrNull() }?.let { ": $it" }.orEmpty()
+					val message = cause.message?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
 
 					when (cause) {
-						is BadRequestException> -> call.respondText(
+						is BadRequestException -> call.respondText(
 							text = "400$message", status = HttpStatusCode.BadRequest)
 
 						is IllegalInputException -> call.respondText(
@@ -96,6 +98,14 @@ open class MinchatLauncher : Runnable {
 								status = HttpStatusCode.InternalServerError)
 						}
 					}
+				}
+			}
+			install(RateLimit) {
+				global {
+					requestKey { call ->
+						call.tokenOrNull().orEmpty()
+					}
+					rateLimiter(limit = 10, refillPeriod = 5.seconds)
 				}
 			}
 

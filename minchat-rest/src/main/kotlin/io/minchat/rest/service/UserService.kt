@@ -15,7 +15,7 @@ class UserService(
 	}
 
 	/** Hashes and validates the password and tries to register a new account. Returns a logged-in MinChatAccount. */
-	fun login(username: String, password: String) {
+	fun register(username: String, password: String) {
 		TODO()
 	}
 

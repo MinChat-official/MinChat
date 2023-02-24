@@ -1,6 +1,7 @@
 package io.minchat.server.databases
 
 import io.minchat.common.entity.*
+import io.minchat.server.util.notFound
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.dao.*
 
@@ -26,12 +27,18 @@ object Users : MinchatEntityTable<User>() {
 
 	override fun createEntity(row: ResultRow) =
 		User(
-			id = row[Users.id].value,
-			username = row[Users.username],
-			discriminator = row[Users.discriminator],
-			isAdmin = row[Users.isAdmin],
+			id = row[id].value,
+			username = row[username],
+			discriminator = row[discriminator],
+			isAdmin = row[isAdmin],
 
-			lastMessageTimestamp = row[Users.lastMessageTimestamp],
-			creationTimestamp = row[Users.creationTimestamp]
+			lastMessageTimestamp = row[lastMessageTimestamp],
+			creationTimestamp = row[creationTimestamp]
 		)
+	
+	fun getByTokenOrNull(token: String) =
+		select { Users.token eq token }.firstOrNull()?.let(::createEntity)
+	
+	fun getByToken(token: String) =
+		getByTokenOrNull(token) ?: notFound("the providen token is not associated with any user.")
 }

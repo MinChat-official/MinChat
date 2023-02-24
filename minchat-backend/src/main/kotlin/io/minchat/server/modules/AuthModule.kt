@@ -68,12 +68,20 @@ class AuthModule : MinchatServerModule() {
 					val salt = BCrypt.gensalt(13)
 					val hashedHash = BCrypt.hashpw(data.passwordHash, salt)
 
-					val userToken = MessageDigest.getInstance("SHA-256")
-						.digest((hashedHash + data.username).toByteArray())
-						.let { BigInteger(1, it) }
-						.toString(32)
-						.padStart(256 / 5 + 1, '0')
+					
+					lateinit var userToken: String
 
+					// generate a token; repeat if the token is already used (this should never happen normally)
+					do {
+						val input = hashedHash + data.username + System.nanoTime() + System.currentTimeMillis()
+						userToken = MessageDigest.getInstance("SHA-256")
+							.digest(input.toByteArray())
+							.let { BigInteger(1, it) }
+							.toString(32)
+							.padStart(256 / 5 + 1, '0')
+					} while (Users.select { Users.token eq userToken }.empty().not())
+
+					// create a new user and get the created row
 					val userRow = Users.insert {
 						it[username] = data.username
 						it[Users.passwordHash] = hashedHash
@@ -88,7 +96,7 @@ class AuthModule : MinchatServerModule() {
 					UserRegisterRequest.Response(userToken, Users.createEntity(userRow))
 				} ?: return@post
 				
-				Log.info { "A new user has registered: ${response.user.tag}" }
+				Log.info { "A new user has been registered: ${response.user.tag}" }
 
 				call.respond(response)
 			}

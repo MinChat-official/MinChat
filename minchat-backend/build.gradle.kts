@@ -26,6 +26,7 @@ dependencies {
 	implementation("io.ktor", "ktor-server-content-negotiation", ktorVersion)
 	implementation("io.ktor", "ktor-serialization-kotlinx-json", ktorVersion)
 	implementation("io.ktor", "ktor-server-status-pages", ktorVersion)
+	implementation("io.ktor", "ktor-server-rate-limit", ktorVersion)
 
 	implementation("org.mindrot", "jbcrypt", "0.4")
 

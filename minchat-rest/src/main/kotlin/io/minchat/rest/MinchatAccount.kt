@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 /**
  * A registered MinChar user whose api token is known.
  */
- @Serializable
  class MinChatAccount(user: User, val token: String) {
 	var user = user	
 		private set
