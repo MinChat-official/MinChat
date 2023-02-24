@@ -22,3 +22,8 @@ fun notFound(message: String? = null): Nothing =
 inline fun Int.throwIfNotFound(message: () -> String) = also {
 	if (this <= 0) notFound(message())
 }
+
+/** Throws an [IllegalInputException] if the length of the string is not in the range. */
+inline fun String.requireLength(range: IntRange, message: () -> String) = also {
+	if (length !in range) illegalInput(message())
+}

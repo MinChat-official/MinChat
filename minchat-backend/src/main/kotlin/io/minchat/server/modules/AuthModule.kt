@@ -53,8 +53,10 @@ class AuthModule : MinchatServerModule() {
 			post(Route.Auth.register) {
 				val data = call.receive<UserRegisterRequest>()
 
+				data.username.requireLength(3..40) { "Username length must be in the range of 3..40 characters!" }
+
 				val complexity = Constants.hashComplexityPre
-				if (data.passwordHash.startsWith("\$2a$complexity")) {
+				if (data.passwordHash.startsWith("\$2a\$$complexity\$").not()) {
 					illegalInput("The password must be hashed with BCrypt and use a complexity of $complexity.")
 				}
 
