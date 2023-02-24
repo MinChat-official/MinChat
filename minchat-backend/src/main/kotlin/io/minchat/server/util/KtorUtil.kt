@@ -1,7 +1,9 @@
 package io.minchat.server.util
 
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
 
 /** 
  * Returns the authorization header of this call,
@@ -12,6 +14,7 @@ fun ApplicationCall.tokenOrNull() =
 		?.trimStart()
 		?.takeIf { it.startsWith("Bearer ") }
 		?.removePrefix("Bearer ")
+		?.takeIf { it.isNotBlank() }
 
 /** 
  * Returns the authorization header of this call. 
@@ -19,3 +22,6 @@ fun ApplicationCall.tokenOrNull() =
  */
 fun ApplicationCall.token() =
 	tokenOrNull() ?: accessDenied("Incorrect or malformed token.")
+
+fun ApplicationResponse.statusOk() =
+	status(HttpStatusCode.OK)

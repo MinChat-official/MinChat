@@ -68,7 +68,9 @@ open class MinchatLauncher : Runnable {
 
 		val modules = listOf(
 			UserModule(),
-			AuthModule()
+			AuthModule(),
+			ChannelModule(),
+			MessageModule()
 		).filter { it.name !in excludedModules }
 
 		val server = embeddedServer(Netty, port = port) {

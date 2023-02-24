@@ -5,5 +5,15 @@ object Constants {
 	 * Passwords must be hashed witn bcrypt before being sent to the server.
 	 * This number indicates the required hash complexity.
 	 */
-	val hashComplexityPre = 11
+	const val hashComplexityPre = 11
+
+	/** Deleted accounts have this name. */
+	const val deletedAccountName = "<DELETED>"
+	/**
+	 * Deleted accounts have password hash instead of a normal one.
+	 *
+	 * Accounts with this hash can not be logged into 
+	 * because this value is not a valid bcrypt hash.
+	 */
+	const val deletedAccountPasswordHash = "<?!>"
 }

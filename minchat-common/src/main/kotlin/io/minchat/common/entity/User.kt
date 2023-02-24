@@ -12,5 +12,8 @@ data class User(
 	val lastMessageTimestamp: Long,
 	val creationTimestamp: Long
 ) {
-	val tag get() = "$username#$discriminator"
+	val tag get() = run {
+		val disc = discriminator.toString().padStart(4, '0')
+		"$username#$disc"
+	}
 }

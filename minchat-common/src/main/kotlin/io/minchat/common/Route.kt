@@ -1,5 +1,6 @@
 package io.minchat.common
 
+import io.minchat.common.entity.*
 import io.minchat.common.request.*
 
 /** 
@@ -33,6 +34,7 @@ object Route {
 		/**
 		 * POST. Requires authorization.
 		 * Body: [UserModifyRequest].
+		 * Response: [UserModifyRequest.Response]
 		 */
 		val edit = to("edit")
 		/**
@@ -51,6 +53,7 @@ object Route {
 		/** 
 		 * POST. Requires authorization.
 		 * Body: [MessageEditRequest].
+		 * Response: [MessageEditRequest.Response]
 		 */
 		val edit = to("edit")
 		/** 
@@ -67,28 +70,14 @@ object Route {
 		 */
 		val fetch = to("")
 		/** 
-		 * POST. Requires authorization. 
-		 * Body: [ChannelEditRequest].
-		 */
-		val edit = to("edit")
-		/** 
-		 * POST. Requires authorization. 
-		 * Body: [ChannelDeleteRequest]. 
-		 */
-		val delete = to("delete")
-
-		/** 
-		 * POST. Requires authorization. 
-		 * Body: [ChannelCreateRequest]. 
-		 */
-		val create = to("new")
-		/** 
 		 * POST. Requires authorization.
 		 * Body: [MessageCreateRequest]. 
+		 * Response: a [Message] object.
 		 */
 		val send = to("send")
 		/** 
 		 * GET. 
+		 * Response: a list of [Message] objects
 		 *
 		 * Query params:
 		 * * {from} - timestamp of the oldest message that has to be listed
@@ -97,6 +86,24 @@ object Route {
 		 * If there are too many messages matching the query, only the latest are listed.
 		 */
 		val messages = to("messages")
+
+		/** 
+		 * POST. Requires authorization and admin access.
+		 * Body: [ChannelCreateRequest]. 
+		 * Response: a [Channel] object.
+		 */
+		val create = to("new")
+		/** 
+		 * POST. Requires authorization and admin access. 
+		 * Body: [ChannelEditRequest].
+		 * Response: [ChannelEditRequest.Response]
+		 */
+		val edit = to("edit")
+		/** 
+		 * POST. Requires authorization and admin access.
+		 * Body: [ChannelDeleteRequest]. 
+		 */
+		val delete = to("delete")
 	}
 
 	sealed class MinchatRoute(val name: String) {

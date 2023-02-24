@@ -94,7 +94,7 @@ class AuthModule : MinchatServerModule() {
 					}.resultedValues!!.first()
 
 					UserRegisterRequest.Response(userToken, Users.createEntity(userRow))
-				} ?: return@post
+				}
 				
 				Log.info { "A new user has been registered: ${response.user.tag}" }
 

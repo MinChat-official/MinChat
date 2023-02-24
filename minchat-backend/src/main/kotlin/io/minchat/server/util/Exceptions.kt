@@ -17,3 +17,8 @@ fun accessDenied(message: String? = null): Nothing =
 /** Throws an [EntityNotFoundException] with the specified message. */
 fun notFound(message: String? = null): Nothing =
 	throw EntityNotFoundException(message)
+
+/** Throws an EntityNotFoundException if the receiver is <= 0. */
+inline fun Int.throwIfNotFound(message: () -> String) = also {
+	if (this <= 0) notFound(message())
+}
