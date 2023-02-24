@@ -34,7 +34,7 @@ object Route {
 		/**
 		 * POST. Requires authorization.
 		 * Body: [UserModifyRequest].
-		 * Response: [UserModifyRequest.Response]
+		 * Response: an updated [User] object.
 		 */
 		val edit = to("edit")
 		/**
@@ -52,8 +52,8 @@ object Route {
 		val fetch = to("")
 		/** 
 		 * POST. Requires authorization.
-		 * Body: [MessageEditRequest].
-		 * Response: [MessageEditRequest.Response]
+		 * Body: [MessageModifyRequest].
+		 * Response: an updated [Message] object.
 		 */
 		val edit = to("edit")
 		/** 
@@ -95,8 +95,8 @@ object Route {
 		val create = to("new")
 		/** 
 		 * POST. Requires authorization and admin access. 
-		 * Body: [ChannelEditRequest].
-		 * Response: [ChannelEditRequest.Response]
+		 * Body: [ChannelModifyRequest].
+		 * Response: an updated [Channel] object.
 		 */
 		val edit = to("edit")
 		/** 

@@ -89,7 +89,7 @@ class AuthModule : MinchatServerModule() {
 						it[Users.passwordHash] = hashedHash
 						it[token] = userToken
 						
-						it[discriminator] = abs(System.nanoTime() xor 0xAAAA).toInt() % 10000
+						it[discriminator] = abs((System.nanoTime() xor 0xAAAA).toInt() % 10000)
 
 						it[creationTimestamp] = System.currentTimeMillis()
 						it[lastLoginTimestamp] = System.currentTimeMillis()

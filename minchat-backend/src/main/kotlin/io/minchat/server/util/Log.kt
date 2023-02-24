@@ -8,7 +8,7 @@ import kotlinx.datetime.*
 /** A logger class inherited from the flarogus discord bot project. */
 @SuppressWarnings("NOTHING_TO_INLINE")
 object Log {
-	var level = LogLevel.DEBUG
+	var level = LogLevel.LIFECYCLE
 		set(level: LogLevel) {
 			if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level")
 			field = level

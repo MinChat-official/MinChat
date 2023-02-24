@@ -62,6 +62,7 @@ open class MinchatLauncher : Runnable {
 
 		transaction {
 			SchemaUtils.create(Channels, Messages, Users)
+			SchemaUtils.createMissingTablesAndColumns(Channels, Messages, Users)
 		}
 		
 		Log.info { "Launching a MinChat server on port $port." }

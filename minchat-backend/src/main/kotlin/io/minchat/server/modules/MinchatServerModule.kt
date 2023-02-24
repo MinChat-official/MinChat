@@ -3,6 +3,7 @@ package io.minchat.server.modules
 import io.ktor.server.application.*
 import io.minchat.server.*
 import io.minchat.server.util.Log
+import org.jetbrains.exposed.sql.*
 
 abstract class MinchatServerModule {
 	lateinit var context: Context
@@ -23,7 +24,7 @@ abstract class MinchatServerModule {
 		require(::context.isInitialized.not()) { "Module '$name' has already been post-loaded!" }
 		this.context = context
 
-		Log.info { "After-loading module '$name'." }
+		Log.lifecycle { "After-loading module '$name'." }
 
 		with(context) { afterLoad() }
 	}
@@ -33,6 +34,19 @@ abstract class MinchatServerModule {
 
 	/** Post-processes the context, if neccesary. */
 	open protected suspend fun Context.afterLoad() {}
+
+	/** Creates an [Op] that uses [commom] if [isAdmin] is true, or `common and userOnly` otherwise. */
+	inline protected fun opWithAdminAccess(
+		isAdmin: Boolean,
+		crossinline common: SqlExpressionBuilder.() -> Op<Boolean> = { Op.TRUE },
+		crossinline userOnly: SqlExpressionBuilder.() -> Op<Boolean>
+	): SqlExpressionBuilder.() -> Op<Boolean> = run {
+		var op = Op.build(common)
+		if (!isAdmin) {
+			op = op and Op.build(userOnly)
+		}
+		{ op }
+	}
 
 	/** Generates the name of this service on initialisation. */
 	protected open fun createServiceName() =

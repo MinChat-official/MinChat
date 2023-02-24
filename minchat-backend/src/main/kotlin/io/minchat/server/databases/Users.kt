@@ -36,9 +36,20 @@ object Users : MinchatEntityTable<User>() {
 			creationTimestamp = row[creationTimestamp]
 		)
 	
+	
+	fun getRawByTokenOrNull(token: String) =
+		select { Users.token eq token }.firstOrNull()
+
+	fun getRawByToken(token: String) =
+		getRawByTokenOrNull(token) ?: notFound("the providen token is not associated with any user.")
+	
 	fun getByTokenOrNull(token: String) =
-		select { Users.token eq token }.firstOrNull()?.let(::createEntity)
+		getRawByTokenOrNull(token)?.let(::createEntity)
 	
 	fun getByToken(token: String) =
 		getByTokenOrNull(token) ?: notFound("the providen token is not associated with any user.")
+	
+	/** Returns true if the user with the providen token is an admin; false otherwise. */
+	fun isAdminToken(token: String) =
+		select { Users.token eq token }.firstOrNull()?.get(isAdmin) ?: false
 }

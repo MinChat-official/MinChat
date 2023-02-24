@@ -10,7 +10,7 @@ abstract class MinchatEntityTable<T> : LongIdTable() {
 		getRawByIdOrNull(id) ?: notFound("Entity with id $id was not found.")
 
 	/** Returns a raw entity roq with the specified id, or null if it doesn't exist. */
-	fun getRawByIdOrNull(id: Long): ResultRow? = run {
+	open fun getRawByIdOrNull(id: Long): ResultRow? = run {
 		val idColumnn = this.id
 		select { idColumnn eq id }.firstOrNull()
 	}

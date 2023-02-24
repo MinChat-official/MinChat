@@ -1,6 +1,7 @@
 package io.minchat.server.databases
 
 import io.minchat.common.entity.*
+import io.minchat.server.util.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.dao.*
 
@@ -10,6 +11,13 @@ object Messages : MinchatEntityTable<Message>() {
 	val channel = reference("channel", Channels)
 
 	val timestamp = long("timestamp")
+
+	val isDeleted = bool("deleted").default(false)
+	
+	override fun getRawByIdOrNull(id: Long) =
+		super.getRawByIdOrNull(id)?.also {
+			if (it[isDeleted]) accessDenied("Message $id was deleted and can not be accsssed anymore.")
+		}
 
 	override fun createEntity(row: ResultRow) =
 		Message(
