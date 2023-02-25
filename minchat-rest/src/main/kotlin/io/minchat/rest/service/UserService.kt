@@ -1,22 +1,44 @@
 package io.minchat.rest.service
 
+import io.ktor.http.*
 import io.ktor.client.*
-import io.minchat.common.Constants
-import io.minchat.rest.MinChatAccount
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.minchat.common.*
+import io.minchat.common.request.*
+import io.minchat.rest.*
 import org.mindrot.jbcrypt.BCrypt
 
 class UserService(
-	val client: HttpClient,
-	val baseUrl: String 
+	val baseUrl: String,
+	val client: HttpClient
 ) {
 	/** Hashes and validates the password and performs authorization. Returns a logged-in MinChatAccount. */
-	fun login(username: String, password: String) {
-		TODO()
+	suspend fun login(username: String, password: String): MinChatAccount {
+		val hash = hashPasswordLocal(password)
+		return loginOrRegister(Route.Auth.register, username, hash)
 	}
 
 	/** Hashes and validates the password and tries to register a new account. Returns a logged-in MinChatAccount. */
-	fun register(username: String, password: String) {
-		TODO()
+	suspend fun register(username: String, password: String): MinChatAccount {
+		val hash = hashPasswordLocal(password)
+		return loginOrRegister(Route.Auth.register, username, hash)
+	}
+
+	// for now, login and register routes use the same pattern, so we can just share the code
+	private inline suspend fun loginOrRegister(
+		route: String, 
+		username: String,
+		passwordHash: String
+	): MinChatAccount {	
+		val response = client.post("$baseUrl$route") {
+			contentType(ContentType.Application.Json)
+			// UserLoginRequest and UserRegisterRequest are the same. just as their responses
+			setBody(UserLoginRequest(username, passwordHash))
+		}.body<UserLoginRequest.Response>()
+
+		return response.user.withToken(response.token)
 	}
 
 	/** 

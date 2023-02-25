@@ -2,8 +2,12 @@ package io.minchat.server.databases
 
 import io.minchat.common.entity.*
 import io.minchat.server.util.notFound
+import java.math.BigInteger
+import java.security.MessageDigest
+import kotlin.math.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.dao.*
+import org.mindrot.jbcrypt.BCrypt
 
 object Users : MinchatEntityTable<User>() {
 	val username = varchar("name", 64)
@@ -52,4 +56,39 @@ object Users : MinchatEntityTable<User>() {
 	/** Returns true if the user with the providen token is an admin; false otherwise. */
 	fun isAdminToken(token: String) =
 		select { Users.token eq token }.firstOrNull()?.get(isAdmin) ?: false
+
+	fun register(name: String, passwordHash: String, admin: Boolean): ResultRow {
+		val salt = BCrypt.gensalt(13)
+		val hashedHash = BCrypt.hashpw(passwordHash, salt)
+		
+		lateinit var userToken: String
+
+		// generate a token; repeat if the token is already used (this should never happen normally)
+		var attempt = 0
+		do {
+			val input = hashedHash + attempt + name + System.nanoTime() + System.currentTimeMillis()
+			userToken = MessageDigest.getInstance("SHA-256")
+				.digest(input.toByteArray())
+				.let { BigInteger(1, it) }
+				.toString(32)
+				.padStart(256 / 5 + 1, '0')
+
+			++attempt
+		} while (select { Users.token eq userToken }.empty().not())
+
+		// create a new user and get the created row
+		val userRow = Users.insert {
+			it[username] = name
+			it[Users.passwordHash] = hashedHash
+			it[token] = userToken
+			
+			it[discriminator] = abs((System.nanoTime() xor 0xAAAA).toInt() % 10000)
+			it[isAdmin] = admin
+
+			it[creationTimestamp] = System.currentTimeMillis()
+			it[lastLoginTimestamp] = System.currentTimeMillis()
+		}.resultedValues!!.first()
+
+		return userRow
+	}
 }

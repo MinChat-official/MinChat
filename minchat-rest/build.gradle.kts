@@ -9,6 +9,7 @@ dependencies {
 	implementation(project(":minchat-common"))
 
 	implementation("io.ktor", "ktor-client-core", ktorVersion)
+	implementation("io.ktor", "ktor-client-cio", ktorVersion)
 
 	implementation("org.mindrot", "jbcrypt", "0.4")
 }

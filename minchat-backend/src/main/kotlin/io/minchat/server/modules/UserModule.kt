@@ -31,8 +31,8 @@ class UserModule : MinchatServerModule() {
 
 				newSuspendedTransaction {
 					Users.update(opWithAdminAccess(Users.isAdminToken(token),
-						common = { Users.token eq token },
-						userOnly = { Users.id eq id }
+						common = { Users.id eq id },
+						userOnly = { Users.token eq token }
 					)) { row ->
 						// todo: support more fields
 						data.newUsername?.let { row[Users.username] = it }
@@ -50,8 +50,8 @@ class UserModule : MinchatServerModule() {
 
 				transaction {
 					Users.update(opWithAdminAccess(Users.isAdminToken(token),
-						common = { Users.token eq token },
-						userOnly = { Users.id eq id }
+						common = { Users.id eq id },
+						userOnly = { Users.token eq token }
 					)) {
 						it[Users.username] = Constants.deletedAccountName
 						it[Users.token] = "" // token() will fail if an empty string is providen
