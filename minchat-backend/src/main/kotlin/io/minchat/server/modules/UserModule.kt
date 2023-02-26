@@ -58,6 +58,7 @@ class UserModule : MinchatServerModule() {
 						it[Users.passwordHash] = Constants.deletedAccountPasswordHash
 
 						it[Users.discriminator] = 0
+						it[Users.isDeleted] = true
 					}.throwIfNotFound { "user with the providen id-token pair does not exist." }
 				}
 				call.response.statusOk()

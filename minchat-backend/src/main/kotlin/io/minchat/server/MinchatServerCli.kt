@@ -154,18 +154,18 @@ open class DbManager : Runnable {
 	override fun run() = runBlocking {
 		val port = Random.nextInt(1025, 3000)
 		// launch the server first
-		MinchatLauncher().also {
+		val context = MinchatLauncher().also {
 			it.port = port
 			it.dataDir = dataDir
 		}.launchServer()
 
-		println("Options: (register) a user, (create) a channel, (delete) a channel, (rename) a channel, (exit)")
+		println("Options: (register) a user, open (sql) shell, (exit)")
 
 		while (true) {
 			when (prompt("option")) {
 				"exit" -> break
 				"register" -> {
-					println("Creating a user...")
+					println("Creating a user...\n")
 					val name = prompt("username")
 					val password = prompt("password (type - to skip)").takeIf { it != "-" }
 					val isAdmin = prompt("is admin (true/false)", { it.toBoolean() })
@@ -185,7 +185,7 @@ open class DbManager : Runnable {
 							}
 						}
 
-						println("Success. Info:")
+						println("Success. Info:\n")
 						println("Username: $name")
 						println(when (password) {
 							null -> "No password (impossible to log into)"
@@ -197,16 +197,12 @@ open class DbManager : Runnable {
 						})
 						println("Id: ${row[Users.id]}")
 						println("Token: ${row[Users.token]}")
+						println()
 					}
 				}
-				"create" -> {
-					TODO()
-				}
-				"rename" -> {
-					TODO() 
-				}
-				"delete" -> {
-					TODO()
+				"sql" -> {
+					println("Launching the H2 SQL shell.\n\n")
+					org.h2.tools.Shell.main("-url", "jdbc:h2:file:${context.dbFile};ifexists=true")
 				}
 
 				else -> {

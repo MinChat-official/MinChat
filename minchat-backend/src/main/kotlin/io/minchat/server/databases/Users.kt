@@ -16,6 +16,7 @@ object Users : MinchatEntityTable<User>() {
 	val isAdmin = bool("admin").default(false)
 
 	val discriminator = integer("discriminator")
+	val isDeleted = bool("deleted").default(false)
 	/**
 	 * Unused: unreliable and hard to manage.
 	 * Will (or will not) be used in the future to prevent users from creating too many accounts.
@@ -28,6 +29,9 @@ object Users : MinchatEntityTable<User>() {
 	val lastMessageTimestamp = long("last-sent").default(0L)
 	val creationTimestamp = long("created-at")
 	val lastLoginTimestamp = long("last-login")
+
+	override fun getRawByIdOrNull(id: Long) =
+		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
 
 	override fun createEntity(row: ResultRow) =
 		User(

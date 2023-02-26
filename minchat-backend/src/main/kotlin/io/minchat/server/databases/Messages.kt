@@ -15,9 +15,7 @@ object Messages : MinchatEntityTable<Message>() {
 	val isDeleted = bool("deleted").default(false)
 	
 	override fun getRawByIdOrNull(id: Long) =
-		super.getRawByIdOrNull(id)?.also {
-			if (it[isDeleted]) accessDenied("Message $id was deleted and can not be accsssed anymore.")
-		}
+		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
 
 	override fun createEntity(row: ResultRow) =
 		Message(
