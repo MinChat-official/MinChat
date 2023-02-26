@@ -30,6 +30,13 @@ class UserModule : MinchatServerModule() {
 				val token = call.token()
 
 				newSuspendedTransaction {
+					data.newUsername?.let { name ->
+						// the name must be unused
+						if (Users.select { Users.username.lowerCase() eq data.new.lowercase() }.empty().not()) {
+							illegalInput("this username is already claimed.")
+						}
+					}
+
 					Users.update(opWithAdminAccess(Users.isAdminToken(token),
 						common = { Users.id eq id },
 						userOnly = { Users.token eq token }
