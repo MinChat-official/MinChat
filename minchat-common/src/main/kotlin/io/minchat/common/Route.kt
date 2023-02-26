@@ -80,10 +80,11 @@ object Route {
 		 * Response: a list of [Message] objects
 		 *
 		 * Query params:
-		 * * {from} - timestamp of the oldest message that has to be listed
-		 * * {to} - timestamp of the newest message thag has to be listed
+		 * * {from} - Unix timestamp. If present, messages sent before or at that moment are not listed.
+		 * * {to} - Unix timestamp. If present, messages sent after that moment are not listed.
 		 *
-		 * If there are too many messages matching the query, only the latest are listed.
+		 * Basically, all messages matching `from < message.timestamp <= to` are listed.
+		 * If there are too many messages matching the query, only the latest ones are listed.
 		 */
 		val messages = to("messages")
 

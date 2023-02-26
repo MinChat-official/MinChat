@@ -17,14 +17,27 @@ object Messages : MinchatEntityTable<Message>() {
 	override fun getRawByIdOrNull(id: Long) =
 		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
 
+	/** 
+	 * Creates an entity from the specified result row,
+	 * QUERYING the channel and author objects from the corresponding tables.
+	 * This can be slow.
+	 */
 	override fun createEntity(row: ResultRow) =
+		createEntity(
+			row,
+			Users.getById(row[author].value),
+			Channels.getById(row[channel].value)
+		)
+
+	/** Creates an entity from the specified result row, using the providen channel and user objects. */
+	fun createEntity(row: ResultRow, author: User, channel: Channel) =
 		Message(
-			id = row[Messages.id].value,
+			id = row[id].value,
 
-			content = row[Messages.content],
-			author = Users.getById(row[Messages.author].value),
-			channel = Channels.getById(row[Messages.channel].value),
+			content = row[content],
+			author = author,
+			channel = channel,
 
-			timestamp = row[Messages.timestamp]
+			timestamp = row[timestamp]
 		)
 }

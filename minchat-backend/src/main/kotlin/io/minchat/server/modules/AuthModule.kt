@@ -50,8 +50,9 @@ class AuthModule : MinchatServerModule() {
 
 			post(Route.Auth.register) {
 				val data = call.receive<UserRegisterRequest>()
+				val name = data.username.trim()
 
-				data.username.requireLength(3..40) { "Username length must be in the range of 3..40 characters!" }
+				name.requireLength(3..40) { "Username length must be in the range of 3..40 characters!" }
 
 				val complexity = Constants.hashComplexityPre
 				if (data.passwordHash.startsWith("\$2a\$$complexity\$").not()) {
@@ -60,11 +61,11 @@ class AuthModule : MinchatServerModule() {
 
 				newSuspendedTransaction {
 					// ensure the name is vacant
-					if (Users.select { Users.username eq data.username }.empty().not()) {
+					if (Users.select { Users.username.lowerCase() eq name.lowercase() }.empty().not()) {
 						illegalInput("This username is already taken. Accounts with identical namss are not yet supported.")
 					}
 					
-					val userRow = Users.register(data.username, data.passwordHash, false)
+					val userRow = Users.register(name, data.passwordHash, false)
 
 					UserRegisterRequest.Response(
 						token = userRow[Users.token],
