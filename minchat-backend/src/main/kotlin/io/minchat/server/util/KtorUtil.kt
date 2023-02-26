@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.minchat.server.databases.Users
 
 /** 
  * Returns the authorization header of this call,
@@ -22,6 +23,14 @@ fun ApplicationCall.tokenOrNull() =
  */
 fun ApplicationCall.token() =
 	tokenOrNull() ?: accessDenied("Incorrect or malformed token.")
+
+/**
+ * Throws an [AccessDeniedException] if an admin token is not provided.
+ * Must be called within a transaction.
+ */
+fun ApplicationCall.requireAdmin() {
+	if (!Users.isAdminToken(token())) accessDenied("admin-only route")
+}
 
 fun ApplicationResponse.statusOk() =
 	status(HttpStatusCode.OK)

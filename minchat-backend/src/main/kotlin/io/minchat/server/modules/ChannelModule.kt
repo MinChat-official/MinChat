@@ -13,6 +13,7 @@ import io.minchat.server.databases.*
 import io.minchat.server.util.*
 import kotlin.system.measureTimeMillis
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.transactions.experimental.*
 
 class ChannelModule : MinchatServerModule() {
@@ -67,15 +68,56 @@ class ChannelModule : MinchatServerModule() {
 
 			// Admin-only
 			post(Route.Channel.create) {
-				TODO()
+				val data = call.receive<ChannelCreateRequest>()
+
+				newSuspendedTransaction {
+					call.requireAdmin()
+
+					val channel = Channels.insert {
+						it[name] = data.name
+						it[description] = data.description
+					}.resultedValues!!.first()
+
+					call.respond(Channels.createEntity(channel))
+				}
+
+				Log.info { "A new channel was created: #${data.name}" }
 			}
 
 			post(Route.Channel.edit) {
-				TODO()
+				val id = call.parameters.getOrFail<Long>("id")
+				val data = call.receive<ChannelModifyRequest>()
+
+				newSuspendedTransaction {
+					call.requireAdmin()
+
+					Channels.update({ Channels.id eq id }) {
+						it[Channels.name] = data.newName
+						it[Channels.description] = data.newDescription
+					}.throwIfNotFound { "no such channel." }
+
+					call.respond(Channels.getById(id))
+				}
+
+				Log.info { "Channel $id was edited." }
 			}
 
 			post(Route.Channel.delete) {
-				TODO()
+				val channelId = call.parameters.getOrFail<Long>("id")
+				call.receive<ChannelDeleteRequest>()
+
+				transaction {
+					call.requireAdmin()
+
+					Channels.deleteWhere { with(it) { Channels.id eq channelId } }.throwIfNotFound { "no such channel." }
+
+					// also actually delete all associated messages
+					Messages.deleteWhere { with(it) { Messages.channel eq channelId } }
+				}
+
+				call.response.statusOk()
+
+				Log.info { "Channel $channelId was deleted." }
 			}
 		}
 	}

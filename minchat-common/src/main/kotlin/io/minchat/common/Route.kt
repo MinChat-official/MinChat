@@ -90,10 +90,12 @@ object Route {
 
 		/** 
 		 * POST. Requires authorization and admin access.
+		 * Unlike other subroutes in this route, this one does not acceot an ID parameter.
+		 *
 		 * Body: [ChannelCreateRequest]. 
 		 * Response: a [Channel] object.
 		 */
-		val create = to("new")
+		val create = to("new").replace("/{id}", "")
 		/** 
 		 * POST. Requires authorization and admin access. 
 		 * Body: [ChannelModifyRequest].
