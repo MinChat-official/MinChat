@@ -9,6 +9,8 @@ data class User(
 	val discriminator: Int,
 	val isAdmin: Boolean,
 
+	val isBanned: Boolean,
+
 	val lastMessageTimestamp: Long,
 	val creationTimestamp: Long
 ) {

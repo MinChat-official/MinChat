@@ -16,6 +16,8 @@ object Users : MinchatEntityTable<User>() {
 	val isAdmin = bool("admin").default(false)
 
 	val discriminator = integer("discriminator")
+
+	val isBanned = bool("banned").default(false)
 	val isDeleted = bool("deleted").default(false)
 	/**
 	 * Unused: unreliable and hard to manage.
@@ -39,6 +41,8 @@ object Users : MinchatEntityTable<User>() {
 			username = row[username],
 			discriminator = row[discriminator],
 			isAdmin = row[isAdmin],
+
+			isBanned = row[isBanned],
 
 			lastMessageTimestamp = row[lastMessageTimestamp],
 			creationTimestamp = row[creationTimestamp]
