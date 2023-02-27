@@ -19,6 +19,8 @@ import kotlinx.serialization.Serializable
 			field = newUser
 		}
 	
+	val id by user::id
+	
 	override fun toString() =
 		"MinChatAccount(user=$user)"
  }

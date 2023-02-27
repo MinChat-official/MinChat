@@ -36,12 +36,7 @@ class UserRegisterRequest(
 @Serializable
 data class UserModifyRequest(
 	val newUsername: String?
-) {
-	@Serializable
-	data class Response(
-		val new: User
-	)
-}
+)
 
 /** 
  * Request to delete the account the providen token belongs to.
