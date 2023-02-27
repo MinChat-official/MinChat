@@ -37,7 +37,7 @@ class UserModule : MinchatServerModule() {
 						}
 					}
 
-					Users.update(opWithAdminAccess(Users.isAdminToken(toke n),
+					Users.update(opWithAdminAccess(Users.isAdminToken(token),
 						common = { Users.id eq id },
 						userOnly = { Users.token eq token }
 					)) { row ->

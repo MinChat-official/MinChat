@@ -55,6 +55,9 @@ open class MinchatLauncher : Runnable {
 	@Option(names = ["--data-location", "-d"], description = ["The directory in which MinChat will store its data. Defaults to ~/minchat."])
 	var dataDir = File(System.getProperty("user.home").orEmpty()).resolve("minchat")
 
+	@Option(names = ["--log-level", "l"], description = ["The log level to use. Valis options are: lifecycle, debug, info, error"])
+	var logLevel = "lifecycle"
+
 	override fun run() = runBlocking {
 		val context = launchServer()
 
@@ -65,6 +68,10 @@ open class MinchatLauncher : Runnable {
 
 	suspend fun launchServer(): Context {
 		Log.baseLogDir = dataDir
+		Log.level = Log.LogLevel.valueOf(logLevel.uppercase())
+
+		Log.lifecycle { "Data directory: ${dataDir.absolutePath}" }
+		Log.lifecycle { "Log level: ${Log.level}" }
 		Log.info { "Connecting to a database." }
 
 		val dbFile = dataDir.also { it.mkdirs() }.resolve("data")

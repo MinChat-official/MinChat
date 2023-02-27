@@ -42,8 +42,8 @@ object Messages : MinchatEntityTable<Message>() {
 		)
 	
 	/** 
-	 * Creates a message in the specified channel
-	 * and sends the corresponding event [TODO]. 
+	 * Creates a message in the specified channel.
+	 * Does not send the corresponding event.
 	 * Returns the created row.
 	 *
 	 * Requires a transaction. 
@@ -61,10 +61,15 @@ object Messages : MinchatEntityTable<Message>() {
 	 * and sends the corresponding event [TODO]. 
 	 * Returns the created entity.
 	 *
+	 * The "channel" and "author" properties of the returned
+	 * entity may be different from those providen as parameters.
+	 *
 	 * Requires a transaction. 
 	 */
-	fun createMessage(channel: Channel, author: User, messageContent: String) =
+	suspend fun createMessage(channel: Channel, author: User, messageContent: String) =
 		createMessageRaw(channel.id, author.id, messageContent).let {
-			createEntity(it, author, channel)
+			// we need to increment the message count too
+			val newAuthor = author.copy(messageCount = author.messageCount + 1)
+			createEntity(it, newAuthor, channel)
 		}
 }
