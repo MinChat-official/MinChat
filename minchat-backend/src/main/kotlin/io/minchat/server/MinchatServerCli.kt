@@ -105,6 +105,9 @@ open class MinchatLauncher : Runnable {
 						is EntityNotFoundException -> call.respondText(
 							text = "Entity not found (404)$message", status = HttpStatusCode.NotFound)
 
+						is TooManyRequestsException -> call.respondText(
+							text = "Too many requests (429)$message", status = HttpStatusCode.NotFound)
+
 						else -> {
 							Log.error(cause) { "Exception thrown when processing $call" }
 							call.respondText(text = "500: An abnormal exception was thrown while processing the request.",

@@ -40,4 +40,31 @@ object Messages : MinchatEntityTable<Message>() {
 
 			timestamp = row[timestamp]
 		)
+	
+	/** 
+	 * Creates a message in the specified channel
+	 * and sends the corresponding event [TODO]. 
+	 * Returns the created row.
+	 *
+	 * Requires a transaction. 
+	 */
+	fun createMessageRaw(channelId: Long, authorId: Long, messageContent: String) = insert {
+		it[content] = messageContent
+		it[author] = authorId
+		it[channel] = channelId
+
+		it[timestamp] = System.currentTimeMillis()
+	}.resultedValues!!.first()
+
+	/** 
+	 * Creates a message in the specified channel
+	 * and sends the corresponding event [TODO]. 
+	 * Returns the created entity.
+	 *
+	 * Requires a transaction. 
+	 */
+	fun createMessage(channel: Channel, author: User, messageContent: String) =
+		createMessageRaw(channel.id, author.id, messageContent).let {
+			createEntity(it, author, channel)
+		}
 }

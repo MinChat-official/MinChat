@@ -37,6 +37,8 @@ class MessageModule : MinchatServerModule() {
 					)) {
 						it[Messages.content] = data.newContent
 					}.throwIfNotFound { "The messages matching the providen id-author pair does not exist (missing admin rights?)" }
+					
+					Log.info { "Message $id was edited." }
 				}
 			}
 
@@ -54,7 +56,9 @@ class MessageModule : MinchatServerModule() {
 						// actually deleting a message may lead to certain sync issues, so we avoid that
 						it[Messages.content] = ""
 						it[Messages.isDeleted] = true
-					}
+					}.throwIfNotFound { "the message does not exist or you lack the permission to delete it." }
+
+					Log.info { "Message $id was deleted." }
 				}
 			}
 		}

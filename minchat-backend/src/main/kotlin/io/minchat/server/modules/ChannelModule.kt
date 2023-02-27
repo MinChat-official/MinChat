@@ -63,7 +63,31 @@ class ChannelModule : MinchatServerModule() {
 			}
 
 			post(Route.Channel.send) {
-				TODO()
+				val channelId = call.parameters.getOrFail<Long>("id")
+				val data = call.receive<MessageCreateRequest>()
+				
+				newSuspendedTransaction {
+					val user = Users.getByToken(call.token())
+					val channel = Channels.getById(channelId)
+
+					if (user.isBanned) {
+						accessDenied("You are banned and can not send messages.")
+					}
+
+					val cooldown = user.lastMessageTimestamp + User.messageRateLimit - System.currentTimeMillis()
+					if (cooldown > 0 && !user.isAdmin) {
+						tooManyRequests("Wait $cooldown milliseconds before sending another message.")
+					}
+
+					val message = Messages.createMessage(channel, user, data.content)
+
+					Users.update({ Users.id eq user.id }) {
+						it[Users.messageCount] = user.messageCount + 1
+						it[Users.lastMessageTimestamp] = message.timestamp
+					}
+
+					call.respond(message)
+				}
 			}
 
 			// Admin-only

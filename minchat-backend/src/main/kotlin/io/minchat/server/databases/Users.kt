@@ -28,7 +28,9 @@ object Users : MinchatEntityTable<User>() {
 	 */
 	val lastIpHash = varchar("last-ip", 256 / 8).nullable().default(null)
 
+	val messageCount = integer("message-count").default(0)
 	val lastMessageTimestamp = long("last-sent").default(0L)
+
 	val creationTimestamp = long("created-at")
 	val lastLoginTimestamp = long("last-login")
 
@@ -44,7 +46,9 @@ object Users : MinchatEntityTable<User>() {
 
 			isBanned = row[isBanned],
 
+			messageCount = row[messageCount],
 			lastMessageTimestamp = row[lastMessageTimestamp],
+
 			creationTimestamp = row[creationTimestamp]
 		)
 	

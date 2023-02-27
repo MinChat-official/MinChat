@@ -32,12 +32,12 @@ class UserModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					data.newUsername?.let { name ->
 						// the name must be unused
-						if (Users.select { Users.username.lowerCase() eq data.new.lowercase() }.empty().not()) {
+						if (Users.select {Users.username.lowerCase() eq name.lowercase() }.empty().not()) {
 							illegalInput("this username is already claimed.")
 						}
 					}
 
-					Users.update(opWithAdminAccess(Users.isAdminToken(token),
+					Users.update(opWithAdminAccess(Users.isAdminToken(toke n),
 						common = { Users.id eq id },
 						userOnly = { Users.token eq token }
 					)) { row ->
