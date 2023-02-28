@@ -116,8 +116,12 @@ class ChannelModule : MinchatServerModule() {
 					call.requireAdmin()
 
 					Channels.update({ Channels.id eq id }) {
-						it[Channels.name] = data.newName
-						it[Channels.description] = data.newDescription
+						data.newName?.let { newName ->
+							it[Channels.name] = newName
+						}
+						data.newDescription?.let { newDescription ->
+							it[Channels.description] = newDescription
+						}
 					}.throwIfNotFound { "no such channel." }
 
 					call.respond(Channels.getById(id))

@@ -10,11 +10,14 @@ data class ChannelCreateRequest(
 	val description: String
 )
 
-/** Admin-only request to edit a channel. */
+/** 
+ * Admin-only request to edit a channel.
+ * Null values mean that the old value is to be preserved.
+ */
 @Serializable
 data class ChannelModifyRequest(
-	val newName: String,
-	val newDescription: String
+	val newName: String?,
+	val newDescription: String?
 )
 
 /** Admin-only request to delete a channel. */

@@ -18,7 +18,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 			.body<User>()
 	}
 
-	/** Edits the user with the specified ID using the providen token. */
+	/** Edits the user with the specified ID using the providen token. Null preserves the old value. */
 	suspend fun editUser(
 		id: Long,
 		token: String,
@@ -38,7 +38,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 		client.post(makeRouteUrl(Route.User.delete, id)) {
 			authorizeBearer(token)
 			setBody(UserDeleteRequest())
-		}.body<User>()
+		}
 	}
 
 	/** Hashes and validates the password and performs authorization. Returns a logged-in MinChatAccount. */
