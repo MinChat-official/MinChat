@@ -13,4 +13,9 @@ object Channels : MinchatEntityTable<Channel>() {
 			name = row[Channels.name],
 			description = row[Channels.description]
 		)
+	
+	companion object {
+		val nameLength = 3..64
+		val descriptionLength = 0..512
+	}
 }

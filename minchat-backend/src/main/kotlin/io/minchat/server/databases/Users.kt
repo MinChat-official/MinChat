@@ -103,4 +103,8 @@ object Users : MinchatEntityTable<User>() {
 
 		return userRow
 	}
+
+	companion object {
+		val nameLength = 3..64
+	}
 }

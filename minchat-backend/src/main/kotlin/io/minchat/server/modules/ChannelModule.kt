@@ -65,6 +65,10 @@ class ChannelModule : MinchatServerModule() {
 			post(Route.Channel.send) {
 				val channelId = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<MessageCreateRequest>()
+
+				data.content.requireLength(Messages.contentLength) {
+					"Content length must be in range of ${Messages.contentLength}"
+				}
 				
 				newSuspendedTransaction {
 					val user = Users.getByToken(call.token())
@@ -94,6 +98,13 @@ class ChannelModule : MinchatServerModule() {
 			post(Route.Channel.create) {
 				val data = call.receive<ChannelCreateRequest>()
 
+				data.name.requireLength(Channels.nameLength) { 
+					"Name length must be in range of Channels.nameLength"
+				}
+				data.description.requireLength(Channels.descriptionLength) { 
+					"Description length must be shorter than 512" 
+				}
+
 				newSuspendedTransaction {
 					call.requireAdmin()
 
@@ -111,6 +122,13 @@ class ChannelModule : MinchatServerModule() {
 			post(Route.Channel.edit) {
 				val id = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<ChannelModifyRequest>()
+
+				data.newName.requireLength(Channels.nameLength) { 
+					"Name length must be in range of Channels.nameLength"
+				}
+				data.newDescription.requireLength(Channels.descriptionLength) { 
+					"Description length must be shorter than 512" 
+				}
 
 				newSuspendedTransaction {
 					call.requireAdmin()

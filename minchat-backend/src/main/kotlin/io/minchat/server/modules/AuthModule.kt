@@ -52,7 +52,9 @@ class AuthModule : MinchatServerModule() {
 				val data = call.receive<UserRegisterRequest>()
 				val name = data.username.trim()
 
-				name.requireLength(3..40) { "Username length must be in the range of 3..40 characters!" }
+				name.requireLength(Users.nameLength) {
+					"Username length must be in the range of ${Users.nameLength} characters!" 
+				}
 
 				val complexity = Constants.hashComplexityPre
 				if (data.passwordHash.startsWith("\$2a\$$complexity\$").not()) {

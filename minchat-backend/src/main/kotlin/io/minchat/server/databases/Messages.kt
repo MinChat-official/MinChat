@@ -72,4 +72,8 @@ object Messages : MinchatEntityTable<Message>() {
 			val newAuthor = author.copy(messageCount = author.messageCount + 1)
 			createEntity(it, newAuthor, channel)
 		}
+	
+	companion object {
+		val contentLength = 1..1024
+	}
 }
