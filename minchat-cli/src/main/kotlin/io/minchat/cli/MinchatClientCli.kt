@@ -80,7 +80,7 @@ open class CliClientLauncher : Runnable {
 				* login (username) (password)
 				* login-token (id) (token)
 				* register (username) (password)
-				* connect (name/id)
+				* connect (channel name/id)
 				* exit$grey
 				--- admin only: -------------------$green
 				* create (name) (description...)

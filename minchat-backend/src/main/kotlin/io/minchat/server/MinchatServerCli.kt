@@ -181,7 +181,7 @@ open class DbManager : Runnable {
 					val isAdmin = prompt("is admin (true/false)", { it.toBoolean() })
 					
 					val hash = password?.let {
-						val salt = BCrypt.gensalt(Constants.hashComplexityPre)
+						val salt = Constants.hashSaltPre
 						BCrypt.hashpw(it, salt)
 					} ?: "<THIS WILL BE REPLACED>"
 					

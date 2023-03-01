@@ -3,6 +3,11 @@ package io.minchat.common
 object Constants {
 	/**
 	 * Passwords must be hashed witn bcrypt before being sent to the server.
+	 * This string is the default hash salt.
+	 */
+	const val hashSaltPre = "\$2a\$11\$IvRbjBtbeZqVwqrnhXg7zO"
+	/**
+	 * Passwords must be hashed witn bcrypt before being sent to the server.
 	 * This number indicates the required hash complexity.
 	 */
 	const val hashComplexityPre = 11

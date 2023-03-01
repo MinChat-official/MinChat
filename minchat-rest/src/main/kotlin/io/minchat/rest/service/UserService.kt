@@ -77,7 +77,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 	fun hashPasswordLocal(password: String) = run {
 		if (password.length !in 8..40) error("Password must be 8..40 characters long!")
 
-		val salt = BCrypt.gensalt(Constants.hashComplexityPre)
+		val salt = Constants.hashSaltPre
 		BCrypt.hashpw(password, salt)
 	}
 }
