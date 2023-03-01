@@ -6,6 +6,7 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.minchat.common.entity.*
 import io.minchat.rest.service.*
+import io.minchat.rest.entity.*
 
 class MinchatRestClient(
 	val baseUrl: String,
@@ -45,19 +46,28 @@ class MinchatRestClient(
 	fun account(): MinChatAccount =
 		account ?: error("You must log in before doing tnis.")
 	
+	/** Returns the currently logged-in account without updating it. */
+	fun self() = account().user.withClient(this)
+	
 	/**
 	 * Fetches the most recent User instance representing this user from the server
 	 * and updates [account].
 	 */
-	suspend fun updateAccount(): User =
+	suspend fun updateAccount() =
 		getUser(account().id).also {
-			account?.user = it
+			account?.user = it.data
 		}
 
 	// getX methods
+	/** Fetches the most recent data of the currently logged-in user and returns it. */
+	suspend fun getSelf() = run {
+		updateAccount()
+		self()
+	}
+
 	/** Fetches the user with the specified ID. */
 	suspend fun getUser(id: Long) =
-		userService.getUser(id)
+		userService.getUser(id).withClient(this)
 
 	/** Fetches the user with the specified ID, returns null if it doesn't exist.. */
 	suspend fun getUserOrNull(id: Long) = runCatching {
@@ -66,7 +76,7 @@ class MinchatRestClient(
 
 	/** Fetches the channel with the specified ID. */
 	suspend fun getChannel(id: Long) =
-		channelService.getChannel(id)
+		channelService.getChannel(id).withClient(this)
 
 	/** Fetches the channel with the specified ID, returns null if it doesn't exist.. */
 	suspend fun getChannelOrNull(id: Long) = runCatching {
@@ -75,7 +85,7 @@ class MinchatRestClient(
 
 	/** Fetches the message with the specified ID. */
 	suspend fun getMessage(id: Long) =
-		messageService.getMessage(id)
+		messageService.getMessage(id).withClient(this)
 
 	/** Fetches the message with the specified ID, returns null if it doesn't exist.. */
 	suspend fun getMessageOrNull(id: Long) = runCatching {
@@ -90,19 +100,22 @@ class MinchatRestClient(
 		channelId: Long,
 		fromTimestamp: Long? = null,
 		toTimestamp: Long? = null
-	) = channelService.getMessages(channelId, fromTimestamp, toTimestamp)
+	) = channelService.getMessages(channelId, fromTimestamp, toTimestamp).map {
+		it.withClient(this)
+	}
 
 	/** Sends a message in the specified channel. */
 	suspend fun createMessage(channelId: Long, content: String) =
 		channelService.createMessage(channelId, account().token, content)
+			.withClient(this)
 
 	/** Creates a new channel. Requires a logged-in admin account. */
-	suspend fun createMessage(name: String, description: String) =
+	suspend fun createChannel(name: String, description: String) =
 		channelService.createChannel(
 			name = name,
 			description = description,
 			token = account().token
-		)
+		).withClient(this)
 	
 	// editX methods
 	/** 
@@ -112,11 +125,12 @@ class MinchatRestClient(
 	 */
 	suspend fun editUser(id: Long, newUsername: String?) =
 		userService.editUser(id, account().token, newUsername)
+			.withClient(this)
 
 	/** Edits the currently logged-in account. */
 	suspend fun editSelf(newUsername: String?) =
 		editUser(account().id, newUsername).also {
-			account().user = it
+			account().user = it.data
 		}
 	
 	/** Edits the specified channel. Requires a logged-in admin account. */
@@ -125,6 +139,7 @@ class MinchatRestClient(
 		newName: String? = null,
 		newDescription: String? = null
 	) = channelService.editChannel(id, account().token, newName, newDescription)
+		.withClient(this)
 	
 	/** 
 	 * Edits the specified message.
@@ -133,6 +148,7 @@ class MinchatRestClient(
 	 */
 	suspend fun editMessage(id: Long, newContent: String) =
 		messageService.editMessage(id, account().token, newContent)
+			.withClient(this)
 	
 	// deleteX methodw
 	/**	

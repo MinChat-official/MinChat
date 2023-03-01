@@ -77,7 +77,7 @@ object Route {
 		val send = to("send")
 		/** 
 		 * GET. 
-		 * Response: a list of [Message] objects
+		 * Response: a list of [Message] objects ordered from oldest to newest.
 		 *
 		 * Query params:
 		 * * {from} - Unix timestamp. If present, messages sent before or at that moment are not listed.
