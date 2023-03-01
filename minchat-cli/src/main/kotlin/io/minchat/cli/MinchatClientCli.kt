@@ -42,8 +42,8 @@ open class CliClientLauncher : Runnable {
 	private val reset = "\u001B[0m"
 	private val grey = color(0x777777)
 	private val red = color(0xff3333)
-	private val green = color(0x33ff33)
-	private val blue = color(0x3333ff)
+	private val green = color(0x33dd33)
+	private val blue = color(0x7766ff)
 
 	override fun run() = runBlocking {
 		// add the url protocol, if neccessary
@@ -79,6 +79,7 @@ open class CliClientLauncher : Runnable {
 				Available commands:
 				* login (username) (password)
 				* login-token (id) (token)
+				* register (username) (password)
 				* connect (name/id)
 				* exit$grey
 				--- admin only: -------------------$green
@@ -102,7 +103,7 @@ open class CliClientLauncher : Runnable {
 
 			try {
 				when (split.firstOrNull().orEmpty().lowercase()) {
-					"login", "register" -> {
+					"login" -> {
 						requireArgs(2..2) ?: continue
 						runSafe({ "Failed to log-in" }) {
 							rest.login(split[1], split[2])
@@ -114,6 +115,12 @@ open class CliClientLauncher : Runnable {
 							user = rest.getUser(split[1].toLong()).data,
 							token = split[2]
 						)
+					}
+					"register" -> {
+						requireArgs(2..2) ?: continue
+						runSafe({ "Failed to register" }) {
+							rest.register(split[1], split[2])
+						}
 					}
 					"connect" -> {
 						requireArgs(1..1) ?: continue

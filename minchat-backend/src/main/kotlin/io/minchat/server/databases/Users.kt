@@ -72,7 +72,7 @@ object Users : MinchatEntityTable<User>() {
 		select { Users.token eq token }.firstOrNull()?.get(isAdmin) ?: false
 
 	fun register(name: String, passwordHash: String, admin: Boolean): ResultRow {
-		val salt = BCrypt.gensalt(13)
+		val salt = BCrypt.gensalt(12)
 		val hashedHash = BCrypt.hashpw(passwordHash, salt)
 		
 		lateinit var userToken: String

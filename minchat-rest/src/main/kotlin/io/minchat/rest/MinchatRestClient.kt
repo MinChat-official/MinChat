@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 class MinchatRestClient(
 	val baseUrl: String,
 	val httpClient: HttpClient = HttpClient(CIO) {
+		expectSuccess = true
 		install(ContentNegotiation) { 
 			json(Json { ignoreUnknownKeys = true })
 		}
@@ -29,24 +30,17 @@ class MinchatRestClient(
 	 * Attempts to log into the providen Minchat account.
 	 * Must be called before using most other methods.
 	 *
-	 * If the account doesn't exist and [register] is true,
-	 * a new account is registered. Otherwise, an exception is thrown.
-	 *
 	 * Length ranges:
 	 * * [username] - 3..40 characters (server-side)
 	 * * [password] - 8..40 characters (client-side only)
 	 */
-	suspend fun login(username: String, password: String, register: Boolean = true) {
-		account = try {
-			userService.login(username, password)
-		} catch (e: ClientRequestException) {
-			// 400 bad request is a sign that the account doesn't exist
-			if (!register || e.response.status.value != HttpStatusCode.BadRequest.value) {
-				throw e
-			}
+	suspend fun login(username: String, password: String) {
+		account = userService.login(username, password)
+	}
 
-			userService.register(username, password)
-		}
+	/** See [login]. */
+	suspend fun register(username: String, password: String) {
+		account = userService.register(username, password)
 	}
 
 	/** Returns [account] or throws an exception if this client is not logged in. */

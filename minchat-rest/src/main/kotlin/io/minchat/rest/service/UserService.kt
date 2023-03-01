@@ -44,7 +44,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 	/** Hashes and validates the password and performs authorization. Returns a logged-in MinchatAccount. */
 	suspend fun login(username: String, password: String): MinchatAccount {
 		val hash = hashPasswordLocal(password)
-		return loginOrRegister(Route.Auth.register, username, hash)
+		return loginOrRegister(Route.Auth.login, username, hash)
 	}
 
 	/** Hashes and validates the password and tries to register a new account. Returns a logged-in MinchatAccount. */
