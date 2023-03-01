@@ -15,6 +15,14 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 			.body<Channel>()
 	}
 
+	/**
+	 * Fetches all channels registered on the server.
+	 */
+	suspend fun getAllChannels() = run {
+		client.get(makeRouteUrl(Route.Channel.all))
+			.body<List<Channel>>()
+	}
+
 	/** 
 	 * Fetches a limited number of messages from the specified channel.
 	 * See [Route.Channel.messages] for more info.

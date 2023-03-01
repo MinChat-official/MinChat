@@ -35,7 +35,7 @@ open class CliClientLauncher : Runnable {
 	lateinit var channels: List<MinchatChannel>
 
 	override fun run() = runBlocking {
-		// channels = rest.getAllChannels()
+		channels = rest.getAllChannels()
 		println("Connected to $serverUrl.")
 	}
 

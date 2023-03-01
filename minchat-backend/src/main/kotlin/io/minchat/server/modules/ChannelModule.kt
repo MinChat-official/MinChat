@@ -147,6 +147,17 @@ class ChannelModule : MinchatServerModule() {
 
 				Log.info { "Channel $channelId was deleted." }
 			}
+
+			get(Route.Channel.all) {
+				newSuspendedTransaction {
+					val list = Channels.selectAll()
+						.orderBy(Channels.id to SortOrder.ASC)
+						.toList()
+						.map { Channels.createEntity(it) }
+					
+					call.respond(list)
+				}
+			}
 		}
 	}
 }

@@ -83,6 +83,11 @@ class MinchatRestClient(
 		getChannel(id)
 	}.getOrNull()
 
+	/** Fetches all channels registered on the server. */
+	suspend fun getAllChannels() =
+		channelService.getAllChannels()
+			.map { it.withClient(this) }
+
 	/** Fetches the message with the specified ID. */
 	suspend fun getMessage(id: Long) =
 		messageService.getMessage(id).withClient(this)

@@ -65,6 +65,14 @@ object Route {
 	/** Accepts an {id} request parameter. */
 	object Channel : MinchatRoute("channel/{id}") {
 		/** 
+		 * GET.
+		 * Unlike most subroutes in this route, this one does not acceot an ID parameter.
+		 * 
+		 * Response: a list of [Channel] objects.
+		 */
+		val all = to("all").replace("/{id}", "")
+
+		/** 
 		 * GET. 
 		 * Response: a [Channel] object.
 		 */
@@ -90,7 +98,7 @@ object Route {
 
 		/** 
 		 * POST. Requires authorization and admin access.
-		 * Unlike other subroutes in this route, this one does not acceot an ID parameter.
+		 * Unlike most subroutes in this route, this one does not acceot an ID parameter.
 		 *
 		 * Body: [ChannelCreateRequest]. 
 		 * Response: a [Channel] object.
