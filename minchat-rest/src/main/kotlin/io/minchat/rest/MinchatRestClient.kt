@@ -4,22 +4,29 @@ import io.ktor.http.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.entity.*
 import io.minchat.rest.service.*
 import io.minchat.rest.entity.*
+import kotlinx.serialization.json.Json
 
 class MinchatRestClient(
 	val baseUrl: String,
-	val httpClient: HttpClient = HttpClient(CIO)
+	val httpClient: HttpClient = HttpClient(CIO) {
+		install(ContentNegotiation) { 
+			json(Json { ignoreUnknownKeys = true })
+		}
+	}
 ) {
-	var account: MinChatAccount? = null
+	var account: MinchatAccount? = null
 
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
 
 	/** 
-	 * Attempts to log into the providen MinChat account.
+	 * Attempts to log into the providen Minchat account.
 	 * Must be called before using most other methods.
 	 *
 	 * If the account doesn't exist and [register] is true,
@@ -43,7 +50,7 @@ class MinchatRestClient(
 	}
 
 	/** Returns [account] or throws an exception if this client is not logged in. */
-	fun account(): MinChatAccount =
+	fun account(): MinchatAccount =
 		account ?: error("You must log in before doing tnis.")
 	
 	/** Returns the currently logged-in account without updating it. */

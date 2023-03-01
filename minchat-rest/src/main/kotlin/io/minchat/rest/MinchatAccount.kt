@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 /**
  * A registered MinChar user whose api token is known.
  */
- class MinChatAccount(user: User, val token: String) {
+ class MinchatAccount(user: User, val token: String) {
  	/** 
 	 * The user object associated with this account.
 	 * Can not be overwritten with a different user.
@@ -22,8 +22,8 @@ import kotlinx.serialization.Serializable
 	val id by user::id
 	
 	override fun toString() =
-		"MinChatAccount(user=$user)"
+		"MinchatAccount(user=$user)"
  }
 
  fun User.withToken(token: String) =
- 	MinChatAccount(this, token)
+ 	MinchatAccount(this, token)

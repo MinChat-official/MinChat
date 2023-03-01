@@ -10,7 +10,9 @@ import org.jetbrains.exposed.dao.*
 import org.mindrot.jbcrypt.BCrypt
 
 object Users : MinchatEntityTable<User>() {
-	val username = varchar("name", 64)
+	val nameLength = 3..64
+
+	val username = varchar("name", nameLength.endInclusive)
 	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
 	val isAdmin = bool("admin").default(false)
@@ -102,9 +104,5 @@ object Users : MinchatEntityTable<User>() {
 		}.resultedValues!!.first()
 
 		return userRow
-	}
-
-	companion object {
-		val nameLength = 3..64
 	}
 }

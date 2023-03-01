@@ -6,14 +6,16 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.dao.*
 
 object Messages : MinchatEntityTable<Message>() {
-	val content = varchar("content", 1024)
+	val contentLength = 1..1024
+	
+	val content = varchar("content", contentLength.endInclusive)
 	val author = reference("author", Users)
 	val channel = reference("channel", Channels)
 
 	val timestamp = long("timestamp")
 
 	val isDeleted = bool("deleted").default(false)
-	
+
 	override fun getRawByIdOrNull(id: Long) =
 		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
 
@@ -72,8 +74,4 @@ object Messages : MinchatEntityTable<Message>() {
 			val newAuthor = author.copy(messageCount = author.messageCount + 1)
 			createEntity(it, newAuthor, channel)
 		}
-	
-	companion object {
-		val contentLength = 1..1024
-	}
 }

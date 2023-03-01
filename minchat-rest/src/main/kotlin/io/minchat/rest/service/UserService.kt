@@ -41,14 +41,14 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 		}
 	}
 
-	/** Hashes and validates the password and performs authorization. Returns a logged-in MinChatAccount. */
-	suspend fun login(username: String, password: String): MinChatAccount {
+	/** Hashes and validates the password and performs authorization. Returns a logged-in MinchatAccount. */
+	suspend fun login(username: String, password: String): MinchatAccount {
 		val hash = hashPasswordLocal(password)
 		return loginOrRegister(Route.Auth.register, username, hash)
 	}
 
-	/** Hashes and validates the password and tries to register a new account. Returns a logged-in MinChatAccount. */
-	suspend fun register(username: String, password: String): MinChatAccount {
+	/** Hashes and validates the password and tries to register a new account. Returns a logged-in MinchatAccount. */
+	suspend fun register(username: String, password: String): MinchatAccount {
 		val hash = hashPasswordLocal(password)
 		return loginOrRegister(Route.Auth.register, username, hash)
 	}
@@ -58,7 +58,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 		route: String, 
 		username: String,
 		passwordHash: String
-	): MinChatAccount {	
+	): MinchatAccount {	
 		val response = client.post(makeRouteUrl(route)) {
 			contentType(ContentType.Application.Json)
 			// UserLoginRequest and UserRegisterRequest are the same. just as their responses

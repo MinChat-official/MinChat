@@ -13,6 +13,8 @@ dependencies {
 
 	implementation("io.ktor", "ktor-client-core", ktorVersion)
 	implementation("io.ktor", "ktor-client-cio", ktorVersion)
+	implementation("io.ktor", "ktor-client-content-negotiation", ktorVersion)
+	implementation("io.ktor", "ktor-serialization-kotlinx-json", ktorVersion)
 
 	implementation("info.picocli", "picocli", picocliVersion)
 	kapt("info.picocli", "picocli-codegen", picocliVersion)
@@ -25,6 +27,6 @@ tasks.jar {
 	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 
 	manifest {
-                attributes["Main-Class"] = "io.minchat.cli.MinchatClientCli"
+                attributes["Main-Class"] = "io.minchat.cli.MinchatClientCliKt"
         }
 }

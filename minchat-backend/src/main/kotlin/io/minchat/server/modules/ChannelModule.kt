@@ -123,10 +123,10 @@ class ChannelModule : MinchatServerModule() {
 				val id = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<ChannelModifyRequest>()
 
-				data.newName.requireLength(Channels.nameLength) { 
+				data.newName?.requireLength(Channels.nameLength) { 
 					"Name length must be in range of Channels.nameLength"
 				}
-				data.newDescription.requireLength(Channels.descriptionLength) { 
+				data.newDescription?.requireLength(Channels.descriptionLength) { 
 					"Description length must be shorter than 512" 
 				}
 
