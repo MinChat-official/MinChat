@@ -2,13 +2,14 @@ package io.minchat.cli
 
 import io.minchat.rest.*
 import io.minchat.rest.entity.*
+import kotlin.math.*
 import kotlin.system.exitProcess
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import picocli.CommandLine
 import picocli.CommandLine.Command // these need to be imported one-by-one. otherwise kapt dies.
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
-import kotlin.math.*
 
 fun main(vararg args: String) {
 	val exitCode = CommandLine(MainCommand()).execute(*args)
@@ -40,10 +41,15 @@ open class CliClientLauncher : Runnable {
 
 	/** A string to the color of the terminal output. */
 	private val reset = "\u001B[0m"
+	// colors
 	private val grey = color(0x777777)
 	private val red = color(0xff3333)
 	private val green = color(0x33dd33)
 	private val blue = color(0x7766ff)
+
+	private val adminColor = color(0x8741cc)
+	private val userColor = color(0x419ecc)
+	private val selfColor = color(0x77e693)
 
 	override fun run() = runBlocking {
 		// add the url protocol, if neccessary
@@ -96,11 +102,14 @@ open class CliClientLauncher : Runnable {
 			fun requireArgs(range: IntRange): Unit? = when {
 				(split.size - 1) in range -> Unit
 				else -> {
-					println("This command accepts $range args.")
+					println("${red}This command accepts $range args.")
 					null
 				}
 			}
+	
 
+			// this all is extremely dumb, I know.
+			// but I don't want to create a complex system for this.
 			try {
 				when (split.firstOrNull().orEmpty().lowercase()) {
 					"login" -> {
@@ -136,8 +145,7 @@ open class CliClientLauncher : Runnable {
 							continue
 						}
 						
-						println("\n\nChannel: #${channel.name}")
-						chatUI(channel.id)
+						chatUI(channel)
 					}
 					"exit" -> {
 						break
@@ -177,8 +185,69 @@ open class CliClientLauncher : Runnable {
 	}
 
 	/** Launches the chat terminal ui. Blocks until the user exits. */
-	suspend fun chatUI(channelId: Long) {
-		TODO()
+	suspend fun chatUI(channel: MinchatChannel) {
+		while (true) {
+			"\n\nChannel: #${channel.name}".let {
+				println(it)
+				println("-".repeat(it.trim().length))
+			}
+
+			print("Fetching messages...")
+
+			val nameColumnWidth = 30
+
+			val messages = channel.getAllMessages(limit = 50)
+				.toList()
+				.reversed()
+
+			print("\r${" ".repeat(40)}\r") // clear the line
+
+			messages.forEach { message ->
+				val color = when {
+					message.author.id == rest.account?.id -> selfColor
+					message.author.isAdmin -> adminColor
+					else -> userColor
+				}
+
+				print(color)
+				print(message.author.tag.let {
+					it.takeIf { it.length < nameColumnWidth }?.padEnd(nameColumnWidth, ' ')
+						?: it.take(nameColumnWidth - 3) + "..."
+				})
+				print("| $reset")
+				// pad every line othwe than the first one with spaces and a pipe symbol
+				message.content.lines().let {
+					println(it[0])
+
+					it.drop(1).map {
+						"$color...${" ".repeat(nameColumnWidth - 3)}| $reset$it"
+					}.forEach(::println)
+				}
+			}
+
+			// TODO: I will need to implement a websocket connection.
+			// to correctly print the newly received messages, I will need
+			// to move the cursor to the left and 2 lines up, then print
+			// the message, and then return.
+			println("${grey}Type :q to quit, :r to refresh${
+				when (rest.isLoggedIn) {
+					true -> ", any other text to send a message."
+					false -> "; ${red}you can't send messages until you log in."
+				}
+			}")
+			val input = prompt("").trim()
+
+			when (input) {
+				":q" -> break
+				":r", "" -> continue
+			}
+			
+			if (rest.account != null) {
+				channel.createMessage(input.replace("\\n", "\n"))
+			} else {
+				println("${red}You must log in before doing this!")
+			}
+		}	
 	}
 
 	/** A string to set the color of the terminal output. */

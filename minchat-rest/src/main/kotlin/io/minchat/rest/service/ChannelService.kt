@@ -38,7 +38,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		client.get(makeRouteUrl(Route.Channel.messages, id)) {
 			url {
 				fromTimestamp?.let { parameters.append("from", it.toString()) }
-				toTimestamp?.let { parameters.append("from", it.toString()) }
+				toTimestamp?.let { parameters.append("to", it.toString()) }
 			}
 		}.body<List<Message>>()
 	}

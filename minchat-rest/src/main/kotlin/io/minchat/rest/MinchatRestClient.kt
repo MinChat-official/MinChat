@@ -21,6 +21,7 @@ class MinchatRestClient(
 	}
 ) {
 	var account: MinchatAccount? = null
+	val isLoggedIn get() = account != null
 
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)

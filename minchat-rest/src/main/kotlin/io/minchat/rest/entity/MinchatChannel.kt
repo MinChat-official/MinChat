@@ -41,26 +41,34 @@ class MinchatChannel(
 	 * This function will use REST to fetch more messages
 	 * until there's none left. This can result in a huge amount
 	 * of REST api calls, and must therefore be used with caution.
+	 *
+	 * The [limit] parameter can be used to limit the number of messages.
+	 * However, the returned flow can contain a little more messages tham
+	 * specified.
 	\*/
 	suspend fun getAllMessages(
 		fromTimestamp: Long? = null,
-		toTimestamp: Long? = null
+		toTimestamp: Long? = null,
+		limit: Int = Int.MAX_VALUE
 	) = flow<MinchatMessage> {
 		// get messages returns N oldest messages matching `from < message.timestamp <= to`
 		var minTimestamp = fromTimestamp ?: 0L
 		var maxTimestamp = toTimestamp ?: Long.MAX_VALUE
+		var count = 0
 
-		while (true) {
+		while (count <= limit) {
 			val portion = rest.getMessagesIn(id, minTimestamp, maxTimestamp)
 
 			if (portion.isNotEmpty()) {
 				for (i in portion.lastIndex downTo 0) {
 					emit(portion[i])
 				}
-				minTimestamp = portion.maxOf { it.timestamp }
+				maxTimestamp = portion.minOf { it.timestamp } - 1
 			} else {
 				break
 			}
+			
+			count += portion.size
 		}
 	}
 	
