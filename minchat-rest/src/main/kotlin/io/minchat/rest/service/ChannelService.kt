@@ -53,6 +53,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		content: String
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.send, channelId)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(MessageCreateRequest(content = content))
 		}.body<Message>()
@@ -65,6 +66,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		description: String
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.create)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(ChannelCreateRequest(
 				name = name,
@@ -81,6 +83,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		newDescription: String?
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.edit, id)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(ChannelModifyRequest(
 				newName = newName,
@@ -95,6 +98,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		token: String
 	) {
 		client.post(makeRouteUrl(Route.Channel.delete, id)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(ChannelDeleteRequest())
 		}

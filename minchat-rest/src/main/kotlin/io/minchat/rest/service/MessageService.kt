@@ -22,6 +22,7 @@ class MessageService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		newContent: String
 	) = run {
 		client.post(makeRouteUrl(Route.Message.edit, id)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(MessageModifyRequest(newContent = newContent))
 		}.body<Message>()
@@ -33,6 +34,7 @@ class MessageService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		token: String
 	) {
 		client.post(makeRouteUrl(Route.Message.delete, id)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(MessageDeleteRequest())
 		}

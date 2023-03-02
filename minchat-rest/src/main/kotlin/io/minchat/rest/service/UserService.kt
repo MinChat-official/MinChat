@@ -25,6 +25,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 		newUsername: String?
 	) = run {
 		client.post(makeRouteUrl(Route.User.edit, id)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(UserModifyRequest(newUsername = newUsername))
 		}.body<User>()
@@ -36,6 +37,7 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 		token: String
 	) {
 		client.post(makeRouteUrl(Route.User.delete, id)) {
+			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(UserDeleteRequest())
 		}
