@@ -68,7 +68,7 @@ open class CliClientLauncher : Runnable {
 
 			println(reset)
 			if (rest.account != null) {
-				println("Logged in as ${rest.account().user.username}.\n")
+				println("Logged in as ${rest.account().user.username} (id ${rest.account().id}).\n")
 			}
 
 			println("${green}Available channels:$blue\n")
@@ -237,9 +237,13 @@ open class CliClientLauncher : Runnable {
 			}")
 			val input = prompt("").trim()
 
-			when (input) {
-				":q" -> break
-				":r", "" -> continue
+			when {
+				input == ":q" -> break
+				input == ":r", input == "" -> continue
+				input.startsWith(":") -> {
+					println("Invalid command: ${input.drop(1)}.")
+					continue
+				}
 			}
 			
 			if (rest.account != null) {
