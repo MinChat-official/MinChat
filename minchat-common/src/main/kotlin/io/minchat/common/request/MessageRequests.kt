@@ -1,7 +1,7 @@
 package io.minchat.common.request
 
 import io.minchat.common.entity.*
-import kotlinx.serialization.*
+import kotlinx.serialization.Serializable
 
 /** Request to create a message in the channel. */
 @Serializable

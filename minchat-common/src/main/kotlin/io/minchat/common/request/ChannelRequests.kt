@@ -1,7 +1,7 @@
 package io.minchat.common.request
 
 import io.minchat.common.entity.*
-import kotlinx.serialization.*
+import kotlinx.serialization.Serializable
 
 /** Admin-only request to create a channel. */
 @Serializable
