@@ -72,7 +72,7 @@ open class CliClientLauncher : Runnable {
 			}
 
 			println("${green}Available channels:$blue\n")
-			val namePad = channels.maxOf { it.name.length }.coerceAtMost(20)
+			val namePad = channels.maxOfOrNull { it.name.length }?.coerceAtMost(20) ?: 0
 
 			channels.forEachIndexed { index, channel ->
 				val prefix = index.toString().padStart(4, ' ')

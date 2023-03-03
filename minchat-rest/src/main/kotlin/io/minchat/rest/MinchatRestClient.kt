@@ -7,19 +7,25 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.entity.*
-import io.minchat.rest.service.*
 import io.minchat.rest.entity.*
+import io.minchat.rest.service.*
+import io.minchat.rest.ratelimit.*
 import kotlinx.serialization.json.Json
 
 class MinchatRestClient(
-	val baseUrl: String,
-	val httpClient: HttpClient = HttpClient(CIO) {
+	val baseUrl: String
+) {
+	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
+		install(ClientRateLimit) {
+			limiter = GlobalBucketRateLimiter()
+			//retryOnRateLimit = true
+		}
 		install(ContentNegotiation) { 
 			json(Json { ignoreUnknownKeys = true })
 		}
 	}
-) {
+
 	var account: MinchatAccount? = null
 	val isLoggedIn get() = account != null
 
