@@ -28,3 +28,9 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}-backend-server
           path: minchat-backend/build/libs/*.jar
+
+      - name: Upload the cli client artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.event.repository.name }}-cli-client
+          path: minchat-cli/build/libs/*.jar

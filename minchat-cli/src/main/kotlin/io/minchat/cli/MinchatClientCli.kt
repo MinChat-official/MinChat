@@ -239,7 +239,7 @@ open class CliClientLauncher : Runnable {
 
 			when {
 				input == ":q" -> break
-				input == ":r", input == "" -> continue
+				input == ":r" || input == "" -> continue
 				input.startsWith(":") -> {
 					println("Invalid command: ${input.drop(1)}.")
 					continue
