@@ -3,12 +3,15 @@ package io.minchat.client
 import arc.*
 import arc.util.*
 import arc.scene.ui.*
+import mindustry.Vars
 import mindustry.mod.*
 import mindustry.game.*
+import mindustry.gen.*
 import mindustry.ui.*
 import mindustry.ui.dialogs.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
+import io.minchat.rest.*
 import kotlinx.coroutines.*
 
 class MinchatMod : Mod() {
@@ -18,6 +21,25 @@ class MinchatMod : Mod() {
 	""".trimIndent()
 
 	init {
+		Events.on(EventType.ClientLoadEvent::class.java) {
+			Vars.ui.menufrag.addButton("MinChat", Icon.terminal) {
+				//lastWindow?.destroy()?.also { lastWindow = null }
+				//DebuggerMenuFragment.apply(menuDialog.cont)
+				//DebuggerMenuFragment.onElementSelection({ menuDialog.hide() }, { menuDialog.show() })
+				//menuDialog.show()
+
+				val channels = runBlocking {
+					MinchatRestClient("http://127.0.0.1:8080")
+						.getAllChannels()
+						.map { "${it.name} - ${it.description}" }
+				}
+
+				createDialog(title = "Available channels") {
+					addLabel(channels.joinToString("\n"))
+				}.show()
+			}
+		}
+
 		//when client load event is fired (that happens only once),
 		Events.on(EventType.ClientLoadEvent::class.java) {
 			//create a dialog,

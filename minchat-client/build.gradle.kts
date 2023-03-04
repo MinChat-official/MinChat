@@ -55,7 +55,9 @@ task("jarAndroid") {
 		
 		
 		//collect dependencies needed to translate java 8 bytecode code to android-compatible bytecode (yeah, android's dvm and art do be sucking)
-		val dependencies = (configurations.compileClasspath.get().files + configurations.runtimeClasspath.files + File(platformRoot, "android.jar")).map { it.path }
+		val dependencies = 
+			(configurations.compileClasspath.get().files() + configurations.runtimeClasspath.get().files() + File(platformRoot, "android.jar"))
+			.map { it.path }
 		val dependenciesStr = Array<String>(dependencies.size * 2) {
 			if (it % 2 == 0) "--classpath" else dependencies.elementAt(it / 2)
 		}
@@ -90,7 +92,7 @@ tasks.jar {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	archiveFileName.set("${jarName}-desktop.jar")
 
-	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
+	from(*configurations.runtimeClasspath.get().files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 
 	from(rootDir) {
 		include("mod.hjson")

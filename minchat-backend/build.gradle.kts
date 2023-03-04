@@ -36,7 +36,7 @@ tasks.jar {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	archiveFileName.set("minchat-server.jar")
 
-	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
+	from(*configurations.runtimeClasspath.get().files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 
 	manifest {
                 attributes["Main-Class"] = "io.minchat.server.MinchatServerCliKt"
