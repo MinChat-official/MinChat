@@ -29,7 +29,6 @@ dependencies {
 	implementation("io.ktor", "ktor-server-rate-limit", ktorVersion)
 
 	implementation("org.mindrot", "jbcrypt", "0.4")
-
 }
 
 tasks.jar {
