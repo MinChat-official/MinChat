@@ -132,23 +132,40 @@ task("jarAndroid") {
 		if (needReDex.isNotEmpty()) println("Done.")
 		println("Preparing to desugar the project and merge dex files.")
 
-		// finally, assemble instructions for the final d8 to merge the previously generated dex files
-		val dexPathes = dependencies.map { "${dexCacheRoot.absolutePath}/${hash(it.toByteArray())}" }
+		val dexPathes = dependencies.map { 
+			dexCacheRoot.resolve(hash(it.toByteArray())).also { it.mkdir() }
+		}
+		// assemble the list of classpath arguments for project dexing
 		val dependenciesStr = Array<String>(dependencies.size * 2) {
-			if (it % 2 == 0) "--classpath" else dexPathes[it / 2]
+			if (it % 2 == 0) "--classpath" else dexPathes[it / 2].absolutePath
 		}
 		
-		// and finally, merge everything and desugar the project
+		// now, compile the project
 		exec {
-			workingDir("$buildDir/libs")
-			errorOutput = OutputStream.nullOutputStream()
+			val output = dexCacheRoot.resolve("project").also { it.mkdirs() }
 			commandLine(
 				"d8", 
-				*dependenciesStr, 
+				*dependenciesStr,
 				"--classpath", "${platformRoot.absolutePath}/android.jar",
-				"--min-api", "14", 
-				"--output", "${jarName}-android.jar", 
-				"${jarName}.jar"
+				"--min-api", "14",
+				"--output", "$output",
+				"$buildDir/libs/$jarName.jar"
+			)
+		}
+
+		// finally, merge all dex files
+		exec {
+			val depDexes = dexPathes
+				.map { it.resolve("classes.dex") }.toTypedArray()
+				.filter { it.exists() } // some are empty
+				.map { it.absolutePath }
+				.toTypedArray()
+
+			commandLine(
+				"d8",
+				*depDexes,
+				dexCacheRoot.resolve("project/classes.dex").absolutePath,
+				"--output", "$buildDir/libs/$jarName-android.jar"
 			)
 		}
 	}
