@@ -31,7 +31,8 @@ allprojects {
 		kotlinOptions {
 			jvmTarget = "1.8"
 			freeCompilerArgs += arrayOf(
-				"-Xcontext-receivers"
+				"-Xcontext-receivers",
+				"-opt-in=kotlin.ExperimentalStdlibApi"
 			)
 		}
 	}
