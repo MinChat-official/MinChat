@@ -2,7 +2,9 @@ package io.minchat.client.ui
 
 import arc.Core
 import arc.graphics.*
+import arc.math.Interp.*
 import arc.scene.*
+import arc.scene.actions.Actions.*
 import arc.scene.event.*
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
@@ -32,19 +34,27 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 	val notificationStack = ConcurrentLinkedQueue<Notification>()
 
+	lateinit var notificationBar: Table
 	lateinit var channelsBar: Table
 	lateinit var channelsContainer: Table
+
 	lateinit var chatBar: Table
 	lateinit var chatContainer: Table
 	lateinit var chatField: TextField
+	lateinit var sendButton: TextButton
 
 	private var closeListener: (() -> Unit)? = null
+	
+	/** Used internally in [tick]. */
+	private var hasInvalidated = false
+	private var lastChatUpdateJob: Job? = null
 
 	override fun build() = createTable {
 		update(::tick)
 
 		// top bar
 		addStack {
+			setClip(false)
 			// the bar itself
 			addTable(Style.surfaceBackground) {
 				setFillParent(true)
@@ -52,9 +62,9 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 				textButton("[#${Style.red}]X") {
 					closeListener?.invoke() ?: 
 						Vars.ui.showInfo("No close listener.")
-				}
+				}.padRight(8f)
 
-				addLabel("MinChat").padRight(8f).color(Style.purple)
+				addLabel("MinChat").color(Style.purple)
 
 				// channel name
 				addLabel({
@@ -63,16 +73,17 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 				// account button
 				textButton({
-					Minchat.client.account?.user?.tag ?: "[Not logged in"
-				}, align = Align.right, ellipsis = "...") {
-					Vars.ui.showInfo("TODO")
-				}.minWidth(120f).padLeft(8f).with {
+					Minchat.client.account?.user?.tag ?: "[Not logged in]"
+				}, ellipsis = "...") {
+					AccountDialog().show()
+				}.minWidth(200f).padLeft(8f).with {
 					it.label.setColor(Style.foreground)
 				}
 			}
-			// Notification label. A table is neccessary to render a background.
+			// Notification bar. A table is neccessary to render a background.
 			addTable(Styles.black5) {
 				center()
+				notificationBar = this
 				touchable = Touchable.disabled
 				translation.y -= 20f // offset it a bit down
 
@@ -120,16 +131,44 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 					})
 					chatField = it
 				}.growX()
+
 				textButton(">") {
-					Vars.ui.showInfo("TODO")
+					if (Minchat.client.isLoggedIn) {
+						sendCurrentMessage()
+					} else {
+						Vars.ui.showInfo("You must login or register first.")
+					}
+				}.with { sendButton = it }.disabled {
+					Minchat.client.isLoggedIn || currentChannel == null
 				}
+				updateChatbox()
 			}.grow().pad(4f).padLeft(10f).padRight(10f)
 		}.grow()
 	}
 
 	fun tick() {
-		if (notificationStack.isNotEmpty() && notificationStack.first().shownUntil <= System.currentTimeMillis()) {
-			notificationStack.remove()
+		if (notificationStack.isNotEmpty()) run {
+			if (notificationStack.first().shownUntil <= System.currentTimeMillis()) {
+				notificationStack.remove()
+			}
+			// the notification box should quickly fade in and then fade out
+			val notification = notificationStack.peek() ?: return@run
+			val progress = with(notification) { 1f - (shownUntil - System.currentTimeMillis()) / lifetime.toFloat() }
+
+			notificationBar.color.a = when {
+				progress < 0.1f -> progress * 10f
+				progress > 0.9f -> (1 - progress) * 10f
+				else -> 1f
+			}
+		} else {
+			notificationBar.color.a = 0f
+		}
+
+		// for reasons unknown to me, the chatbox gets laid out with a wrong height
+		// this is fixed once it's invalidated.
+		if (!hasInvalidated) {
+			chatField.invalidateHierarchy()
+			hasInvalidated = true
 		}
 	}
 
@@ -138,7 +177,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 	 * [maxTime] defines that maximum time it will be shown for (in seconds).
 	 */
 	fun notification(text: String, maxTime: Long) = 
-		Notification(text, System.currentTimeMillis() + maxTime * 1000)
+		Notification(text, maxTime * 1000)
 			.also { notificationStack.add(it) }
 
 	override fun applied(cell: Cell<Table>) {
@@ -146,9 +185,9 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		reloadChannels()
 	}
 
-	fun reloadChannels() {
+	fun reloadChannels(): Job {
 		val notif = notification("Loading channels...", 10)
-		launch {
+		return launch {
 			runCatching {
 				val channels = Minchat.client.getAllChannels()
 				runUi { setChannels(channels) }
@@ -163,43 +202,78 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		channelsContainer.clearChildren()
 		
 		channels.forEach { channel ->
-			channelsContainer.textButton("#${channel.name}", Styles.flatBordert) {
+			channelsContainer.textButton("#${channel.name}", Styles.flatBordert, align = Align.left) {
 				currentChannel = channel
-				updateChatUi()
+				lastChatUpdateJob?.cancel()
+				lastChatUpdateJob = updateChatUi()
 			}.with {
 				it.label.setColor(Style.foreground)
 			}.align(Align.left).growX().row()
 		}
 	}
 
-	fun updateChatUi() {
-		val channel = currentChannel ?: return
+	fun updateChatUi(): Job? {
+		val channel = currentChannel ?: return null
 		val notif = notification("Loading messages...", 10)
 
-		launch {
+		return launch {
 			val messages = runCatching {
 				channel.getAllMessages(limit = 60).toList().reversed()
 			}.onFailure {
 				notif.cancel()
 				notification(it.userReadable(), 5)
-				return@launch
 			}.getOrThrow()
+
 			notif.cancel()
 			// if the channel was changed, return
 			if (channel != currentChannel) return@launch
 
 			runUi {
-				chatField.hint = "Message #${currentChannel?.name}"
+				updateChatbox()
 
-				// TODO: instead of doing this, play a swipe animation
 				chatContainer.clearChildren()
 
 				messages.forEach { message ->
-					chatContainer.add(MinchatMessageElement(message))
-						.marginBottom(10f).pad(4f).growX().row()
+					val element = MinchatMessageElement(message)
+					chatContainer.add(element)
+						.padBottom(10f).pad(4f).growX().row()
+
+					// play a move-in animation
+					element.addAction(sequence(
+						translateBy(chatContainer.width, 0f),
+						translateBy(-chatContainer.width, 0f, 0.5f, sineOut)
+					))
 				}
 			}
 		}
+	}
+
+	fun updateChatbox() {
+		chatField.hint = when {
+			!Minchat.client.isLoggedIn -> "Log in or register to send messages."
+			currentChannel == null -> "Choose a channel to chat in."
+			else -> "Message #${currentChannel?.name}"
+		}
+	}
+
+	fun sendCurrentMessage(): Job? {
+		if (!Minchat.client.isLoggedIn) return null
+
+		val content = chatField.content.trim().replace("\\n", "\n")
+		val channel = currentChannel ?: return null
+
+		return if (content.isNotEmpty()) {
+			val notif = notification("Sending...", 1)
+			launch {
+				runCatching {
+					channel.createMessage(content)
+				}.onFailure {
+					notification(it.userReadable(), 10)
+				}
+				if (currentChannel == channel) updateChatUi()?.join()
+				notif.cancel()
+			}
+		} else null
 	}
 
 	/** Executes an action when the close button is pressed. Overrires the previous listener. */
@@ -207,9 +281,13 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		closeListener = action
 	}
 
+	/**
+	 * Represents a notification shown in the top bar.
+	 */
 	data class Notification(
-		val content: String, 
-		@Volatile var shownUntil: Long
+		val content: String,
+		val lifetime: Long,
+		@Volatile var shownUntil: Long = System.currentTimeMillis() + lifetime
 	) {
 		fun cancel() {
 			shownUntil = 0
@@ -229,12 +307,17 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 			left()
 
 			// Top row: 3 labels: author tag + timeatamp
-			addLabel(message.author.username, ellipsis = "...").color(Style.foreground)
+			addLabel(message.author.username, ellipsis = "...").color(when {
+				message.author.id == Minchat.client.account?.id -> Style.green
+				message.author.isAdmin -> Style.pink // I just like pink~
+				else -> Style.purple
+			})
 			addLabel("#$discriminator").color(Style.comment)
 			addLabel({ formatTimestamp() }).color(Style.comment).padLeft(10f)
 			row()
 			// bottom row: message content
-			addLabel(message.content, wrap = true, align = Align.left).color(Style.foreground).colspan(3)
+			addLabel(message.content, wrap = true, align = Align.left)
+				.growX().color(Style.foreground).colspan(3)
 		}
 
 		protected fun formatTimestamp(): String {

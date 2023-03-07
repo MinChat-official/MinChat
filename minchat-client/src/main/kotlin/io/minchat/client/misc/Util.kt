@@ -20,6 +20,9 @@ fun Throwable.userReadable() = when {
 
 		"$prefix: $midfix. $postifx"
 	}
+	this is java.net.ConnectException -> {
+		"Could not connect to the server."
+	}
 	this is RuntimeException -> {
 		"Mod error: $message"
 	}
