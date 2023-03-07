@@ -179,11 +179,9 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 	fun reloadChannels(): Job {
 		val notif = notification("Loading channels...", 10)
 		return launch {
-			runCatching {
+			runSafe {
 				val channels = Minchat.client.getAllChannels()
 				runUi { setChannels(channels) }
-			}.onFailure {
-				notification(it.userReadable(), 5)
 			}
 			notif.cancel()
 		}
@@ -208,12 +206,9 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		val notif = notification("Loading messages...", 10)
 
 		return launch {
-			val messages = runCatching {
+			val messages = runSafe {
 				channel.getAllMessages(limit = 60).toList().reversed()
-			}.onFailure {
-				notif.cancel()
-				notification(it.userReadable(), 5)
-			}.getOrThrow()
+			}.onFailure { notif.cancel() }.getOrThrow()
 
 			notif.cancel()
 			// if the channel was changed, return
@@ -271,6 +266,14 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 	fun onClose(action: () -> Unit) {
 		closeListener = action
 	}
+
+	/** Executes [block] and sends a notification if an important exception is thrown. */
+	inline fun <R> runSafe(notificationTime: Long = 5, block: () -> R) =
+		runCatching {
+			block()
+		}.onFailure {
+			if (it.isImportant()) notification(it.userReadable(), notificationTime)
+		}
 
 	/**
 	 * Represents a notification shown in the top bar.

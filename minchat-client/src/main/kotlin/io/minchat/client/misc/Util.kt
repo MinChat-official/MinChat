@@ -28,3 +28,8 @@ fun Throwable.userReadable() = when {
 	}
 	else -> "Unknown error: $this. Please, report to the developer."
 }
+
+fun Throwable.isImportant() = when (this) {
+	is kotlinx.coroutines.CancellationException -> false
+	else -> true
+}

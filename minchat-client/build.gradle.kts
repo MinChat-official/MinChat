@@ -14,7 +14,7 @@ dependencies {
 	implementation(project(":minchat-common"))
 	implementation(project(":minchat-rest"))
 
-	implementation("com.github.mnemotechnician", "mkui", "master-SNAPSHOT")
+	implementation("com.github.mnemotechnician", "mkui", "v1.2.1")
 
 	implementation("io.ktor", "ktor-client-core", ktorVersion)
 
