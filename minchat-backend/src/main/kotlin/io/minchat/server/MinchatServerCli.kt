@@ -102,21 +102,22 @@ open class MinchatLauncher : Runnable {
 		
 		// Create an environment either with or without ssl configured
 		val environment = applicationEngineEnvironment {
+			connector {
+				port = this@MinchatLauncher.port
+			}
+
 			if (!keystoreFile.exists() || keystoreFile.isDirectory()) {
 				Log.error { "SSL keystore file ($keystoreFile) could not be found." }
 			} else if (credentials == null) {
 				val path = (credentialsFileOption ?: dataDir.resolve(".credentials.txt")).absolutePath
 
-				Log.error { "SSL certificate file is either absent or malformed." }
+				Log.error { "SSL certificate file is either absent or malformed. HTTPS will be unavailable." }
 				Log.error { "Make sure the file ($path) exists and contains the following 3 lines:" }
 				Log.error { "key alias, key store password, private key password." }
 			} else {
 				val keyStore = KeyStore.getInstance("JKS")
 				keyStore.load(keystoreFile.inputStream(), credentials[1].toCharArray())
-				
-				connector {
-					port = this@MinchatLauncher.port
-				}
+
 				sslConnector(
 					keyStore = keyStore,
 					keyAlias = credentials[0],
@@ -129,7 +130,7 @@ open class MinchatLauncher : Runnable {
 			}
 		}
 
-		Log.info { "Launching a MinChat server on port $port." }
+		Log.info { "Launching a MinChat server. Ports: http=$port, https=$sslPort." }
 
 		val modules = listOf(
 			UserModule(),
