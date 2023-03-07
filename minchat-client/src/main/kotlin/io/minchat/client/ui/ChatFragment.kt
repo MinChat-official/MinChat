@@ -45,8 +45,6 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 	private var closeListener: (() -> Unit)? = null
 	
-	/** Used internally in [tick]. */
-	private var hasInvalidated = false
 	private var lastChatUpdateJob: Job? = null
 
 	override fun build() = createTable {
@@ -142,7 +140,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 					Minchat.client.isLoggedIn || currentChannel == null
 				}
 				updateChatbox()
-			}.grow().pad(4f).padLeft(10f).padRight(10f)
+			}.growX().pad(4f).padLeft(10f).padRight(10f)
 		}.grow()
 	}
 
@@ -162,13 +160,6 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 			}
 		} else {
 			notificationBar.color.a = 0f
-		}
-
-		// for reasons unknown to me, the chatbox gets laid out with a wrong height
-		// this is fixed once it's invalidated.
-		if (!hasInvalidated) {
-			chatField.invalidateHierarchy()
-			hasInvalidated = true
 		}
 	}
 
@@ -304,20 +295,20 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		init {
 			val discriminator = message.author.discriminator.toString().padStart(4, '0')
 			
-			left()
-
-			// Top row: 3 labels: author tag + timeatamp
-			addLabel(message.author.username, ellipsis = "...").color(when {
-				message.author.id == Minchat.client.account?.id -> Style.green
-				message.author.isAdmin -> Style.pink // I just like pink~
-				else -> Style.purple
-			})
-			addLabel("#$discriminator").color(Style.comment)
-			addLabel({ formatTimestamp() }).color(Style.comment).padLeft(10f)
-			row()
+			// Top row: author tag + timeatamp
+			addTable {
+				left()
+				addLabel(message.author.username, ellipsis = "...").color(when {
+					message.author.id == Minchat.client.account?.id -> Style.green
+					message.author.isAdmin -> Style.pink // I just like pink~
+					else -> Style.purple
+				})
+				addLabel("#$discriminator").color(Style.comment)
+				addLabel({ formatTimestamp() }).color(Style.comment).padLeft(20f)
+			}.growX().row()
 			// bottom row: message content
 			addLabel(message.content, wrap = true, align = Align.left)
-				.growX().color(Style.foreground).colspan(3)
+				.growX().color(Style.foreground)
 		}
 
 		protected fun formatTimestamp(): String {
