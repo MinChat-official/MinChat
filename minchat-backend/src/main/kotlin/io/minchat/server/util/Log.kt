@@ -71,7 +71,7 @@ object Log {
 		log(LogLevel.ERROR) { "${message()}: $throwable. Stacktrace saved to ${file.absolutePath}."  }
 	}
 
-	inline fun force(crossinline message: () -> String) = log(LogLevel.FORCE, message)
+	inline fun all(crossinline message: () -> String) = log(LogLevel.ALL, message)
 
 	/** Saves the stacktrace to the stacktrace directory. Returns the created file. */
 	fun printStackTrace(throwable: Throwable) = run {
@@ -101,7 +101,7 @@ object Log {
 		DEBUG(1, 0x00897B), 
 		INFO(2, 0x3F51B5), 
 		ERROR(3, 0xF50057), 
-		FORCE(4, 0x999999);
+		ALL(4, 0x999999);
 		
 		companion object {
 			fun of(level: Int) = values().find { it.level == level } ?: INFO

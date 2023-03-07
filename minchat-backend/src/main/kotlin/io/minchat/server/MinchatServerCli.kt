@@ -18,6 +18,7 @@ import io.minchat.server.databases.*
 import io.minchat.server.modules.*
 import io.minchat.server.util.*
 import java.io.File
+import java.security.KeyStore
 import kotlin.time.Duration.Companion.seconds
 import kotlin.random.Random
 import org.jetbrains.exposed.sql.*
@@ -46,14 +47,20 @@ open class MainCommand
 	mixinStandardHelpOptions = true
 )
 open class MinchatLauncher : Runnable {
-	@Option(names = ["--port", "-p"], description = ["Port to run on. Defaults to 8080."])
+	@Option(names = ["--port", "-p"], description = ["Port to run on. This port will accept HTTP connections. Defaults to 8080."])
 	var port = 8080
+
+	@Option(names = ["--https-port"], description = ["Port to use for the SSL connector. This port will accept HTTPS connections. Defaults to 8443."])
+	var sslPort = 8443
 
 	@Option(names = ["--exclude", "-e"], description = ["Prevent modules with the specified names from loading."])
 	var excludedModules = listOf<String>()
 
 	@Option(names = ["--data-location", "-d"], description = ["The directory in which MinChat will store its data. Defaults to ~/minchat."])
 	var dataDir = File(System.getProperty("user.home").orEmpty()).resolve("minchat")
+
+	@Option(names = ["--credentials"], description = ["The file containing SSL keystore credentials. Defaults to ~/minchat/.credentials.txt."])
+	var credentialsFileOption: File? = null
 
 	@Option(names = ["--log-level", "l"], description = ["The log level to use. Valis options are: lifecycle, debug, info, error"])
 	var logLevel = "lifecycle"
@@ -71,7 +78,7 @@ open class MinchatLauncher : Runnable {
 		Log.level = Log.LogLevel.valueOf(logLevel.uppercase())
 
 		Log.lifecycle { "Data directory: ${dataDir.absolutePath}" }
-		Log.lifecycle { "Log level: ${Log.level}" }
+		Log.info { "Log level: ${Log.level}" }
 		Log.info { "Connecting to a database." }
 
 		val dbFile = dataDir.also { it.mkdirs() }.resolve("data")
@@ -80,6 +87,46 @@ open class MinchatLauncher : Runnable {
 		transaction {
 			SchemaUtils.create(Channels, Messages, Users)
 			SchemaUtils.createMissingTablesAndColumns(Channels, Messages, Users)
+		}
+
+		Log.lifecycle { "Loading the SSL key store." }
+
+		// Array of [alias, password, privatePassword
+		val keystoreFile = dataDir.resolve("keystore.jks")
+		val credentials = (credentialsFileOption ?: dataDir.resolve(".credentials.txt"))
+			.takeIf { it.exists() && it.isFile() }
+			?.readText()
+			?.lines()
+			?.filter { it.isNotBlank() }
+			?.takeIf { it.size == 3 }
+		
+		// Create an environment either with or without ssl configured
+		val environment = applicationEngineEnvironment {
+			if (!keystoreFile.exists() || keystoreFile.isDirectory()) {
+				Log.error { "SSL keystore file ($keystoreFile) could not be found." }
+			} else if (credentials == null) {
+				val path = (credentialsFileOption ?: dataDir.resolve(".credentials.txt")).absolutePath
+
+				Log.error { "SSL certificate file is either absent or malformed." }
+				Log.error { "Make sure the file ($path) exists and contains the following 3 lines:" }
+				Log.error { "key alias, key store password, private key password." }
+			} else {
+				val keyStore = KeyStore.getInstance("JKS")
+				keyStore.load(keystoreFile.inputStream(), credentials[1].toCharArray())
+				
+				connector {
+					port = this@MinchatLauncher.port
+				}
+				sslConnector(
+					keyStore = keyStore,
+					keyAlias = credentials[0],
+					keyStorePassword = { credentials[1].toCharArray() },
+					privateKeyPassword = { credentials[2].toCharArray() }
+				) {
+					port = sslPort
+					keyStorePath = keystoreFile
+				}
+			}
 		}
 
 		Log.info { "Launching a MinChat server on port $port." }
@@ -91,49 +138,51 @@ open class MinchatLauncher : Runnable {
 			MessageModule()
 		).filter { it.name !in excludedModules }
 
-		val server = embeddedServer(Netty, port = port) {
-			install(ContentNegotiation) {
-				json()
-			}
-			install(StatusPages) {
-				exception<Throwable> { call, cause ->
-					val message = cause.message?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
+		val server = embeddedServer(Netty, environment).apply {
+			with(application) {
+				install(ContentNegotiation) {
+					json()
+				}
+				install(StatusPages) {
+					exception<Throwable> { call, cause ->
+						val message = cause.message?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
 
-					when (cause) {
-						is BadRequestException -> call.respondText(
-							text = "400$message", status = HttpStatusCode.BadRequest)
+						when (cause) {
+							is BadRequestException -> call.respondText(
+								text = "400$message", status = HttpStatusCode.BadRequest)
 
-						is IllegalInputException -> call.respondText(
-							text = "Illegal input (400)$message", status = HttpStatusCode.BadRequest)
+							is IllegalInputException -> call.respondText(
+								text = "Illegal input (400)$message", status = HttpStatusCode.BadRequest)
 
-						is AccessDeniedException -> call.respondText(
-							text = "Access denied (403)$message", status = HttpStatusCode.Forbidden)
+							is AccessDeniedException -> call.respondText(
+								text = "Access denied (403)$message", status = HttpStatusCode.Forbidden)
 
-						is EntityNotFoundException -> call.respondText(
-							text = "Entity not found (404)$message", status = HttpStatusCode.NotFound)
+							is EntityNotFoundException -> call.respondText(
+								text = "Entity not found (404)$message", status = HttpStatusCode.NotFound)
 
-						is TooManyRequestsException -> call.respondText(
-							text = "Too many requests (429)$message", status = HttpStatusCode.NotFound)
+							is TooManyRequestsException -> call.respondText(
+								text = "Too many requests (429)$message", status = HttpStatusCode.NotFound)
 
-						else -> {
-							Log.error(cause) { "Exception thrown when processing $call" }
-							call.respondText(text = "500: An abnormal exception was thrown while processing the request.",
-								status = HttpStatusCode.InternalServerError)
+							else -> {
+								Log.error(cause) { "Exception thrown when processing $call" }
+								call.respondText(text = "500: An abnormal exception was thrown while processing the request.",
+									status = HttpStatusCode.InternalServerError)
+							}
 						}
 					}
 				}
-			}
-			install(RateLimit) {
-				global {
-					requestKey { call ->
-						call.tokenOrNull().orEmpty()
+				install(RateLimit) {
+					global {
+						requestKey { call ->
+							call.tokenOrNull().orEmpty()
+						}
+						rateLimiter(limit = 10, refillPeriod = 5.seconds)
 					}
-					rateLimiter(limit = 10, refillPeriod = 5.seconds)
 				}
-			}
 
-			modules.forEach {
-				it.onLoad(this)
+				modules.forEach {
+					it.onLoad(this)
+				}
 			}
 		}
 
