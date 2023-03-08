@@ -34,6 +34,9 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 	val notificationStack = ConcurrentLinkedQueue<Notification>()
 
+	private val layoutMargin = 3f
+	private val layoutPad = 4f
+
 	lateinit var notificationBar: Table
 	lateinit var channelsBar: Table
 	lateinit var channelsContainer: Table
@@ -49,6 +52,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 	override fun build() = createTable {
 		update(::tick)
+		setClip(false)
 
 		// top bar
 		addStack {
@@ -56,18 +60,19 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 			// the bar itself
 			addTable(Style.surfaceBackground) {
 				setFillParent(true)
+				margin(layoutMargin)
 
 				textButton("[#${Style.red}]X") {
 					closeListener?.invoke() ?: 
 						Vars.ui.showInfo("No close listener.")
-				}.padRight(8f)
+				}.padRight(10f)
 
-				addLabel("MinChat").color(Style.purple)
+				addLabel("MinChat").color(Style.purple).scaleFont(1.3f)
 
 				// channel name
 				addLabel({
 					currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
-				}, ellipsis = "...").growX().minWidth(150f).color(Style.foreground)
+				}, ellipsis = "...").growX().color(Style.foreground)
 
 				// account button
 				textButton({
@@ -79,7 +84,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 				}
 			}
 			// Notification bar. A table is neccessary to render a background.
-			addTable(Styles.black5) {
+			addTable(Styles.black8) {
 				center()
 				notificationBar = this
 				touchable = Touchable.disabled
@@ -88,42 +93,45 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 				addLabel({ notificationStack.peek()?.content ?: "" }).with {
 					it.setColor(Style.orange)
 					it.setFontScale(1.2f)
-				}.pad(8f)
+				}.pad(12f)
 
 				visible { notificationStack.peek() != null }
 			}
-		}.growX().pad(4f).colspan(3).row()
+		}.growX().pad(layoutPad).colspan(3).row()
 
 		hsplitter(padBottom = 0f).colspan(3)
 
 		// left bar: channel list + notification labeo
 		addTable(Style.surfaceBackground) {
+			margin(layoutMargin)
 			channelsBar = this
 
-			addLabel("Channels", align = Align.left)
-				.color(Style.purple).growX().marginTop(5f).row()
+			addLabel("Channels").color(Style.purple).growX().row()
 
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
 				channelsContainer = this
 			}.grow().row()
-		}.width(150f).minHeight(300f).pad(4f).growY()
+		}.width(150f).minHeight(300f).pad(layoutPad).growY()
 
 		vsplitter()
 
 		// right bar: chat
 		addTable {
+			margin(layoutMargin)
+
 			chatBar = this
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
-				addLabel("this is a WIP chat ui")
 				setBackground(Style.surfaceBackground)
 				chatContainer = this
-			}.grow().pad(4f).row()
+			}.grow().pad(layoutPad).row()
 
 			// chatbox
 			addTable(Style.surfaceBackground) {
-				textField().with {
+				margin(layoutMargin)
+
+				textArea().with {
 					it.setStyle(TextField.TextFieldStyle(Styles.defaultField).apply {
 						fontColor = Style.foreground
 					})
@@ -137,10 +145,10 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 						Vars.ui.showInfo("You must login or register first.")
 					}
 				}.with { sendButton = it }.disabled {
-					Minchat.client.isLoggedIn || currentChannel == null
+					!Minchat.client.isLoggedIn || currentChannel == null
 				}
 				updateChatbox()
-			}.growX().pad(4f).padLeft(10f).padRight(10f)
+			}.growX().padTop(layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
 	}
 
@@ -183,8 +191,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 				val channels = Minchat.client.getAllChannels()
 				runUi { setChannels(channels) }
 			}
-			notif.cancel()
-		}
+		}.then { notif.cancel() }
 	}
 
 	fun setChannels(channels: List<MinchatChannel>) {
@@ -208,9 +215,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		return launch {
 			val messages = runSafe {
 				channel.getAllMessages(limit = 60).toList().reversed()
-			}.onFailure { notif.cancel() }.getOrThrow()
-
-			notif.cancel()
+			}.getOrThrow()
 			// if the channel was changed, return
 			if (channel != currentChannel) return@launch
 
@@ -231,7 +236,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 					))
 				}
 			}
-		}
+		}.then { notif.cancel() }
 	}
 
 	fun updateChatbox() {
@@ -251,14 +256,11 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		return if (content.isNotEmpty()) {
 			val notif = notification("Sending...", 1)
 			launch {
-				runCatching {
+				runSafe {
 					channel.createMessage(content)
-				}.onFailure {
-					notification(it.userReadable(), 10)
 				}
 				if (currentChannel == channel) updateChatUi()?.join()
-				notif.cancel()
-			}
+			}.then { notif.cancel() }
 		} else null
 	}
 
@@ -296,6 +298,8 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 		private var cachedLongTimestamp: String? = null
 
 		init {
+			margin(4f)
+
 			val discriminator = message.author.discriminator.toString().padStart(4, '0')
 			
 			// Top row: author tag + timeatamp
@@ -307,6 +311,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 					else -> Style.purple
 				})
 				addLabel("#$discriminator").color(Style.comment)
+				addSpace().growX()
 				addLabel({ formatTimestamp() }).color(Style.comment).padLeft(20f)
 			}.growX().row()
 			// bottom row: message content

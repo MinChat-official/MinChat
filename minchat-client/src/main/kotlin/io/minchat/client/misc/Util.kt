@@ -1,6 +1,7 @@
 package io.minchat.client.misc
 
 import io.ktor.client.plugins.*
+import kotlinx.coroutines.*
 
 fun Throwable.userReadable() = when {
 	this is ResponseException -> {
@@ -32,4 +33,9 @@ fun Throwable.userReadable() = when {
 fun Throwable.isImportant() = when (this) {
 	is kotlinx.coroutines.CancellationException -> false
 	else -> true
+}
+
+/** Same as [Job.invokeOnCompletion], but returns [this]. */
+fun Job.then(handler: CompletionHandler) = this.also {
+	invokeOnCompletion(handler)
 }
