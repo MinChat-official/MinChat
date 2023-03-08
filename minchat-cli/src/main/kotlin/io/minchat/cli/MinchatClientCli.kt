@@ -106,7 +106,6 @@ open class CliClientLauncher : Runnable {
 					null
 				}
 			}
-	
 
 			// this all is extremely dumb, I know.
 			// but I don't want to create a complex system for this.

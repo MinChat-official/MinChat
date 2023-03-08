@@ -14,6 +14,8 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
 import io.minchat.client.ui.*
 import io.minchat.rest.*
+import java.time.*
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.*
 
 private var minchatInstance: MinchatMod? = null
@@ -29,9 +31,19 @@ class MinchatMod : Mod(), CoroutineScope {
 	}
  	override val coroutineContext = rootJob + exceptionHandler + MinchatDispatcher
 
-	val client = MinchatRestClient("http://127.0.0.1:8080")
+	val timestampFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+	val timezone = ZoneId.systemDefault()
 
-	val chatFragment by lazy { ChatFragment(coroutineContext) }
+	// TODO: UNHARDCODE THIS!
+	// this must be overridable + must be fetched from github by default
+	//
+	// one way to achieve this is to make it a lateinit var,
+	// try to load the default url asynchronously at startup and, if failed, explicitly
+	// retry the next time the user opens the minchst dialog/window
+	// however, this shouldn't be done if it's overriden in the settings
+	var client = MinchatRestClient("https://vps76238.xxvps.net:8443")
+
+	val chatFragment by lazy { ChatFragment(this) }
 	val chatDialog by lazy { createDialog(title = "") {
 		it.setFillParent(true)
 		it.setBackground(Styles.none)

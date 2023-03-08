@@ -16,26 +16,20 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
 import io.minchat.client.*
 import io.minchat.client.misc.*
+import io.minchat.client.misc.MinchatStyle as Style
 import io.minchat.rest.*
 import io.minchat.rest.entity.*
-import java.time.*
-import java.time.format.DateTimeFormatter
+import java.time.Instant
 import java.util.concurrent.ConcurrentLinkedQueue
 import mindustry.Vars
-import mindustry.graphics.Pal
-import mindustry.gen.Tex
 import mindustry.ui.*
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) {
+class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentScope) {
 	@Volatile var currentChannel: MinchatChannel? = null
 
 	val notificationStack = ConcurrentLinkedQueue<Notification>()
-
-	private val layoutMargin = 3f
-	private val layoutPad = 4f
 
 	lateinit var notificationBar: Table
 	lateinit var channelsBar: Table
@@ -60,7 +54,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 			// the bar itself
 			addTable(Style.surfaceBackground) {
 				setFillParent(true)
-				margin(layoutMargin)
+				margin(Style.layoutMargin)
 
 				textButton("[#${Style.red}]X") {
 					closeListener?.invoke() ?: 
@@ -78,7 +72,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 				textButton({
 					Minchat.client.account?.user?.tag ?: "[Not logged in]"
 				}, ellipsis = "...") {
-					AccountDialog().show()
+					// AccountDialog().show()
 				}.minWidth(200f).padLeft(8f).with {
 					it.label.setColor(Style.foreground)
 				}
@@ -97,13 +91,13 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 				visible { notificationStack.peek() != null }
 			}
-		}.growX().pad(layoutPad).colspan(3).row()
+		}.growX().pad(Style.layoutPad).colspan(3).row()
 
 		hsplitter(padBottom = 0f).colspan(3)
 
 		// left bar: channel list + notification labeo
 		addTable(Style.surfaceBackground) {
-			margin(layoutMargin)
+			margin(Style.layoutMargin)
 			channelsBar = this
 
 			addLabel("Channels").color(Style.purple).growX().row()
@@ -112,24 +106,24 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 				it.isScrollingDisabledX = true
 				channelsContainer = this
 			}.grow().row()
-		}.width(150f).minHeight(300f).pad(layoutPad).growY()
+		}.width(150f).minHeight(300f).pad(Style.layoutPad).growY()
 
 		vsplitter()
 
 		// right bar: chat
 		addTable {
-			margin(layoutMargin)
+			margin(Style.layoutMargin)
 
 			chatBar = this
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
 				setBackground(Style.surfaceBackground)
 				chatContainer = this
-			}.grow().pad(layoutPad).row()
+			}.grow().pad(Style.layoutPad).row()
 
 			// chatbox
 			addTable(Style.surfaceBackground) {
-				margin(layoutMargin)
+				margin(Style.layoutMargin)
 
 				textArea().with {
 					it.setStyle(TextField.TextFieldStyle(Styles.defaultField).apply {
@@ -148,7 +142,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 					!Minchat.client.isLoggedIn || currentChannel == null
 				}
 				updateChatbox()
-			}.growX().padTop(layoutPad).padLeft(10f).padRight(10f)
+			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
 	}
 
@@ -293,7 +287,7 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 	/**
 	 * Displays a MinChat message.
 	 */
-	class MinchatMessageElement(val message: MinchatMessage) : Table(Styles.black5) {
+	inner class MinchatMessageElement(val message: MinchatMessage) : Table(Styles.black5) {
 		/** When a DateTimeFormatter has to be used to acquire a timestamp, the result is saved here. */
 		private var cachedLongTimestamp: String? = null
 
@@ -302,21 +296,34 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 
 			val discriminator = message.author.discriminator.toString().padStart(4, '0')
 			
-			// Top row: author tag + timeatamp
+			// Top row: author tag + timestamp
 			addTable {
 				left()
+				// username
 				addLabel(message.author.username, ellipsis = "...").color(when {
 					message.author.id == Minchat.client.account?.id -> Style.green
 					message.author.isAdmin -> Style.pink // I just like pink~
 					else -> Style.purple
-				})
-				addLabel("#$discriminator").color(Style.comment)
+				}).fillY().get().clicked(::showUserDialog)
+				// tag
+				addLabel("#$discriminator")
+					.fillY().color(Style.comment)
+					.get().clicked(::showUserDialog)
+				// filler + timestamp
 				addSpace().growX()
-				addLabel({ formatTimestamp() }).color(Style.comment).padLeft(20f)
-			}.growX().row()
+				addLabel({ formatTimestamp() })
+					.color(Style.comment).padLeft(20f)
+			}.growX().padBottom(5f).row()
 			// bottom row: message content
 			addLabel(message.content, wrap = true, align = Align.left)
 				.growX().color(Style.foreground)
+		}
+
+		fun showUserDialog() {
+			UserDialog(message.author).apply {
+				show()
+				update()
+			}
 		}
 
 		protected fun formatTimestamp(): String {
@@ -336,32 +343,10 @@ class ChatFragment(context: CoroutineContext) : Fragment<Table, Table>(context) 
 			cachedLongTimestamp?.let { return it }
 
 			val longTimestamp = Instant.ofEpochMilli(message.timestamp)
-				.atZone(timezone)
-				.let { timestampFormatter.format(it) }
+				.atZone(Minchat.timezone)
+				.let { Minchat.timestampFormatter.format(it) }
 
 			return longTimestamp.also { cachedLongTimestamp = it }
 		}
-
-		companion object {
-			val timestampFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
-			val timezone = ZoneId.systemDefault()
-		}
-	}
-
-	object Style {
-		// darcula theme specs
-		val background = Color.valueOf("282A36")
-		val foreground = Color.valueOf("F8F8F2")
-		val comment = Color.valueOf("6272A4")
-		val red = Color.valueOf("FF5555")
-		val orange = Color.valueOf("FFB86C")
-		val yellow = Color.valueOf("F1FA8C")
-		val green = Color.valueOf("50FA7B")
-		val purple = Color.valueOf("BD93F9")
-		val cyan = Color.valueOf("8BE9FD")
-		val pink = Color.valueOf("FF79C6") // uwu
-
-		val surfaceWhite = Tex.whiteui as TextureRegionDrawable
-		val surfaceBackground = surfaceWhite.tint(background)
 	}
 }

@@ -6,7 +6,7 @@ import arc.scene.ui.*
 import arc.scene.ui.layout.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.*
 
 /**
@@ -20,8 +20,9 @@ import kotlinx.coroutines.*
  * @param Type the type of this fragment, aka the element this fragment adds to the target group.
  */
 abstract class Fragment<Parent: Table, Type: Element>(
-	override val coroutineContext: CoroutineContext
+	parentScope: CoroutineScope
 ) : CoroutineScope {
+	override val coroutineContext = parentScope.newCoroutineContext(EmptyCoroutineContext)
 	/**
 	 * The current instance of this fragment.
 	 * Null if this fragment hasn't been applied anywhere.

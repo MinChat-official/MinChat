@@ -32,7 +32,10 @@ allprojects {
 			jvmTarget = "1.8"
 			freeCompilerArgs += arrayOf(
 				"-Xcontext-receivers",
-				"-opt-in=kotlin.ExperimentalStdlibApi"
+				"-opt-in=kotlin.ExperimentalStdlibApi",
+				"-opt-in=kotlin.experimental.ExperimentalTypeInference",
+				"-opt-in=kotlinx.coroutines.DelicateCoroutinesApi",
+				"-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
 			)
 		}
 	}
