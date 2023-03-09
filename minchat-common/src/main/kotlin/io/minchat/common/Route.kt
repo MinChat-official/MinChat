@@ -1,5 +1,6 @@
 package io.minchat.common
 
+import io.minchat.common.*
 import io.minchat.common.entity.*
 import io.minchat.common.request.*
 
@@ -10,6 +11,14 @@ import io.minchat.common.request.*
  * an authorization header (a user token).
  */
 object Route {
+	object Root : MinchatRoute(null) {
+		/**
+		 * GET.
+		 * Response: [BuildVersion].
+		 */
+		val version = to("version")
+	}
+
 	object Auth : MinchatRoute("auth") {
 		/** 
 		 * POST. 
@@ -117,10 +126,13 @@ object Route {
 		val delete = to("delete")
 	}
 
-	sealed class MinchatRoute(val name: String) {
-		protected fun to(subroute: String) = when {
-			subroute.isEmpty() -> "/api/$name"
-			else -> "/api/$name/$subroute"
+	sealed class MinchatRoute(val name: String?) {
+		protected fun to(subroute: String): String {
+			val prefix = name?.let { "/$it" }.orEmpty()
+			return when {
+				subroute.isEmpty() -> "/api$prefix"
+				else -> "/api$prefix/$subroute"
+			}
 		}
 	}
 }

@@ -29,6 +29,7 @@ class MinchatRestClient(
 	var account: MinchatAccount? = null
 	val isLoggedIn get() = account != null
 
+	val rootService = RootService(baseUrl, httpClient)
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
@@ -67,6 +68,10 @@ class MinchatRestClient(
 		}
 
 	// getX methods
+	/** Fetches the MinChat version of the server. */
+	suspend fun getServerVersion() =
+		rootService.getServerVersion()
+
 	/** Fetches the most recent data of the currently logged-in user and returns it. */
 	suspend fun getSelf() = run {
 		updateAccount()

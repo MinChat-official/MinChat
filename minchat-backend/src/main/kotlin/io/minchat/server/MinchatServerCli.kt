@@ -133,6 +133,7 @@ open class MinchatLauncher : Runnable {
 		Log.info { "Launching a MinChat server. Ports: http=$port, https=$sslPort." }
 
 		val modules = listOf(
+			RootModule(),
 			UserModule(),
 			AuthModule(),
 			ChannelModule(),

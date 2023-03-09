@@ -1,5 +1,6 @@
 package io.minchat.cli
 
+import io.minchat.common.*
 import io.minchat.rest.*
 import io.minchat.rest.entity.*
 import kotlin.math.*
@@ -58,6 +59,24 @@ open class CliClientLauncher : Runnable {
 		}
 
 		println("Connecting to $serverUrl.")
+		
+		// Check for compatibility
+		val serverVersion = rest.getServerVersion()
+		when {
+			!MINCHAT_VERSION.isCompatibleWith(serverVersion) -> {
+				println("${red}The server version is incompatible with the client version:")
+				println("$MINCHAT_VERSION vs $serverVersion")
+				exitProcess(1)
+			}
+			!MINCHAT_VERSION.isInterchangableWith(serverVersion) -> {
+				println("${red}Caution: the server version is not the same as the client version. Some issues may arise.")
+				println("$MINCHAT_VERSION vs $serverVersion.$reset")
+			}
+			else -> {
+				println("Server version: $serverVersion, client version: $MINCHAT_VERSION")
+			}
+		}
+
 		selectChannelUi()
 	}
 
