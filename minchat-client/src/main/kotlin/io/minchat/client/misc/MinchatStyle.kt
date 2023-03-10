@@ -2,10 +2,15 @@ package io.minchat.client.misc
 
 import arc.graphics.*
 import arc.scene.style.*
+import arc.scene.ui.*
+import arc.scene.ui.Label as MindustryLabel
+import arc.scene.ui.layout.*
 import mindustry.gen.Tex
+import mindustry.ui.Styles
 
 object MinchatStyle {
 	val layoutMargin = 3f
+	val buttonMargin = 10f
 	val layoutPad = 4f
 
 	// darcula theme specs
@@ -26,4 +31,40 @@ object MinchatStyle {
 	val surfaceDown = surfaceWhite.tint(background.cpy().mul(0.7f))
 	/** Surface that's hovered over. */
 	val surfaceOver = surfaceWhite.tint(background.cpy().mul(0.9f))
+	
+	object Label : MindustryLabel.LabelStyle(Styles.defaultLabel) {
+		init {
+			fontColor = foreground
+		}
+	}
+
+	object SurfaceLabel : MindustryLabel.LabelStyle(Styles.defaultLabel) {
+		init {
+			background = surfaceBackground
+			fontColor = foreground
+		}
+	}
+
+	object ActionButton : TextButton.TextButtonStyle(Styles.defaultt) {
+		init {
+			fontColor = foreground
+		
+			up = surfaceBackground
+			down = surfaceDown
+			over = surfaceOver
+
+			disabled = surfaceDown
+			disabledFontColor = foreground.cpy().mul(0.7f)
+			pressedOffsetY = -2f
+		}
+	}
+
+	object TextInput : TextField.TextFieldStyle(Styles.defaultField) {
+		init {
+			fontColor = foreground
+			background = surfaceBackground
+			focusedBackground = surfaceOver
+			invalidBackground = surfaceWhite.tint(MinchatStyle.background.cpy().mul(1f, 0.7f, 0.7f, 1f))
+		}
+	}
 }

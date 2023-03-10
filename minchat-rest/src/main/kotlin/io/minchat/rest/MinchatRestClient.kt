@@ -58,6 +58,12 @@ class MinchatRestClient(
 	/** Returns the currently logged-in account without updating it. */
 	fun self() = account().user.withClient(this)
 	
+	/** 
+	 * Returns the currently logged-in account without updating it, 
+	 * or null if this client is not loggec in.
+	 */
+	fun selfOrNull() = account?.user?.withClient(this)
+	
 	/**
 	 * Fetches the most recent User instance representing this user from the server
 	 * and updates [account].

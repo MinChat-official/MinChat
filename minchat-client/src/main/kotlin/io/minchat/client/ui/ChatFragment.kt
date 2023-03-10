@@ -36,6 +36,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var channelsContainer: Table
 
 	lateinit var chatBar: Table
+	lateinit var chatPane: ScrollPane
 	lateinit var chatContainer: Table
 	lateinit var chatField: TextField
 	lateinit var sendButton: TextButton
@@ -52,30 +53,31 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		addStack {
 			setClip(false)
 			// the bar itself
-			addTable(Style.surfaceBackground) {
+			addTable {
 				setFillParent(true)
-				margin(Style.layoutMargin)
 
-				textButton("[#${Style.red}]X") {
-					closeListener?.invoke() ?: 
-						Vars.ui.showInfo("No close listener.")
-				}.padRight(10f)
+				addTable(Style.surfaceBackground) {
+					margin(Style.layoutMargin)
 
-				addLabel("MinChat").color(Style.purple).scaleFont(1.3f)
+					textButton("[#${Style.red}]X") {
+						closeListener?.invoke() ?: 
+							Vars.ui.showInfo("No close listener.")
+					}.padRight(10f)
 
-				// channel name
-				addLabel({
-					currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
-				}, ellipsis = "...").growX().color(Style.foreground)
+					addLabel("MinChat", Style.Label).scaleFont(1.3f)
+
+					// channel name
+					addLabel({
+						currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
+					}, Style.Label, ellipsis = "...").growX()
+				}.growX()
 
 				// account button
 				textButton({
 					Minchat.client.account?.user?.tag ?: "[Not logged in]"
-				}, ellipsis = "...") {
-					// AccountDialog().show()
-				}.minWidth(200f).padLeft(8f).with {
-					it.label.setColor(Style.foreground)
-				}
+				}, Style.ActionButton, ellipsis = "...") {
+					AuthDialog().show()
+				}.fill().minWidth(200f).padLeft(8f)
 			}
 			// Notification bar. A table is neccessary to render a background.
 			addTable(Styles.black8) {
@@ -118,21 +120,21 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
 				setBackground(Style.surfaceBackground)
+
+				chatPane = it
 				chatContainer = this
 			}.grow().pad(Style.layoutPad).row()
 
 			// chatbox
-			addTable(Style.surfaceBackground) {
+			addTable {
 				margin(Style.layoutMargin)
 
 				textArea().with {
-					it.setStyle(TextField.TextFieldStyle(Styles.defaultField).apply {
-						fontColor = Style.foreground
-					})
+					it.setStyle(Style.TextInput)
 					chatField = it
 				}.growX()
 
-				textButton(">") {
+				textButton(">", Style.ActionButton) {
 					if (Minchat.client.isLoggedIn) {
 						sendCurrentMessage()
 					} else {
@@ -140,7 +142,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 				}.with { sendButton = it }.disabled {
 					!Minchat.client.isLoggedIn || currentChannel == null
-				}
+				}.padLeft(8f).fill().width(80f)
+
 				updateChatbox()
 			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
@@ -192,6 +195,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		channelsContainer.clearChildren()
 		
 		channels.forEach { channel ->
+			// TODO: custom style
 			channelsContainer.textButton("#${channel.name}", Styles.flatBordert, align = Align.left) {
 				currentChannel = channel
 				lastChatUpdateJob?.cancel()
@@ -218,16 +222,21 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 				chatContainer.clearChildren()
 
-				messages.forEach { message ->
+				messages.forEachIndexed { index, message ->
 					val element = MinchatMessageElement(message)
 					chatContainer.add(element)
 						.padBottom(10f).pad(4f).growX().row()
 
-					// play a move-in animation
+					// play a move-in animation, with newer messages appearing first
+					val prolongation = 0.01f * (messages.size - index)
 					element.addAction(sequence(
 						translateBy(chatContainer.width, 0f),
-						translateBy(-chatContainer.width, 0f, 0.5f, sineOut)
+						translateBy(-chatContainer.width, 0f, 0.5f + prolongation, sineOut)
 					))
+
+					// force the scroll pane to recslculate its dimensions and scroll to the bottom
+					chatPane.validate()
+					chatPane.setScrollYForce(chatPane.maxY)
 				}
 			}
 		}.then { notif.cancel() }
@@ -244,8 +253,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	fun sendCurrentMessage(): Job? {
 		if (!Minchat.client.isLoggedIn) return null
 
-		val content = chatField.content.trim().replace("\\n", "\n")
+		val content = chatField.content.trim()
 		val channel = currentChannel ?: return null
+		chatField.content = ""
 
 		return if (content.isNotEmpty()) {
 			val notif = notification("Sending...", 1)

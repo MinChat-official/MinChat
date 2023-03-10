@@ -29,11 +29,12 @@ abstract class UserDialog(
 
 	/** A single-row table. */
 	lateinit var headerTable: Table
+	lateinit var userLabel: Label
 	/** A table with 2 columns holding the stats of the user. */
 	lateinit var statsTable: Table
 	/** A table containing buttons related to the dialog. */
 	lateinit var actionsTable: Table
-	
+
 	init {
 		setFillParent(true)
 		closeOnBack()
@@ -44,66 +45,75 @@ abstract class UserDialog(
 		cont.addLabel({ status.orEmpty() })
 			.color(Style.red).row()
 
-		cont.addTable(Style.surfaceBackground) {
-			margin(Style.layoutMargin)
+		cont.addTable {
 			headerTable = this
-
-			addLabel({ user?.tag ?: "Invalid User" }).color(Style.green).scaleFont(1.5f)
-		}.fillX().pad(Style.layoutPad).row()
-
-		addLabel("Info", align = Align.left)
-			.color(Style.foreground).fillX().colspan(2)
+			
+			addTable(Style.surfaceBackground) {
+				margin(Style.buttonMargin)
+				addLabel({ user?.tag ?: "Invalid User" })
+					.with { userLabel = it }
+					.scaleFont(1.1f)
+			}.growX().pad(Style.layoutPad)
+		}.fillX().row()
 
 		cont.addTable {
 			statsTable = this
 
-			addStat("ID") { user?.id?.toString() ?: "N/A" }
-			addStat("Is admin") { user?.isAdmin ?: false }
-			addStat("Is banned") { user?.isBanned ?: false }
-			addStat("Messages sent") { user?.messageCount?.toString() ?: "N/A" }
-			addStat("Last active") {
-				user?.lastMessageTimestamp?.let(::formatTimestamp) ?: "N/A" 
-			}
-			addStat("Registered") { 
-				user?.creationTimestamp?.let(::formatTimestamp) ?: "N/A"
-			}
+			addStat("ID") { user?.id?.toString() }
+			addStat("Is admin") { user?.isAdmin }
+			addStat("Is banned") { user?.isBanned }
+			addStat("Messages sent") { user?.messageCount?.toString() }
+			addStat("Last active") { user?.lastMessageTimestamp?.let(::formatTimestamp) }
+			addStat("Registered") { user?.creationTimestamp?.let(::formatTimestamp) }
 		}.fillX().row()
 
 		cont.addTable {
 			actionsTable = this
-			
-			addAction("Close", ::hide)
+			createActions()
 		}.fillX().row()
 	}
 
+	/** Clears [actionsTable] and fills it using [addAction]. */
+	open fun createActions() {
+		actionsTable.clearChildren()
+
+		addAction("Close", ::hide)
+		// only add the "edit" and "delete" options if the user can be modified
+		if (Minchat.client.account?.user?.let { it.isAdmin || it.id == user?.id } ?: false) {
+			addAction("Edit") { mindustry.Vars.ui.showInfo("TODO") }
+			addAction("Delete") { mindustry.Vars.ui.showInfo("TODO") }
+		}
+	}
+
 	/** Adds a stat entry to the stats table. */
-	inline fun addStat(name: String, crossinline value: () -> String) {
+	inline fun addStat(name: String, crossinline value: () -> String?) {
 		statsTable.row()
 		statsTable.addTable(Style.surfaceBackground) {
-			margin(10f)
-			addLabel(name, StatLabelStyle, align = Align.left)
+			margin(Style.buttonMargin)
+			addLabel(name, Style.Label, align = Align.left)
 				.grow().color(Style.comment)
 		}.pad(Style.layoutPad).fill()
 
 		statsTable.addTable(Style.surfaceBackground) {
-			margin(10f)
-			addLabel(value, StatLabelStyle, align = Align.right)
+			margin(Style.buttonMargin)
+			addLabel({ value() ?: "N/A" }, Style.Label, align = Align.right)
 				.grow().color(Style.foreground)
-		}.pad(Style.layoutPad).fill()
+		}.pad(Style.layoutPad).growX().fillY()
 	}
 
 	/** Adds a stat entry to the stats table, using yes/no as the value. */
 	@JvmName("addStatYesNo")
 	@OverloadResolutionByLambdaReturnType
-	inline fun addStat(name: String, crossinline value: () -> Boolean): Unit =
-		addStat(name, { if (value()) "Yes" else "No" })
+	inline fun addStat(name: String, crossinline value: () -> Boolean?): Unit =
+		addStat(name) {
+			value()?.let { if (it) "Yes" else "No" }
+		}
 	
 	/** Adds an action button to the buttons table. */
-	inline fun addAction(text: String, crossinline action: () -> Unit) {
-		actionsTable.textButton(text, ActionButtonStyle) {
+	inline fun addAction(text: String, crossinline action: () -> Unit) =
+		actionsTable.textButton(text, Style.ActionButton) {
 			action()
-		}.growX().uniformX().margin(10f).pad(Style.layoutPad)
-	}
+		}.growX().uniformX().margin(Style.buttonMargin).pad(Style.layoutPad)
 
 	/**
 	 * Asynchronously fetches a new User object from the server
@@ -163,20 +173,6 @@ abstract class UserDialog(
 				status("An error has occurred: ${exception.userReadable()}")
 			}
 		}
-	
-	object StatLabelStyle : Label.LabelStyle(Styles.defaultLabel) {
-		init {
-			// background = Style.surfaceBackground
-		}
-	}
-
-	object ActionButtonStyle : TextButton.TextButtonStyle(Styles.defaultt) {
-		init {
-			up = Style.surfaceBackground
-			down = Style.surfaceDown
-			over = Style.surfaceOver
-		}
-	}
 }
 
 fun CoroutineScope.UserDialog(user: MinchatUser) = object : UserDialog(this) {
