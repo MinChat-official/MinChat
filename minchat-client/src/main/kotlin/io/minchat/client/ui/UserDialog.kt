@@ -42,8 +42,8 @@ abstract class UserDialog(
 		buttons.remove()
 		cont.cell()?.grow()
 
-		cont.addLabel({ status.orEmpty() })
-			.color(Style.red).row()
+		cont.addLabel({ status.orEmpty() }, wrap = true)
+			.color(Style.red).fillX().row()
 
 		cont.addTable {
 			headerTable = this
@@ -92,13 +92,13 @@ abstract class UserDialog(
 			margin(Style.buttonMargin)
 			addLabel(name, Style.Label, align = Align.left)
 				.grow().color(Style.comment)
-		}.pad(Style.layoutPad).fill()
+		}.pad(Style.layoutPad).fill().uniformX()
 
 		statsTable.addTable(Style.surfaceBackground) {
 			margin(Style.buttonMargin)
 			addLabel({ value() ?: "N/A" }, Style.Label, align = Align.right)
 				.grow().color(Style.foreground)
-		}.pad(Style.layoutPad).growX().fillY()
+		}.pad(Style.layoutPad).growX().uniformX().fillY()
 	}
 
 	/** Adds a stat entry to the stats table, using yes/no as the value. */

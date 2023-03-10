@@ -47,5 +47,5 @@ abstract class ModalDialog : Dialog() {
 	protected inline fun action(text: String, crossinline listener: () -> Unit) =
 		actionTable.textButton(text, Style.ActionButton) { listener() }
 			.uniformX().growX().fillY()
-			.pad(Style.layoutPad).margin(Style.layoutMargin)
+			.pad(Style.layoutPad).margin(Style.buttonMargin)
 }

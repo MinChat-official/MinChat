@@ -49,12 +49,16 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 	inner class LoginDialog : ModalDialog() {
 		init {
 			fields.addLabel("Enter your credentials:", Style.Label, align = Align.left)
-				.growX().pad(Style.layoutPad).margin(Style.layoutMargin)
+				.growX().pad(Style.layoutPad)
 				.row()
 
 			// todo: move Users.nameLength to User.Companion and unhardcode these limits
-			val usernameField = field("Username", false) { it.trim().length in 3..64 }
-			val passwordField = field("Password", true) { it.length in 8..40 }
+			val usernameField = field("Username", false) { 
+				it.trim().length in 3..64 
+			}
+			val passwordField = field("Password", true) {
+				it.length in 8..40
+			}
 
 			action("Login") {
 				val username = usernameField.content
@@ -78,7 +82,41 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 
 	inner class RegisterDialog : ModalDialog() {
 		init {
-			fields.addLabel("[red]TODO")
+			fields.addLabel("Create a new MinChat account:", Style.Label, align = Align.left)
+				.growX().pad(Style.layoutPad)
+				.row()
+			
+			// todo: move Users.nameLength to User.Companion and unhardcode these limits
+			val usernameField = field("Username", false) { 
+				it.isEmpty() || it.trim().length in 3..64 
+			}
+			val passwordField = field("Confirm password", true) {
+				it.isEmpty() || it.length in 8..40
+			}
+			val passwordConfirmField = field("Password", true) {
+				it.isEmpty() || it == passwordField.content
+			}
+
+			action("Register") {
+				val username = usernameField.content
+				val password = passwordField.content
+				hide()
+
+				val statusString = "Registering as $username..."
+				status(statusString)
+
+				launch {
+					runSafe {
+						Minchat.client.register(username, password)
+					}
+					// Update AuthDialog
+					status(null, override = statusString)
+					createActions()
+				}
+			}.disabled {
+				!usernameField.isValid || !passwordField.isValid
+					|| passwordField.content != passwordConfirmField.content
+			}
 		}
 	}
 }

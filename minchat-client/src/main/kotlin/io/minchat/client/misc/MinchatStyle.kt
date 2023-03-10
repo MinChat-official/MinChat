@@ -26,11 +26,13 @@ object MinchatStyle {
 	val pink = Color.valueOf("FF79C6") // uwu
 
 	val surfaceWhite = Tex.whiteui as TextureRegionDrawable
-	val surfaceBackground = surfaceWhite.tint(background)
+	val surfaceBackground = surfaceWhite.tintMul(background)
+	/** Surface inside a surface. */
+	val surfaceInner = surfaceBackground.tintMul(0.5f)
 	/** Pressed surface. */
-	val surfaceDown = surfaceWhite.tint(background.cpy().mul(0.7f))
+	val surfaceDown = surfaceBackground.tintMul(0.7f)
 	/** Surface that's hovered over. */
-	val surfaceOver = surfaceWhite.tint(background.cpy().mul(0.9f))
+	val surfaceOver = surfaceBackground.tintMul(0.9f)
 	
 	object Label : MindustryLabel.LabelStyle(Styles.defaultLabel) {
 		init {
@@ -59,12 +61,49 @@ object MinchatStyle {
 		}
 	}
 
+	object ChannelButton : TextButton.TextButtonStyle(Styles.defaultt) {
+		init {
+			fontColor = foreground
+		
+			up = surfaceBackground
+			down = surfaceDown
+			over = surfaceOver
+
+			disabled = surfaceDown
+			disabledFontColor = foreground.cpy().mul(0.7f)
+			pressedOffsetY = -2f
+		}
+	}
+
+
 	object TextInput : TextField.TextFieldStyle(Styles.defaultField) {
 		init {
 			fontColor = foreground
 			background = surfaceBackground
 			focusedBackground = surfaceOver
-			invalidBackground = surfaceWhite.tint(MinchatStyle.background.cpy().mul(1f, 0.7f, 0.7f, 1f))
+			invalidBackground = surfaceBackground.tintMul(0.9f, 0.88f, 0.88f)
 		}
 	}
 }
+
+private val tintProperty = TextureRegionDrawable::class.java.getDeclaredField("tint").also {
+	it.isAccessible = true
+}
+
+/** 
+ * Copies this drawable and tints it, multiplying its "tint" property by the specified color.
+ */
+fun TextureRegionDrawable.tintMul(r: Float, g: Float = r, b: Float = r, a: Float = 1f) = run {
+	val old = tintProperty.get(this) as Color
+
+	object : TextureRegionDrawable(region) {
+		init {
+			tint = old.cpy().mul(r, g, b, a)
+		}
+	}
+}
+/** 
+ * Copies this drawable and tints it, multiplying its "tint" property by the specified color.
+ */
+fun TextureRegionDrawable.tintMul(color: Color) =
+	tintMul(color.r, color.g, color.b, color.a)

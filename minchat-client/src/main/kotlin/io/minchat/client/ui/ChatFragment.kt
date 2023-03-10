@@ -56,28 +56,32 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			addTable {
 				setFillParent(true)
 
+				textButton("[#${Style.red}][X]", Style.ActionButton) {
+					closeListener?.invoke() ?:
+						Vars.ui.showInfo("No close listener.")
+				}.padRight(10f).margin(Style.buttonMargin).fill()
+
 				addTable(Style.surfaceBackground) {
 					margin(Style.layoutMargin)
 
-					textButton("[#${Style.red}]X") {
-						closeListener?.invoke() ?: 
-							Vars.ui.showInfo("No close listener.")
-					}.padRight(10f)
-
-					addLabel("MinChat", Style.Label).scaleFont(1.3f)
-
+					addLabel("MinChat", Style.Label)
+						.color(Style.purple).scaleFont(1.3f)
 					// channel name
 					addLabel({
 						currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
 					}, Style.Label, ellipsis = "...").growX()
-				}.growX()
+				}.growX().fillY()
 
 				// account button
 				textButton({
 					Minchat.client.account?.user?.tag ?: "[Not logged in]"
 				}, Style.ActionButton, ellipsis = "...") {
-					AuthDialog().show()
-				}.fill().minWidth(200f).padLeft(8f)
+					AuthDialog().apply {
+						hidden(::updateChatUi)
+						show()
+						update()
+					}
+				}.minWidth(200f).padLeft(8f).margin(Style.buttonMargin)
 			}
 			// Notification bar. A table is neccessary to render a background.
 			addTable(Styles.black8) {
@@ -179,6 +183,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	override fun applied(cell: Cell<Table>) {
 		cell.grow()
 		reloadChannels()
+		updateChatUi()
 	}
 
 	fun reloadChannels(): Job {
@@ -297,7 +302,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	/**
 	 * Displays a MinChat message.
 	 */
-	inner class MinchatMessageElement(val message: MinchatMessage) : Table(Styles.black5) {
+	inner class MinchatMessageElement(val message: MinchatMessage) : Table(Style.surfaceInner) {
 		/** When a DateTimeFormatter has to be used to acquire a timestamp, the result is saved here. */
 		private var cachedLongTimestamp: String? = null
 
