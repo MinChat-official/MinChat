@@ -56,7 +56,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			addTable {
 				setFillParent(true)
 
-				textButton("[#${Style.red}][X]", Style.ActionButton) {
+				textButton("[#${Style.red}]X", Style.ActionButton) {
 					closeListener?.invoke() ?:
 						Vars.ui.showInfo("No close listener.")
 				}.padRight(10f).margin(Style.buttonMargin).fill()

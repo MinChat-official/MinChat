@@ -14,6 +14,7 @@ import io.minchat.client.misc.MinchatStyle as Style
 import io.minchat.rest.entity.*
 import java.time.Instant
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.*
 import mindustry.ui.Styles
 
@@ -80,8 +81,13 @@ abstract class UserDialog(
 		addAction("Close", ::hide)
 		// only add the "edit" and "delete" options if the user can be modified
 		if (Minchat.client.account?.user?.let { it.isAdmin || it.id == user?.id } ?: false) {
-			addAction("Edit") { mindustry.Vars.ui.showInfo("TODO") }
-			addAction("Delete") { mindustry.Vars.ui.showInfo("TODO") }
+			addAction("Edit") {
+				UserEditDialog().show()
+			}.disabled { user == null }
+
+			addAction("Delete") {
+				UserDeleteConfirmDialog().show()
+			}.disabled { user == null }
 		}
 	}
 
@@ -123,14 +129,10 @@ abstract class UserDialog(
 	 */
 	fun update() = run {
 		val id = user?.id ?: return@run
-		val newStatus = "Updating. Please wait..."
-		status(newStatus)
 		
-		launch {
+		launchWithStatus("Updating. Please wait...") {
 			runSafe {
 				user = Minchat.client.getUserOrNull(id)
-			}.onSuccess {
-				status(null, override = newStatus)
 			}
 		}
 	}
@@ -173,6 +175,69 @@ abstract class UserDialog(
 				status("An error has occurred: ${exception.userReadable()}")
 			}
 		}
+	
+	/** Executes [action] and sets a temporary status, then cancels the status. */
+	protected inline fun launchWithStatus(status: String, crossinline action: suspend () -> Unit) = run {
+		status(status)
+		launch {
+			action()
+		}.then {
+			status(null, override = status)
+		}
+	}
+	
+	inner class UserEditDialog : ModalDialog() {
+		val user = this@UserDialog.user!!
+
+		init {
+			fields.addLabel("Editing user ${user.tag}.", align = Align.left)
+				.fillX().row()
+
+			val usernameField = field("New username", false) {
+				it.length in 3..40
+			}.also {
+				it.content = user.username
+			}
+
+			action("Confirm") {
+				hide()
+				launchWithStatus("Editing user ${user.tag}...") {
+					runSafe {
+						// This will also update the minchat account
+						this@UserDialog.user = user.edit(
+							newUsername = usernameField.content
+						)
+					}
+				}
+			}.disabled { !usernameField.isValid }
+		}
+	}
+	
+	inner class UserDeleteConfirmDialog : ModalDialog() {
+		val user = this@UserDialog.user!!
+
+		init {
+			val confirmNumber = Random.nextInt(10_000, 100_000).toString()
+			fields.addLabel("""
+				Are you sure you want to delete this user account?
+				Type "$confirmNumber" to confirm your intention.
+			""".trimIndent(), wrap = true).fillX().row()
+
+			val confirmField = field("Type $confirmNumber", false) {
+				it == confirmNumber
+			}
+
+			action("Confirm") {
+				hide()
+				launchWithStatus("Deleting user ${user.tag}...") {
+					runSafe {
+						user.delete()
+						Minchat.client.logout()
+					}
+				}
+			}.disabled { !confirmField.isValid }
+		}
+	}
 }
 
 fun CoroutineScope.UserDialog(user: MinchatUser) = object : UserDialog(this) {

@@ -65,15 +65,11 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				val password = passwordField.content
 				hide()
 
-				val statusString = "Logging in as $username..."
-				status(statusString)
-				
-				launch {
+				launchWithStatus("Logging in as $username...") {
 					runSafe {
 						Minchat.client.login(username, password)
 					}
 					// Update AuthDialog
-					status(null, override = statusString)
 					createActions()
 				}
 			}.disabled { !usernameField.isValid || !passwordField.isValid }
@@ -88,13 +84,13 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 			
 			// todo: move Users.nameLength to User.Companion and unhardcode these limits
 			val usernameField = field("Username", false) { 
-				it.isEmpty() || it.trim().length in 3..64 
+				it.trim().length in 3..64 
 			}
 			val passwordField = field("Confirm password", true) {
-				it.isEmpty() || it.length in 8..40
+				it.length in 8..40
 			}
 			val passwordConfirmField = field("Password", true) {
-				it.isEmpty() || it == passwordField.content
+				it == passwordField.content
 			}
 
 			action("Register") {
@@ -102,15 +98,10 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				val password = passwordField.content
 				hide()
 
-				val statusString = "Registering as $username..."
-				status(statusString)
-
-				launch {
+				launchWithStatus("Registering as $username...") {
 					runSafe {
 						Minchat.client.register(username, password)
 					}
-					// Update AuthDialog
-					status(null, override = statusString)
 					createActions()
 				}
 			}.disabled {

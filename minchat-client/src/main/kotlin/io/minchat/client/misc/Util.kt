@@ -11,10 +11,10 @@ fun Throwable.userReadable() = when {
 			else -> "Unknown network error"
 		}
 		val midfix = when (this) {
-			is ServerResponseException -> {
-				val regex = "Text: \"(.*)\"".toRegex()
-				regex.find(message)!!.groupValues[1]
-			}
+			// is ServerResponseException -> {
+			// 	val regex = "Text: \"(.*)\"".toRegex()
+			// 	regex.find(message)!!.groupValues[1]
+			// }
 			else -> response.status.description
 		}
 		val postifx = "Received status code ${response.status.value}"
