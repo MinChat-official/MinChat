@@ -51,6 +51,11 @@ class MinchatRestClient(
 		account = userService.register(username, password)
 	}
 
+	/** Logs out of the current account. */
+	fun logout() {
+		account = null
+	}
+
 	/** Returns [account] or throws an exception if this client is not logged in. */
 	fun account(): MinchatAccount =
 		account ?: error("You must log in before doing tnis.")
