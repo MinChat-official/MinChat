@@ -29,8 +29,8 @@ class UserModule : MinchatServerModule() {
 				val data = call.receive<UserModifyRequest>()
 				val token = call.token()
 
-				data.newUsername?.requireLength(Users.nameLength) {
-					"Username length must be in the range of ${Users.nameLength} characters!" 
+				data.newUsername?.requireLength(User.nameLength) {
+					"Username length must be in the range of ${User.nameLength} characters!" 
 				}
 
 				newSuspendedTransaction {

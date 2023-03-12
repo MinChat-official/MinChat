@@ -11,4 +11,8 @@ data class Message(
 	val channel: Channel,
 
 	val timestamp: Long
-)
+) {
+	companion object {
+		val contentLength = 1..1024
+	}
+}

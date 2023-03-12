@@ -6,8 +6,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.dao.*
 
 object Messages : MinchatEntityTable<Message>() {
-	val contentLength = 1..1024
-	
 	val content = varchar("content", contentLength.endInclusive)
 	val author = reference("author", Users)
 	val channel = reference("channel", Channels)

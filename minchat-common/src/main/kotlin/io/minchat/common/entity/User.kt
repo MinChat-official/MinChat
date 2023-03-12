@@ -24,5 +24,7 @@ data class User(
 	companion object {
 		/** The minimum amount of milliseconds a normal user has to wait before sending another message. */
 		val messageRateLimit = 2500L
+		val nameLength = 3..64
+		val passwordLength = 8..40
 	}
 }

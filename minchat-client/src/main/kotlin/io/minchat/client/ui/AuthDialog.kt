@@ -52,12 +52,11 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 
-			// todo: move Users.nameLength to User.Companion and unhardcode these limits
 			val usernameField = field("Username", false) { 
-				it.trim().length in 3..64 
+				it.trim().length in User.nameLength
 			}
 			val passwordField = field("Password", true) {
-				it.length in 8..40
+				it.length in User.passwordLength
 			}
 
 			action("Login") {
@@ -82,12 +81,11 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 			
-			// todo: move Users.nameLength to User.Companion and unhardcode these limits
 			val usernameField = field("Username", false) { 
-				it.trim().length in 3..64 
+				it.trim().length in User.nameLength
 			}
 			val passwordField = field("Confirm password", true) {
-				it.length in 8..40
+				it.length in User.passwordLength
 			}
 			val passwordConfirmField = field("Password", true) {
 				it == passwordField.content

@@ -17,6 +17,7 @@ import com.github.mnemotechnician.mkui.extensions.groups.*
 import io.minchat.client.*
 import io.minchat.client.misc.*
 import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.common.entity.*
 import io.minchat.rest.*
 import io.minchat.rest.entity.*
 import java.time.Instant
@@ -134,8 +135,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				margin(Style.layoutMargin)
 
 				textArea().with {
-					it.setStyle(Style.TextInput)
 					chatField = it
+					it.setStyle(Style.TextInput)
 				}.growX()
 
 				textButton(">", Style.ActionButton) {
@@ -145,7 +146,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 						Vars.ui.showInfo("You must login or register first.")
 					}
 				}.with { sendButton = it }.disabled {
-					!Minchat.client.isLoggedIn || currentChannel == null
+					!Minchat.client.isLoggedIn || currentChannel == null ||
+						chatField.content.length !in Message.contentLength
 				}.padLeft(8f).fill().width(80f)
 
 				updateChatbox()

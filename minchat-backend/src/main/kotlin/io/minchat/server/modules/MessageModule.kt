@@ -28,8 +28,8 @@ class MessageModule : MinchatServerModule() {
 				val id = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<MessageModifyRequest>()
 
-				data.newContent.requireLength(Messages.contentLength) {
-					"Content length must be in range of ${Messages.contentLength}"
+				data.newContent.requireLength(Message.contentLength) {
+					"Content length must be in range of ${Message.contentLength}"
 				}
 
 				transaction {

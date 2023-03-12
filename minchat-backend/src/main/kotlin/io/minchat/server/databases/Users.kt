@@ -10,8 +10,6 @@ import org.jetbrains.exposed.dao.*
 import org.mindrot.jbcrypt.BCrypt
 
 object Users : MinchatEntityTable<User>() {
-	val nameLength = 3..64
-
 	val username = varchar("name", nameLength.endInclusive)
 	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
