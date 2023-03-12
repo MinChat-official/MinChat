@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  */
 val MINCHAT_VERSION = BuildVersion(
 	major = 0,
-	minor = 1,
+	minor = 2,
 	patch = 0
 )
 
@@ -50,4 +50,7 @@ data class BuildVersion(
 		minor != other.minor -> minor - other.minor
 		else -> patch - other.patch
 	}
+
+	override fun toString() =
+		"$major.$minor.$patch"
 }

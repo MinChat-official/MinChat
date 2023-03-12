@@ -39,7 +39,7 @@ object Route {
 		 * GET. 
 		 * Response: a [User] object.
 		 */
-		val fetch = to("")
+		val fetch = to()
 		/**
 		 * POST. Requires authorization.
 		 * Body: [UserModifyRequest].
@@ -58,7 +58,7 @@ object Route {
 		 * GET. 
 		 * Response: a [Message] object.
 		 */
-		val fetch = to("")
+		val fetch = to()
 		/** 
 		 * POST. Requires authorization.
 		 * Body: [MessageModifyRequest].
@@ -85,7 +85,7 @@ object Route {
 		 * GET. 
 		 * Response: a [Channel] object.
 		 */
-		val fetch = to("")
+		val fetch = to()
 		/** 
 		 * POST. Requires authorization.
 		 * Body: [MessageCreateRequest]. 
@@ -126,8 +126,15 @@ object Route {
 		val delete = to("delete")
 	}
 
+	object Chat : MinchatRoute("chat") {
+		/**
+		 * WebSocket.
+		 */
+		val websocket = to()
+	}
+
 	sealed class MinchatRoute(val name: String?) {
-		protected fun to(subroute: String): String {
+		protected fun to(subroute: String = ""): String {
 			val prefix = name?.let { "/$it" }.orEmpty()
 			return when {
 				subroute.isEmpty() -> "/api$prefix"

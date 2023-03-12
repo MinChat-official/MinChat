@@ -21,4 +21,9 @@ object Constants {
 	 * because this value is not a valid bcrypt hash.
 	 */
 	const val deletedAccountPasswordHash = "<?!>"
+
+	/** Websocket connection timeout. */
+	val connectionTimeout = 10000L
+	/** Websocket connection ping period. */
+	val connectionPingPeriod = 4000L
 }
