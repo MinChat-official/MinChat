@@ -5,18 +5,28 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
+import io.minchat.common.Constants
 import io.minchat.common.entity.*
 import io.minchat.rest.entity.*
 import io.minchat.rest.service.*
 import io.minchat.rest.ratelimit.*
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 
 class MinchatRestClient(
-	val baseUrl: String
-) {
+	val baseUrl: String,
+	dispatcher: CoroutineDispatcher = Dispatchers.Default
+) : CoroutineScope {
+	override val coroutineContext = SupervisorJob() + dispatcher
+
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
+		install(WebSockets) {
+			contentConverter = KotlinxWebsocketSerializationConverter(Json)
+		}
 		install(ClientRateLimit) {
 			limiter = GlobalBucketRateLimiter()
 			//retryOnRateLimit = true
@@ -33,6 +43,8 @@ class MinchatRestClient(
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
+
+	val gateway = Gateway(baseUrl, httpClient)
 
 	/** 
 	 * Attempts to log into the providen Minchat account.

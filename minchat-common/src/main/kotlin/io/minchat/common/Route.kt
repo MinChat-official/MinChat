@@ -2,6 +2,7 @@ package io.minchat.common
 
 import io.minchat.common.*
 import io.minchat.common.entity.*
+import io.minchat.common.event.*
 import io.minchat.common.request.*
 
 /** 
@@ -126,9 +127,11 @@ object Route {
 		val delete = to("delete")
 	}
 
-	object Chat : MinchatRoute("chat") {
+	object Gateway : MinchatRoute("chat") {
 		/**
 		 * WebSocket.
+		 * Client-to-server: none.
+		 * Server-to-client: [Event] objects.
 		 */
 		val websocket = to()
 	}

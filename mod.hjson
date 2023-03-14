@@ -5,7 +5,7 @@ WIP global mindustry chat
 displayName: "MinChat Official"
 author: "Mnemotechnician"
 minGameVersion: "137"
-version: "v0.0.0-prealpha"
+version: "v0.2.0"
 
 main: "io.minchat.client.MinchatMod"
 hidden: true

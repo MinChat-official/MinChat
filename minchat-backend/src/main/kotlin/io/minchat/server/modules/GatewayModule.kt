@@ -3,6 +3,7 @@ package io.minchat.server.modules
 import io.ktor.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.websocket.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -17,7 +18,7 @@ import java.util.concurrent.atomic.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 
-class ChatModule : MinchatServerModule() {
+class GatewayModule : MinchatServerModule() {
 	val connections = Collections.synchronizedSet<Connection>(LinkedHashSet())
 	/** Events to send to the clients. */
 	val pendingEvents = ConcurrentLinkedQueue<Event>()
@@ -33,7 +34,7 @@ class ChatModule : MinchatServerModule() {
 		}
 
 		routing {
-			webSocket(Route.Chat.websocket) {
+			webSocket(Route.Gateway.websocket) {
 				val connection = Connection(this).also(connections::add)
 
 				Log.info { "Incoming connection: $connection" }
