@@ -6,10 +6,10 @@ import kotlinx.serialization.*
 /**
  * A user has been modified or deleted.
  *
- * In the latter case, a placeholder user object is providen.
+ * In the latter case, a placeholder usee user object is providen.
  */
 @Serializable
 @SerialName("UserModify")
 data class UserModifyEvent(
-	val channel: Channel
+	val newUser: User
 ) : Event()
