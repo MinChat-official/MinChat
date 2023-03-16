@@ -1,31 +1,25 @@
 package io.minchat.client.ui
 
-import arc.Core
-import arc.graphics.*
-import arc.math.Interp.*
-import arc.scene.*
+import arc.math.Interp.sineOut
 import arc.scene.actions.Actions.*
-import arc.scene.event.*
+import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
-import arc.scene.style.*
-import arc.util.*
-import com.github.mnemotechnician.mkui.extensions.*
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
-import com.github.mnemotechnician.mkui.extensions.groups.*
-import io.minchat.client.*
+import com.github.mnemotechnician.mkui.extensions.runUi
+import io.minchat.client.Minchat
 import io.minchat.client.misc.*
-import io.minchat.client.misc.MinchatStyle as Style
-import io.minchat.common.entity.*
-import io.minchat.rest.*
+import io.minchat.common.entity.Message
 import io.minchat.rest.entity.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.toList
+import mindustry.Vars
+import mindustry.ui.Styles
 import java.time.Instant
 import java.util.concurrent.ConcurrentLinkedQueue
-import mindustry.Vars
-import mindustry.ui.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import io.minchat.client.misc.MinchatStyle as Style
 
 class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentScope) {
 	@Volatile var currentChannel: MinchatChannel? = null

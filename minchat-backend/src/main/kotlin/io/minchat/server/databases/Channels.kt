@@ -1,7 +1,7 @@
 package io.minchat.server.databases
 
-import io.minchat.common.entity.*
-import org.jetbrains.exposed.sql.*
+import io.minchat.common.entity.Channel
+import org.jetbrains.exposed.sql.ResultRow
 
 object Channels : MinchatEntityTable<Channel>() {
 	val name = varchar("name", Channel.nameLength.endInclusive)

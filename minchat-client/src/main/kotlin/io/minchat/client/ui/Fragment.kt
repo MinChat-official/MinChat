@@ -1,13 +1,12 @@
 package io.minchat.client.ui
 
-import arc.scene.Element
-import arc.scene.Group
+import arc.scene.*
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.*
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Represents a reusable UI fragment.

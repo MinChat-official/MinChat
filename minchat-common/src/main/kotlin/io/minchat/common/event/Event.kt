@@ -1,7 +1,6 @@
 package io.minchat.common.event
 
-import io.minchat.common.entity.*
-import kotlinx.serialization.*
+import kotlinx.serialization.Serializable
 
 /** A base class for all events. Only used for serialization purposes. */
 @Serializable

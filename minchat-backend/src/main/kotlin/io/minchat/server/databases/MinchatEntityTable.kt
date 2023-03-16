@@ -1,8 +1,8 @@
 package io.minchat.server.databases
 
 import io.minchat.server.util.notFound
+import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.dao.id.*
 
 abstract class MinchatEntityTable<T> : LongIdTable() {
 	/** Returns a raw entity roq with the specified id, or throws an exception if it doesn't exist. */

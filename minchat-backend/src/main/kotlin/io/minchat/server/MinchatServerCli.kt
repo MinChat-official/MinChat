@@ -1,32 +1,30 @@
 package io.minchat.server
 
-import kotlin.system.exitProcess
-import kotlinx.coroutines.*
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.minchat.common.*
+import io.minchat.common.Constants
 import io.minchat.server.databases.*
 import io.minchat.server.modules.*
 import io.minchat.server.util.*
-import java.io.File
-import java.security.KeyStore
-import kotlin.time.Duration.Companion.seconds
-import kotlin.random.Random
+import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import picocli.CommandLine
-import picocli.CommandLine.Command // these need to be imported one-by-one. otherwise kapt dies.
-import picocli.CommandLine.Option
 import org.mindrot.jbcrypt.BCrypt
+import picocli.CommandLine
+import picocli.CommandLine.*
+import java.io.File
+import java.security.KeyStore
+import kotlin.random.Random
+import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 fun main(vararg args: String) {
 	val exitCode = CommandLine(MainCommand()).execute(*args)

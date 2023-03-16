@@ -1,6 +1,6 @@
 package io.minchat.common.request
 
-import io.minchat.common.entity.*
+import io.minchat.common.entity.User
 import kotlinx.serialization.Serializable
 
 /** Request to log into an existing account. */

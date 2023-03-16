@@ -10,13 +10,12 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
 import io.minchat.client.*
 import io.minchat.client.misc.*
-import io.minchat.client.misc.MinchatStyle as Style
 import io.minchat.rest.entity.*
+import kotlinx.coroutines.*
 import java.time.Instant
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
-import kotlinx.coroutines.*
-import mindustry.ui.Styles
+import io.minchat.client.misc.MinchatStyle as Style
 
 /** A dialog showing the stats of a user. */
 abstract class UserDialog(

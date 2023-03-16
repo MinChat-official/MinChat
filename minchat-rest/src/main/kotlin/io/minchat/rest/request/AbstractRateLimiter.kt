@@ -1,7 +1,7 @@
 package io.minchat.rest.ratelimit
 
-import io.ktor.client.statement.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 
 /**
  * Limits client requests.

@@ -1,8 +1,8 @@
 package io.minchat.rest.entity
 
-import io.minchat.common.entity.*
+import io.minchat.common.entity.Channel
 import io.minchat.rest.MinchatRestClient
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.flow
 
 class MinchatChannel(
 	val data: Channel,

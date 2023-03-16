@@ -1,8 +1,6 @@
 package io.minchat.rest.ratelimit
 
 import io.ktor.client.plugins.api.*
-import io.ktor.client.statement.*
-import io.ktor.client.request.*
 
 val ClientRateLimit = createClientPlugin("ClientRateLimit", ::ClientRateLimitConfiguration) {
 	val limiter = pluginConfig.limiter ?: GlobalBucketRateLimiter()

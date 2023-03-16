@@ -1,13 +1,10 @@
 package io.minchat.client.ui
 
-import arc.scene.*
-import arc.scene.style.*
 import arc.scene.ui.*
-import arc.scene.ui.layout.*
-import arc.util.*
+import arc.scene.ui.layout.Table
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import com.github.mnemotechnician.mkui.extensions.elements.*
-import com.github.mnemotechnician.mkui.extensions.groups.*
+import com.github.mnemotechnician.mkui.extensions.elements.hint
 import io.minchat.client.misc.MinchatStyle as Style
 
 /**

@@ -1,13 +1,12 @@
 package io.minchat.server.databases
 
-import io.minchat.common.entity.*
+import io.minchat.common.entity.User
 import io.minchat.server.util.notFound
+import org.jetbrains.exposed.sql.*
+import org.mindrot.jbcrypt.BCrypt
 import java.math.BigInteger
 import java.security.MessageDigest
-import kotlin.math.*
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.dao.*
-import org.mindrot.jbcrypt.BCrypt
+import kotlin.math.abs
 
 object Users : MinchatEntityTable<User>() {
 	val username = varchar("name", User.nameLength.endInclusive)

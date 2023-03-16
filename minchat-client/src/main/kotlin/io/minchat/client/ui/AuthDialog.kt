@@ -1,19 +1,13 @@
 package io.minchat.client.ui
 
-import arc.scene.*
-import arc.scene.style.*
-import arc.scene.ui.*
-import arc.scene.ui.layout.*
-import arc.util.*
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import com.github.mnemotechnician.mkui.extensions.elements.*
-import com.github.mnemotechnician.mkui.extensions.groups.*
-import io.minchat.client.*
-import io.minchat.client.misc.*
+import com.github.mnemotechnician.mkui.extensions.elements.content
+import io.minchat.client.Minchat
+import io.minchat.common.entity.User
+import io.minchat.rest.entity.MinchatUser
+import kotlinx.coroutines.CoroutineScope
 import io.minchat.client.misc.MinchatStyle as Style
-import io.minchat.common.entity.*
-import io.minchat.rest.entity.*
-import kotlinx.coroutines.*
 
 /**
  * A dialog allowing the user to manage their MinChat account.

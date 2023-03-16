@@ -1,8 +1,6 @@
 package io.minchat.common
 
-import io.minchat.common.*
-import io.minchat.common.entity.*
-import io.minchat.common.event.*
+import io.minchat.common.event.Event
 import io.minchat.common.request.*
 
 /** 

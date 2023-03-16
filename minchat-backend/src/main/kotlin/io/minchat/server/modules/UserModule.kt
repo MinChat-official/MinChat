@@ -1,20 +1,20 @@
 package io.minchat.server.modules
 
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.*
 import io.minchat.common.Route
-import io.minchat.common.entity.*
-import io.minchat.common.event.*
+import io.minchat.common.entity.User
+import io.minchat.common.event.UserModifyEvent
 import io.minchat.common.request.*
 import io.minchat.server.databases.Users
 import io.minchat.server.util.*
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.experimental.*
 
 class UserModule : MinchatServerModule() {
 	override fun Application.onLoad() {

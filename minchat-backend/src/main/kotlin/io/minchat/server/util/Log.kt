@@ -1,9 +1,9 @@
 package io.minchat.server.util
 
-import java.io.*
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.*
 import kotlinx.datetime.*
+import java.io.*
+import java.time.format.DateTimeFormatter
 
 /** A logger class inherited from the flarogus discord bot project. */
 @SuppressWarnings("NOTHING_TO_INLINE")

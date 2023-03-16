@@ -3,9 +3,9 @@ package io.minchat.server
 import io.ktor.server.engine.*
 import io.minchat.common.event.Event
 import io.minchat.server.modules.*
-import io.minchat.server.util.*
-import java.io.File
+import io.minchat.server.util.Log
 import kotlinx.coroutines.*
+import java.io.File
 
 class ServerContext(
 	val engine: ApplicationEngine,

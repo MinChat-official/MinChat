@@ -1,12 +1,11 @@
 package io.minchat.client.misc
 
-import arc.graphics.*
-import arc.scene.style.*
+import arc.graphics.Color
+import arc.scene.style.TextureRegionDrawable
 import arc.scene.ui.*
-import arc.scene.ui.Label as MindustryLabel
-import arc.scene.ui.layout.*
 import mindustry.gen.Tex
 import mindustry.ui.Styles
+import arc.scene.ui.Label as MindustryLabel
 
 object MinchatStyle {
 	val layoutMargin = 3f

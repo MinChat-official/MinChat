@@ -1,9 +1,9 @@
 package io.minchat.rest.ratelimit
 
-import io.ktor.client.statement.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.delay
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.*
 
 /**
  * Limits requests per-host using the bucket system.

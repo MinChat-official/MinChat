@@ -1,9 +1,7 @@
 package io.minchat.server.databases
 
 import io.minchat.common.entity.*
-import io.minchat.server.util.*
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.dao.*
 
 object Messages : MinchatEntityTable<Message>() {
 	val content = varchar("content", Message.contentLength.endInclusive)
