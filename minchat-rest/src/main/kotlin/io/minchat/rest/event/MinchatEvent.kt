@@ -1,13 +1,13 @@
 package io.minchat.rest.event
 
-import io.minchat.common.event.*
-import io.minchat.rest.*
+import io.minchat.common.event.Event
+import io.minchat.rest.MinchatRestClient
 
 /** A base class for all REST-level events. */
-class MinchatEvent<T : Event>(
+abstract class MinchatEvent<T : Event>(
 	val data: Event,
 	val client: MinchatRestClient
 ) {
 	override fun toString() =
-		"${this.class.simpleName}(data=$data)"
+		"${this::class.simpleName}(data=$data)"
 }

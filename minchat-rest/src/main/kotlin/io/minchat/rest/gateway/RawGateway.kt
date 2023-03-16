@@ -1,27 +1,27 @@
 package io.minchat.rest.gateway
 
-import io.ktor.http.*
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.minchat.common.*
-import io.minchat.common.entity.*
-import io.minchat.common.event.*
-import kotlin.coroutines.EmptyCoroutineContext
+import io.ktor.http.*
+import io.minchat.common.Route
+import io.minchat.common.event.Event
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import java.net.URL
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A low-level MinChat gateway client that receives raw
  * [Event] objects from the server and emits them into 
  * [RawGateway.events].
+ *
+ * @param useTsl Whether to use the `wss` protocol instead of `ws`.
+ *     By default, `wss` is used if [baseUrl] uses `https`, and `ws` is used in all other cases.
  */
 class RawGateway(
-	val host: String,
-	val port: Int?,
-	val client: HttpClient
+	val baseUrl: String,
+	val client: HttpClient,
+	val useTsl: Boolean = baseUrl.startsWith("https")
 ) : CoroutineScope {
 	override val coroutineContext = client.newCoroutineContext(EmptyCoroutineContext)
 
@@ -47,7 +47,7 @@ class RawGateway(
 	/**
 	 * Invokes [connect] if [isConnected] is false. Does nothing otherwise.
 	 */
-	suspend fun connectIfNeccessary() {
+	suspend fun connectIfNecessary() {
 		if (!isConnected) connect()
 	}
 	
@@ -68,21 +68,20 @@ class RawGateway(
 			while (true) {
 				if (!isConnected) {
 					openSession()
-
 					if (!isConnected) {
 						delay(10L)
 						continue
 					}
 				}
-				val session = session!!
+				val thisSession = session!!
 
 				try {
-					val event = session.receiveDeserialized<Event>()
-					eventsMutable.connect()
+					val event = thisSession.receiveDeserialized<Event>()
+					eventsMutable.emit(event)
 				} catch (e: Exception) {
 					// terminate this session
-					session?.cancel()
-					session = null
+					thisSession.cancel()
+					if (session == thisSession) session = null
 				}
 			}
 		}
@@ -90,17 +89,22 @@ class RawGateway(
 
 	private suspend fun openSession() {
 		session?.cancel()
-		session = client.webSocketSession(
-			host = host,
-			port = port,
-			path = Route.Gateway.websocket
-		)
+		session = client.webSocketSession {
+			val location = URL(baseUrl)
+
+			url.set(
+				if (useTsl) "wss" else "ws",
+				location.host,
+				location.port,
+				location.path.removeSuffix("/") + Route.Gateway.websocket
+			)
+		}
 	}
 
 	/** 
 	* Closes the already existing chat connection.
 	*/
-	suspend fun disconnect() {
+	fun disconnect() {
 		session?.cancel()
 		session = null
 		sessionReader?.cancel()

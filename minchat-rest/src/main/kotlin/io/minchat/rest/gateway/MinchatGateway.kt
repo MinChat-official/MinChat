@@ -1,6 +1,12 @@
 package io.minchat.rest.gateway
 
-typealias EventTransformer<I : Event, O : MinchatRestClient> = (I, MinchatRestClient) -> O
+import io.minchat.common.event.*
+import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.event.MinchatEvent
+import io.minchat.rest.gateway.MinchatGateway.EventTransformer
+import kotlinx.coroutines.flow.map
+import java.lang.reflect.Constructor
+import kotlin.reflect.KClass
 
 /**
  * A high-level class wrapping a low-level [RawGateway].
@@ -14,7 +20,7 @@ class MinchatGateway(
 	/**
 	 * The underlying raw MinChat gateway.
 	 */
-	val rawGateway = RawGateway(client.host, client.host, client.httpClient)
+	val rawGateway = RawGateway(client.baseUrl, client.httpClient)
 
 	val isConnected by rawGateway::isConnected
 	
@@ -24,24 +30,26 @@ class MinchatGateway(
 	 */
 	val events =
 		rawGateway.events.map {
-			val transformation = transformationForClass(it
+			val transformation = transformationForClass<Event>(it::class)
+				?: error("No transformation found for event class ${it::class}")
+			transformation.transform(it, client)
 		}
 	
-	/** See [RawGateway.connectIfNeccessary]. */
-	suspend fun connectIfNeccessary() =
-		rawGateway.connectIfNeccessary()
+	/** See [RawGateway.connectIfNecessary]. */
+	suspend fun connectIfNecessary() =
+		rawGateway.connectIfNecessary()
 
 	/** See [RawGateway.connect]. */
 	suspend fun connect() =
 		rawGateway.connect()
 
 	/** See [RawGateway.disconnect]. */
-	suspend fun disconnect() =
+	fun disconnect() =
 		rawGateway.disconnect()
 	
 	companion object {
 		/** A map of all transformations a MinchatGateway can apply to the received events. */
-		val transformations = mutableMapOf() as MutableMap<EventTransformer<*, *>>
+		val transformations = mutableMapOf<KClass<out Event>, EventTransformer<*, *>>()
 
 		init {
 			// All these classes share a common constructor and name pattern, so we can use reflection allocate them
@@ -56,25 +64,32 @@ class MinchatGateway(
 				ChannelDeleteEvent::class
 			)
 
+			@Suppress("UNCHECKED_CAST")
 			classes.forEach {
-				val transformedName = "Minchat" + it.simpleName.removeSuffix("Event")
-				val classConstructor = Class.forName("io.minchat.rest.event$transformedName")
-					.getDeclaredConstructor(Event::class.java, MinchatRestClient::class.java)
+				val simpleName = it.simpleName?.removeSuffix("Event") ?: return@forEach
+				val classConstructor = Class.forName("io.minchat.rest.event.Minchat$simpleName")
+					.getDeclaredConstructor(it.java, MinchatRestClient::class.java)
+					.let { it as Constructor<MinchatEvent<Event>> }
 
-				transformations[it] = { data, client ->
+				transformations[it] = EventTransformer<Event, _> { data, client ->
 					classConstructor.newInstance(data, client)
 				}
 			}
 		}
 
 		/** Add an entry to [transformations]. */
-		inline fun <reified I : Event, O : MinchatEvent> addTransformation(
-			transformer: EventTransformer<I, O>
+		inline fun <reified Input : Event, Output : MinchatEvent<Input>> addTransformation(
+			transformer: EventTransformer<Input, Output>
 		) {
-			transformations[I::class] = transformer
+			transformations[Input::class] = transformer
 		}
 
-		fun transformationForClass(eventClass: KClass<Event>) =
-			transformations.getOrDefault(eventClass, null)
+		@Suppress("UNCHECKED_CAST")
+		fun <T : Event> transformationForClass(eventClass: KClass<out Event>) =
+			transformations.getOrDefault(eventClass, null) as EventTransformer<T, MinchatEvent<T>>?
+	}
+
+	fun interface EventTransformer<Input : Event, Output : MinchatEvent<Input>> {
+		fun transform(event: Input, client: MinchatRestClient): Output
 	}
 }

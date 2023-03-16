@@ -1,11 +1,10 @@
 package io.minchat.rest.service
 
-import io.ktor.http.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.minchat.common.*
+import io.ktor.http.*
+import io.minchat.common.Route
 import io.minchat.common.entity.*
 import io.minchat.common.request.*
 

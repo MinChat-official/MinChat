@@ -1,18 +1,14 @@
 package io.minchat.rest
 
-import io.ktor.http.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
-import io.minchat.common.Constants
-import io.minchat.common.entity.*
-import io.minchat.rest.entity.*
-import io.minchat.rest.service.*
+import io.minchat.rest.entity.withClient
 import io.minchat.rest.ratelimit.*
+import io.minchat.rest.service.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 
@@ -21,10 +17,6 @@ class MinchatRestClient(
 	dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CoroutineScope {
 	override val coroutineContext = SupervisorJob() + dispatcher
-
-	internal val httpProtocol: String
-	internal val host: String
-	internal val port: Int?
 
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
@@ -47,18 +39,6 @@ class MinchatRestClient(
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
-
-	init {
-		httpProtocol = baseUrl.split("://").firstOrNull()
-			?: error("The base url must begin with a protocol (e.g. http or https).")
-
-		val hostPort = baseUrl.substringAfter("://").substringBefore("/").split(":")
-		require(hostPort.isNotEmpty()) {
-			"The base url must contain a host (e.g. 127.0.0.1 or example.com)"
-		}
-		host = hostPort.first()
-		port = hostPort.getOrNull(1)?.toInt()
-	}
 
 	/** 
 	 * Attempts to log into the providen Minchat account.

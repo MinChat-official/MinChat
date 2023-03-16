@@ -1,25 +1,24 @@
 package io.minchat.client
 
-import arc.*
-import arc.util.*
-import arc.scene.ui.*
-import mindustry.Vars
-import mindustry.mod.*
-import mindustry.game.*
-import mindustry.gen.*
-import mindustry.ui.*
-import mindustry.ui.dialogs.*
-import com.github.mnemotechnician.mkui.extensions.*
+import arc.Events
+import arc.scene.ui.Label
+import arc.util.Log
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import com.github.mnemotechnician.mkui.extensions.elements.*
-import com.github.mnemotechnician.mkui.extensions.groups.*
+import com.github.mnemotechnician.mkui.extensions.elements.cell
+import com.github.mnemotechnician.mkui.extensions.groups.child
+import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.misc.*
-import io.minchat.client.ui.*
-import io.minchat.common.*
-import io.minchat.rest.*
-import java.time.*
-import java.time.format.DateTimeFormatter
+import io.minchat.client.ui.ChatFragment
+import io.minchat.common.MINCHAT_VERSION
+import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.*
+import mindustry.Vars
+import mindustry.game.EventType
+import mindustry.gen.Icon
+import mindustry.mod.Mod
+import mindustry.ui.Styles
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private var minchatInstance: MinchatMod? = null
 /** The only instance of this mod. */

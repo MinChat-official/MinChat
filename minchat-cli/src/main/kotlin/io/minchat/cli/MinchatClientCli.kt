@@ -1,17 +1,14 @@
 package io.minchat.cli
 
-import io.minchat.common.*
+import io.minchat.common.MINCHAT_VERSION
 import io.minchat.rest.*
-import io.minchat.rest.entity.*
-import kotlin.math.*
-import kotlin.system.exitProcess
+import io.minchat.rest.entity.MinchatChannel
+import io.minchat.rest.gateway.MinchatGateway
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.toList
 import picocli.CommandLine
-import picocli.CommandLine.Command // these need to be imported one-by-one. otherwise kapt dies.
-import picocli.CommandLine.Option
-import picocli.CommandLine.Parameters
+import picocli.CommandLine.*
+import kotlin.system.exitProcess
 
 fun main(vararg args: String) {
 	val exitCode = CommandLine(MainCommand()).execute(*args)
@@ -32,13 +29,14 @@ open class MainCommand
 	mixinStandardHelpOptions = true
 )
 open class CliClientLauncher : Runnable {
-	@Parameters(description = ["MinChat server url to conntect to."])
+	@Parameters(description = ["MinChat server url to connect to."], index = "0")
 	lateinit var serverUrl: String
 
 	@Option(names = ["--no-fix-http", "-n"], description = ["Do not add the missing 'http://' protocol to the url"])
 	var noFixHttp = false
 
 	val rest by lazy { MinchatRestClient(serverUrl) }
+	val gateway by lazy { MinchatGateway(rest) }
 	lateinit var channels: List<MinchatChannel>
 
 	/** A string to the color of the terminal output. */
@@ -77,24 +75,14 @@ open class CliClientLauncher : Runnable {
 				println("Server version: $serverVersion, client version: $MINCHAT_VERSION")
 			}
 		}
-		// TODO REMOVE
-		launch {
-			for (it in rest.gateway.events) {
-				println("\n\nreceived $it")
-			}
-		}
-		launch {
-			for (it in rest.gateway.events) {
-				println("received (2) $it\n\n")
-			}
-		}
-
 
 		selectChannelUi()
 	}
 
 	/** Launches the "select channel" terminal ui. Blocks until the user exits. */
 	suspend fun selectChannelUi() {
+		gateway.connectIfNecessary()
+
 		while (true) {
 			channels = rest.getAllChannels()
 
