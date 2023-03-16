@@ -127,7 +127,7 @@ object Route {
 		val delete = to("delete")
 	}
 
-	object Gateway : MinchatRoute("chat") {
+	object Gateway : MinchatRoute("gateway") {
 		/**
 		 * WebSocket.
 		 * Client-to-server: none.
