@@ -7,6 +7,7 @@ import kotlin.math.*
 import kotlin.system.exitProcess
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.*
 import picocli.CommandLine
 import picocli.CommandLine.Command // these need to be imported one-by-one. otherwise kapt dies.
 import picocli.CommandLine.Option
@@ -76,6 +77,18 @@ open class CliClientLauncher : Runnable {
 				println("Server version: $serverVersion, client version: $MINCHAT_VERSION")
 			}
 		}
+		// TODO REMOVE
+		launch {
+			for (it in rest.gateway.events) {
+				println("\n\nreceived $it")
+			}
+		}
+		launch {
+			for (it in rest.gateway.events) {
+				println("received (2) $it\n\n")
+			}
+		}
+
 
 		selectChannelUi()
 	}
@@ -94,9 +107,9 @@ open class CliClientLauncher : Runnable {
 			val namePad = channels.maxOfOrNull { it.name.length }?.coerceAtMost(20) ?: 0
 
 			channels.forEachIndexed { index, channel ->
-				val prefix = index.toString().padStart(4, ' ')
+				val prefix = (index + 1).toString().padStart(4, ' ')
 				print("$prefix. #${channel.name.padEnd(namePad, ' ')}")
-				println(" (${channel.id}) [${channel.description}]")
+				println(" (id ${channel.id}) [${channel.description}]")
 			}
 			println("""
 				$grey

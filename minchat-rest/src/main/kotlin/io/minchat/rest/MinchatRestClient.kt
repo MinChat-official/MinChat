@@ -22,6 +22,10 @@ class MinchatRestClient(
 ) : CoroutineScope {
 	override val coroutineContext = SupervisorJob() + dispatcher
 
+	internal val httpProtocol: String
+	internal val host: String
+	internal val port: Int?
+
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
 		install(WebSockets) {
@@ -44,7 +48,17 @@ class MinchatRestClient(
 	val channelService = ChannelService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
 
-	val gateway = Gateway(baseUrl, httpClient)
+	init {
+		httpProtocol = baseUrl.split("://").firstOrNull()
+			?: error("The base url must begin with a protocol (e.g. http or https).")
+
+		val hostPort = baseUrl.substringAfter("://").substringBefore("/").split(":")
+		require(hostPort.isNotEmpty()) {
+			"The base url must contain a host (e.g. 127.0.0.1 or example.com)"
+		}
+		host = hostPort.first()
+		port = hostPort.getOrNull(1)?.toInt()
+	}
 
 	/** 
 	 * Attempts to log into the providen Minchat account.
