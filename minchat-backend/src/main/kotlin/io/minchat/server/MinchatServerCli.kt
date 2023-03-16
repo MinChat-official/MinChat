@@ -69,11 +69,11 @@ open class MinchatLauncher : Runnable {
 		val context = launchServer()
 
 		Log.info { "MinChat server is running. Awaiting termination." }
-		context.server.stopServerOnCancellation().join()
+		context.engine.stopServerOnCancellation().join()
 		Log.info { "Good night." }
 	}
 
-	suspend fun launchServer(): Context {
+	suspend fun launchServer(): ServerContext {
 		Log.baseLogDir = dataDir
 		Log.level = Log.LogLevel.valueOf(logLevel.uppercase())
 
@@ -141,7 +141,7 @@ open class MinchatLauncher : Runnable {
 			GatewayModule()
 		).filter { it.name !in excludedModules }
 
-		val server = embeddedServer(Netty, environment).apply {
+		val engine = embeddedServer(Netty, environment).apply {
 			with(application) {
 				install(ContentNegotiation) {
 					json()
@@ -189,14 +189,14 @@ open class MinchatLauncher : Runnable {
 			}
 		}
 
-		val context = Context(
-			server = server,
+		val context = ServerContext(
+			engine = engine,
 			modules = modules,
 			dataDir = dataDir,
 			dbFile = dbFile
 		)
 
-		server.start(wait = false)
+		engine.start(wait = false)
 
 		modules.forEach { it.afterLoad(context) }
 

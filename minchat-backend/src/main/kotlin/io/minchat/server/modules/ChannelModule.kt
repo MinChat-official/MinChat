@@ -7,8 +7,9 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.*
 import io.minchat.common.Route
-import io.minchat.common.request.*
 import io.minchat.common.entity.*
+import io.minchat.common.event.*
+import io.minchat.common.request.*
 import io.minchat.server.databases.*
 import io.minchat.server.util.*
 import kotlin.system.measureTimeMillis
@@ -36,27 +37,26 @@ class ChannelModule : MinchatServerModule() {
 					val channel = Channels.getById(id)
 
 					lateinit var messages: List<Message>
-					measureTimeMillis { //todo remove after testing
-						// using innerJoin to improve performance
-						(Messages innerJoin Users).select {
-							not(Messages.isDeleted) and
-								(Messages.channel eq id) and
-								(Messages.timestamp greater fromTimestamp) and
-								(Messages.timestamp lessEq toTimestamp)
+					// TODO: this may be unoptimal.
+					// consider getting rid of innerJoin.
+					(Messages innerJoin Users).select {
+						not(Messages.isDeleted) and
+							(Messages.channel eq id) and
+							(Messages.timestamp greater fromTimestamp) and
+							(Messages.timestamp lessEq toTimestamp)
+					}
+						.orderBy(Messages.id to SortOrder.DESC)
+						.limit(20) // this will take the 20 last messages in a descending order
+						.toList()
+						.reversed() // this makes the order correct
+						.map {
+							Messages.createEntity(
+								row = it,
+								author = Users.createEntity(it),
+								channel = channel
+							)
 						}
-							.orderBy(Messages.id to SortOrder.DESC)
-							.limit(20) // this will take the 20 last messages in a descending order
-							.toList()
-							.reversed() // this makes the order correct
-							.map {
-								Messages.createEntity(
-									row = it,
-									author = Users.createEntity(it),
-									channel = channel
-								)
-							}
-							.let { messages = it }
-					}.let { Log.debug { "Message query took $it ms" } } 
+						.let { messages = it }
 
 					call.respond(messages)
 				}
@@ -91,6 +91,8 @@ class ChannelModule : MinchatServerModule() {
 					}
 
 					call.respond(message)
+					
+					server.sendEvent(MessageCreateEvent(message))
 				}
 			}
 
@@ -108,15 +110,17 @@ class ChannelModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					call.requireAdmin()
 
-					val channel = Channels.insert {
+					val channelRow = Channels.insert {
 						it[name] = data.name
 						it[description] = data.description
 					}.resultedValues!!.first()
 
-					call.respond(Channels.createEntity(channel))
-				}
+					val channel = Channels.createEntity(channelRow)
+					Log.info { "A new channel was created: #${channel.name}" }
 
-				Log.info { "A new channel was created: #${data.name}" }
+					call.respond(channel)
+					server.sendEvent(ChannelCreateEvent(channel))
+				}
 			}
 
 			post(Route.Channel.edit) {
@@ -142,10 +146,12 @@ class ChannelModule : MinchatServerModule() {
 						}
 					}.throwIfNotFound { "no such channel." }
 
-					call.respond(Channels.getById(id))
-				}
+					Log.info { "Channel $id was edited." }
 
-				Log.info { "Channel $id was edited." }
+					val newChannel = Channels.getById(id)
+					call.respond(newChannel)
+					server.sendEvent(ChannelModifyEvent(newChannel))
+				}
 			}
 
 			post(Route.Channel.delete) {
@@ -164,6 +170,8 @@ class ChannelModule : MinchatServerModule() {
 				call.response.statusOk()
 
 				Log.info { "Channel $channelId was deleted." }
+
+				server.sendEvent(ChannelDeleteEvent(channelId))
 			}
 
 			get(Route.Channel.all) {

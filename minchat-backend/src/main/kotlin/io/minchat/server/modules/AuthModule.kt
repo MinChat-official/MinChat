@@ -8,6 +8,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.Constants
 import io.minchat.common.Route
+import io.minchat.common.entity.*
 import io.minchat.common.request.*
 import io.minchat.server.databases.Users
 import io.minchat.server.util.*

@@ -1,9 +1,9 @@
 package io.minchat.server.modules
 
 import io.ktor.websocket.*
+import io.ktor.serialization.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.websocket.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -23,6 +23,8 @@ class GatewayModule : MinchatServerModule() {
 	/** Events to send to the clients. */
 	val pendingEvents = ConcurrentLinkedQueue<Event>()
 
+	val jsonConverter = KotlinxWebsocketSerializationConverter(Json)
+
 	override fun Application.onLoad() {
 		install(WebSockets) {
 			pingPeriodMillis = Constants.connectionPingPeriod
@@ -30,19 +32,20 @@ class GatewayModule : MinchatServerModule() {
 			maxFrameSize = 1024 * 30L // there's no way an event could take more than that
 			masking = false
 
-			contentConverter = KotlinxWebsocketSerializationConverter(Json)
+			contentConverter = jsonConverter
 		}
 
 		routing {
 			webSocket(Route.Gateway.websocket) {
 				val connection = Connection(this).also(connections::add)
 
-				Log.info { "Incoming connection: $connection" }
+				Log.lifecycle { "Incoming: $connection" }
 
 				try {
 					handleConnection(connection)
+					Log.lifecycle { "$connection has closed." }
 				} catch (e: Exception) {
-					Log.error(e) { "Connection ${connection.id} terminated" }
+					Log.error(e) { "$connection has been terminated" }
 				} finally {
 					connections -= connection
 				}
@@ -50,30 +53,39 @@ class GatewayModule : MinchatServerModule() {
 		}
 	}
 	
-	override suspend fun Context.afterLoad() {
+	override suspend fun ServerContext.afterLoad() {
 		// A coroutine that sends events
 		launch {
-			while (pendingEvents.isNotEmpty()) {
-				val event = pendingEvents.remove()
+			while (true) {
+				if (pendingEvents.isNotEmpty()) {
+					val event = pendingEvents.remove()
+					val frame = jsonConverter.serialize(event)
 
-				connections.forEach {
-					it.session.sendSerialized(event)
+					connections.forEach {
+						it.session.outgoing.send(frame)
+						Log.info { "Sending $event to ${it.id}" }
+					}
 				}
+				delay(20L)
 			}
 		}
 	}
 
 	suspend fun handleConnection(connection: Connection) {
-		// todo: do I need anything here?
+		// suspend until this connection terminates
+		connection.session.coroutineContext[Job]?.join()
 	}
 
-	/** Requests to send the event to all connections.. */
+	/** Requests to send the event to all connections. */
 	fun send(event: Event) {
 		pendingEvents += event
 	}
 
 	class Connection(val session: WebSocketServerSession) {
 		val id = lastId.getAndIncrement()
+
+		override fun toString() =
+			"Connection #$id"
 
 		companion object {
 			val lastId = AtomicLong(0L)

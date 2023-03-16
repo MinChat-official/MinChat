@@ -7,6 +7,8 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.*
 import io.minchat.common.Route
+import io.minchat.common.entity.*
+import io.minchat.common.event.*
 import io.minchat.common.request.*
 import io.minchat.server.databases.Users
 import io.minchat.server.util.*
@@ -24,6 +26,7 @@ class UserModule : MinchatServerModule() {
 					call.respond(Users.getById(id))
 				}
 			}
+
 			post(Route.User.edit) {
 				val id = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<UserModifyRequest>()
@@ -49,11 +52,14 @@ class UserModule : MinchatServerModule() {
 						data.newUsername?.let { row[Users.username] = it }
 					}.throwIfNotFound { "user with the providen id-token pair does not exist." }
 
-					call.respond(Users.getById(id))
-				}
+					val newUser = Users.getById(id)
 
-				Log.info { "User $id was modified." }
+					call.respond(newUser)
+					Log.info { "User $id was modified." }
+					server.sendEvent(UserModifyEvent(newUser))
+				}
 			}
+
 			post(Route.User.delete) {
 				val id = call.parameters.getOrFail<Long>("id")
 				call.receive<UserDeleteRequest>() // unused
@@ -75,6 +81,11 @@ class UserModule : MinchatServerModule() {
 				call.response.statusOk()
 
 				Log.info { "User $id was deleted." }
+
+				// getById would throw an exception since the user is already deleted
+				server.sendEvent(UserModifyEvent(
+					Users.select { Users.id eq id }.single().let(Users::createEntity)
+				))
 			}
 		}
 	}

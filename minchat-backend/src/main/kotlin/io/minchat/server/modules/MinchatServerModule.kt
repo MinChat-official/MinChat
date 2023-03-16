@@ -6,13 +6,13 @@ import io.minchat.server.util.Log
 import org.jetbrains.exposed.sql.*
 
 abstract class MinchatServerModule {
-	lateinit var context: Context
+	lateinit var server: ServerContext
 
 	val name = createServiceName()
 
 	@JvmName("onLoadPublic")
 	fun onLoad(application: Application) {
-		require(::context.isInitialized.not()) { "Module '$name' has already been loaded!" }
+		require(::server.isInitialized.not()) { "Module '$name' has already been loaded!" }
 
 		Log.info { "Loading module '$name'." }
 
@@ -20,9 +20,9 @@ abstract class MinchatServerModule {
 	}
 
 	@JvmName("afterLoadPublic")
-	suspend fun afterLoad(context: Context) {
-		require(::context.isInitialized.not()) { "Module '$name' has already been post-loaded!" }
-		this.context = context
+	suspend fun afterLoad(context: ServerContext) {
+		require(::server.isInitialized.not()) { "Module '$name' has already been post-loaded!" }
+		this.server = context
 
 		Log.lifecycle { "After-loading module '$name'." }
 
@@ -33,7 +33,7 @@ abstract class MinchatServerModule {
 	abstract protected fun Application.onLoad()
 
 	/** Post-processes the context, if neccesary. */
-	open protected suspend fun Context.afterLoad() {}
+	open protected suspend fun ServerContext.afterLoad() {}
 
 	/** Creates an [Op] that uses [commom] if [isAdmin] is true, or `common and userOnly` otherwise. */
 	inline protected fun opWithAdminAccess(
