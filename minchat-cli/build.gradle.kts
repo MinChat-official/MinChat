@@ -1,8 +1,16 @@
-plugins {
-	kotlin("jvm") version "1.8.0"
-	kotlin("kapt") version "1.8.0"
-	kotlin("plugin.serialization") version "1.8.0"
+buildscript {
+	dependencies {
+		classpath("com.jakewharton.mosaic", "mosaic-gradle-plugin", "0.5.0")
+	}
 }
+
+plugins {
+	kotlin("jvm") version "1.8.10"
+	kotlin("kapt") version "1.8.10"
+	kotlin("plugin.serialization") version "1.8.10"
+}
+
+apply(plugin = "com.jakewharton.mosaic")
 
 val ktorVersion: String by rootProject
 val picocliVersion: String by rootProject
@@ -18,6 +26,9 @@ dependencies {
 
 	implementation("info.picocli", "picocli", picocliVersion)
 	kapt("info.picocli", "picocli-codegen", picocliVersion)
+
+	implementation("org.jline", "jline-terminal", "3.23.0")
+	runtimeOnly("org.jline", "jline-terminal-jna", "3.23.0")
 }
 
 tasks.jar {
