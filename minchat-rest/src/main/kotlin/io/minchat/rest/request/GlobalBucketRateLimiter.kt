@@ -4,6 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.delay
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.*
 
 /**
  * Limits requests per-host using the bucket system.
@@ -21,9 +22,9 @@ class GlobalBucketRateLimiter : AbstractRateLimiter() {
 			limits.getOrPut(response.call.request.url.host) { Bucket() }.let { bucket ->
 				synchronized(bucket) {
 					limit?.let { bucket.capacity = it }
-					reset?.let { bucket.refreshOn = it * 1000 + 1000 }
+					reset?.let { bucket.refreshOn.set(it * 1000 + 1000) }
 
-					bucket.requestsLeft = remaining ?: 1000
+					bucket.requestsLeft.set(remaining ?: 1000)
 				}
 			}
 		}
@@ -35,24 +36,24 @@ class GlobalBucketRateLimiter : AbstractRateLimiter() {
 
 	override fun availableRequests(context: HttpRequestBuilder) =
 		getBucket(context)
-		.requestsLeft
+		.requestsLeft.get()
 
 	override fun untilNextRequest(context: HttpRequestBuilder) = run {
 		val bucket = getBucket(context)
-		if (bucket.requestsLeft > 0) {
+		if (bucket.requestsLeft.get() > 0) {
 			0
 		} else {
-			bucket.refreshOn - System.currentTimeMillis()
+			bucket.refreshOn.get() - System.currentTimeMillis()
 		}
 	}
 
 	override fun consumeToken(context: HttpRequestBuilder) = run {
 		val bucket = getBucket(context)
 		
-		if (bucket.requestsLeft <= 0) {
+		if (bucket.requestsLeft.get() <= 0) {
 			false
 		} else synchronized(bucket) {
-			bucket.requestsLeft -= 1
+			bucket.requestsLeft.decrementAndGet()
 			true
 		}
 	}
@@ -60,25 +61,25 @@ class GlobalBucketRateLimiter : AbstractRateLimiter() {
 	override suspend fun awaitNext(context: HttpRequestBuilder) {
 		val bucket = getBucket(context)
 
-		while (bucket.requestsLeft <= 0) {
+		while (bucket.requestsLeft.get() <= 0) {
 			delay(10L)
 			bucket.checkRefresh()
 		}
 
 		synchronized(bucket) {
-			bucket.requestsLeft -= 1
+			bucket.requestsLeft.decrementAndGet()
 		}
 	}
 
 	data class Bucket(
-		var capacity: Int = 100,
-		var requestsLeft: Int = 100,
-		var refreshOn: Long = 0
+		@Volatile var capacity: Int = 100,
+		val refreshOn: AtomicLong = AtomicLong(0),
+		val requestsLeft: AtomicInteger = AtomicInteger(0)
 	) {
 		fun checkRefresh() = synchronized(this) {
-			if (refreshOn < System.currentTimeMillis()) {
-				refreshOn = Long.MAX_VALUE
-				requestsLeft = capacity
+			if (refreshOn.get() < System.currentTimeMillis()) {
+				refreshOn.set(Long.MAX_VALUE)
+				requestsLeft.set(capacity)
 			}
 		}
 	}
