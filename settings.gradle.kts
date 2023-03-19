@@ -1,6 +1,16 @@
 rootProject.name = "minchat"
-arrayOf("client", "backend", "common", "rest", "cli").forEach {
-	include("minchat-$it")
+
+pluginManagement {
+	repositories {
+		gradlePluginPortal()
+		mavenCentral()
+	}
 }
 
-//include("remote")
+include(
+	"minchat-client",
+	"minchat-backend",
+	"minchat-common",
+	"minchat-rest",
+	"minchat-cli"
+)
