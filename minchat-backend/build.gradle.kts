@@ -1,7 +1,7 @@
 plugins {
-	kotlin("jvm") version "1.8.10"
-	kotlin("kapt") version "1.8.10"
-	kotlin("plugin.serialization") version "1.8.10"
+	kotlin("jvm") version "1.8.0"
+	kotlin("kapt") version "1.8.0"
+	kotlin("plugin.serialization") version "1.8.0"
 }
 
 val ktorVersion: String by rootProject
