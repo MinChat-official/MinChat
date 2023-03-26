@@ -4,7 +4,7 @@ import io.minchat.common.event.*
 import io.minchat.rest.MinchatRestClient
 import io.minchat.rest.event.MinchatEvent
 import io.minchat.rest.gateway.MinchatGateway.EventTransformer
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import java.lang.reflect.Constructor
 import kotlin.reflect.KClass
 
@@ -28,7 +28,7 @@ class MinchatGateway(
 	 * A hot flow of all events sent by the server to the client,
 	 * transformed to their respective high-level types.
 	 */
-	val events =
+	val events: Flow<MinchatEvent<out Event>> =
 		rawGateway.events.map {
 			val transformation = transformationForClass<Event>(it::class)
 				?: error("No transformation found for event class ${it::class}")

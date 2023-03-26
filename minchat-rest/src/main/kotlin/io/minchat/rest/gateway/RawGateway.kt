@@ -60,11 +60,12 @@ class RawGateway(
 	 * This method must be called before [events] can be read.
 	 */
 	suspend fun connect() {
+		// invoked in the caller coroutine
 		disconnect()
-
 		openSession()
 
-		sessionReader = launch {
+		// launched in the gateway coroutine
+		sessionReader = this@RawGateway.launch {
 			while (true) {
 				if (!isConnected) {
 					openSession()
