@@ -1,6 +1,6 @@
 buildscript {
 	dependencies {
-		classpath("com.jakewharton.mosaic", "mosaic-gradle-plugin", "0.5.0")
+		classpath("com.github.minchat-official.mosaic-open", "mosaic-gradle-plugin", "master-SNAPSHOT")
 	}
 }
 
@@ -29,6 +29,9 @@ dependencies {
 
 	implementation("org.jline", "jline-terminal", "3.23.0")
 	runtimeOnly("org.jline", "jline-terminal-jna", "3.23.0")
+
+	implementation("com.github.minchat-official.mosaic-open", "mosaic-runtime", "master-SNAPSHOT")
+	implementation("com.github.minchat-official.mosaic-open", "mosaic-runtime-jvm", "master-SNAPSHOT")
 }
 
 tasks.jar {

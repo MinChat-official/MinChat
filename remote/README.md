@@ -7,8 +7,6 @@ The following files are present:
 Contains a JSON object of type `io.minchat.common.BuildVersion`,
 representing the latest stable version of the MinChat client.
 
-To update this file, run the `:remote:update` gradle task.
-
 ## changelog
 Contains a list of versions.
 

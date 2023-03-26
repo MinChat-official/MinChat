@@ -1,7 +1,8 @@
 package io.minchat.cli.ui
 
 import androidx.compose.runtime.*
-import com.jakewharton.mosaic.*
+import com.jakewharton.mosaic.layout.Layout
+import com.jakewharton.mosaic.ui.*
 import kotlinx.coroutines.*
 import java.io.Reader
 
@@ -20,25 +21,36 @@ import java.io.Reader
  * [onCancel] is called. If it's not provided, [onConfirm] is called instead.
  */
 @Composable
-inline fun TextField(
+fun TextField(
 	reader: Reader,
-	defaultText: String = "",
 	length: Int,
 	color: Color? = null,
 	background: Color? = null,
-	crossinline focusCondition: () -> Boolean = { true },
-	crossinline onChange: (String) -> Boolean = { true },
-	noinline onCancel: ((String) -> Unit)? = null,
-	crossinline onConfirm: (String) -> Unit
+	clearOnConfirm: Boolean = true,
+	focusCondition: () -> Boolean = { true },
+	onChange: (String) -> Boolean = { true },
+	onCancel: ((String) -> Unit)? = null,
+	onConfirm: (String) -> Unit
 ) {
-	var currentInput by remember { mutableStateOf(defaultText) }
+	val thisScope = currentRecomposeScope
+	var currentInput by remember { mutableStateOf("") }
 
-	val text = if (currentInput.length <= length) {
-		currentInput.padEnd(length, '_')
-	} else {
-		"..." + currentInput.takeLast(length - 3)
-	}
-	Text(text, color = color, background = background, style = TextStyle.Underline)
+	Layout(
+		debugInfo = {
+			"""Text("$currentInput")"""
+		},
+		measurePolicy = {
+			layout(length, 1)
+		},
+		drawPolicy = { canvas ->
+			val text = if (currentInput.length <= length) {
+				currentInput.padEnd(length, '_')
+			} else {
+				"..." + currentInput.takeLast(length - 3)
+			}
+			canvas.write(0, 0, text, color, background, TextStyle.Underline)
+		}
+	)
 
 	LaunchedEffect(Unit) {
 		withContext(Dispatchers.IO) {
@@ -53,7 +65,7 @@ inline fun TextField(
 
 				when (nextChar) {
 					// backspace
-					'\b' -> {
+					'\b', '\u007F' -> {
 						if (currentInput.length > 0) {
 							val newInput = currentInput.dropLast(1)
 							if (onChange(newInput)) currentInput = newInput
@@ -66,13 +78,13 @@ inline fun TextField(
 						// Windows uses CRLF, so it sends \r\n
 						if (lastChar != '\r' || nextChar != '\n') {
 							onConfirm(currentInput)
-							currentInput = ""
+							if (clearOnConfirm) currentInput = ""
 						}
 					}
 					// escape
 					'\u001b' -> {
 						if (onCancel != null) onCancel(currentInput) else onConfirm(currentInput)
-						currentInput = ""
+						if (clearOnConfirm) currentInput = ""
 					}
 					// normal text: everything except control chars.
 					else -> {
@@ -84,6 +96,7 @@ inline fun TextField(
 				}
 
 				lastChar = nextChar
+				thisScope.invalidate()
 			}
 		}
 	}

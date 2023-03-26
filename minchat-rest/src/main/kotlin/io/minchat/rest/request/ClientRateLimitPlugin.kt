@@ -7,8 +7,6 @@ val ClientRateLimit = createClientPlugin("ClientRateLimit", ::ClientRateLimitCon
 
 	onResponse { response ->
 		limiter.extractRateLimits(response)
-
-		// todo: retry on 429?
 	}
 
 	onRequest { request, _ ->

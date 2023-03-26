@@ -1,6 +1,7 @@
+
 import java.io.OutputStream
 import java.security.MessageDigest
-import java.util.Base64
+import java.util.*
 
 plugins {
 	kotlin("jvm") version "1.8.0"
@@ -115,7 +116,7 @@ task("jarAndroid") {
 					"--intermediate",
 					"--classpath", "${platformRoot.absolutePath}/android.jar",
 					"--min-api", "14", 
-					"--output", outputDir.absolutePath, 
+					"--output", outputDir.absolutePath + "/",
 					dependency
 				)
 			}
