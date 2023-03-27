@@ -317,7 +317,6 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				runSafe {
 					channel.createMessage(content)
 				}
-				if (currentChannel == channel) updateChatUi()?.join()
 			}.then { notif.cancel() }
 		} else null
 	}
