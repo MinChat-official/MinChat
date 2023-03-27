@@ -1,39 +1,33 @@
 package io.minchat.rest.event
 
-import io.minchat.common.entity.Message
 import io.minchat.common.event.*
 import io.minchat.rest.MinchatRestClient
-import io.minchat.rest.entity.*
-
-sealed class MinchatMessageEvent<T : Event>(data: T, client: MinchatRestClient) : MinchatEvent<T>(data, client) {
-	protected abstract val dataMessage: Message
-
-	private var message_: MinchatMessage? = null
-	val message: MinchatMessage
-		get() {
-			message_?.let { return it }
-			return dataMessage.withClient(client).also { message_ = it }
-		}
-
-	val channel by message::channel
-	val author by message::author
-
-	val authorId by dataMessage.author::id
-	val channelId by dataMessage.channel::id
-}
+import io.minchat.rest.entity.withClient
 
 class MinchatMessageCreate(
 	data: MessageCreateEvent,
 	client: MinchatRestClient
-) : MinchatMessageEvent<MessageCreateEvent>(data, client) {
-	override val dataMessage = data.message
+) : MinchatEvent<MessageCreateEvent>(data, client) {
+	val message = data.message.withClient(client)
+
+	val channel get() = message.channel
+	val author get() = message.author
+
+	val authorId get() = message.author.id
+	val channelId get() = message.channel.id
 }
 
 class MinchatMessageModify(
 	data: MessageModifyEvent,
 	client: MinchatRestClient
-) : MinchatMessageEvent<MessageModifyEvent>(data, client) {
-	override val dataMessage = data.message
+) : MinchatEvent<MessageModifyEvent>(data, client) {
+	val message = data.message.withClient(client)
+
+	val channel get() = message.channel
+	val author get() = message.author
+
+	val authorId get() = message.author.id
+	val channelId get() = message.channel.id
 }
 
 class MinchatMessageDelete(
