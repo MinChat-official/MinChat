@@ -1,44 +1,51 @@
-package io.minchat.client.ui
+package io.minchat.client.ui.chat
 
-import arc.math.Interp.sineOut
-import arc.scene.actions.Actions.*
+import arc.scene.Element
+import arc.scene.actions.Actions
 import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
-import arc.util.Align
+import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
+import io.minchat.client.ui.*
 import io.minchat.common.entity.Message
-import io.minchat.rest.entity.*
+import io.minchat.rest.entity.MinchatChannel
+import io.minchat.rest.event.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import mindustry.Vars
 import mindustry.ui.Styles
-import java.time.Instant
 import java.util.concurrent.ConcurrentLinkedQueue
-import io.minchat.client.misc.MinchatStyle as Style
 
 class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentScope) {
 	@Volatile var currentChannel: MinchatChannel? = null
 
 	val notificationStack = ConcurrentLinkedQueue<Notification>()
 
+	/** A bar displaying the current notification. */
 	lateinit var notificationBar: Table
+	/** A bar containing the channel list. */
 	lateinit var channelsBar: Table
 	lateinit var channelsContainer: Table
 
 	lateinit var chatBar: Table
 	lateinit var chatPane: ScrollPane
+	/** Contains a list of message elements. */
 	lateinit var chatContainer: Table
+	/** A field that allows either to enter a new message or edit an existing one. */
 	lateinit var chatField: TextField
 	lateinit var sendButton: TextButton
 
+	/** If present, a message being edited. This listener overrides the default "send" action, but only once. */
+	private var editListener: ((String) -> Unit)? = null
 	private var closeListener: (() -> Unit)? = null
-	
+
 	private var lastChatUpdateJob: Job? = null
+	private var messageListenerJob: Job? = null
 
 	override fun build() = createTable {
 		update(::tick)
@@ -51,32 +58,31 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			addTable {
 				setFillParent(true)
 
-				textButton("[#${Style.red}]X", Style.ActionButton) {
-					closeListener?.invoke() ?:
-						Vars.ui.showInfo("No close listener.")
-				}.padRight(10f).margin(Style.buttonMargin).fill()
+				textButton("[#${MinchatStyle.red}]X", MinchatStyle.ActionButton) {
+					closeListener?.invoke() ?: Vars.ui.showInfo("No close listener.")
+				}.padRight(10f).margin(MinchatStyle.buttonMargin).fill()
 
-				addTable(Style.surfaceBackground) {
-					margin(Style.layoutMargin)
+				addTable(MinchatStyle.surfaceBackground) {
+					margin(MinchatStyle.layoutMargin)
 
-					addLabel("MinChat", Style.Label)
-						.color(Style.purple).scaleFont(1.3f)
+					addLabel("MinChat", MinchatStyle.Label)
+						.color(MinchatStyle.purple).scaleFont(1.3f)
 					// channel name
 					addLabel({
 						currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
-					}, Style.Label, ellipsis = "...").growX()
+					}, MinchatStyle.Label, ellipsis = "...").growX()
 				}.growX().fillY()
 
 				// account button
 				textButton({
 					Minchat.client.account?.user?.tag ?: "[Not logged in]"
-				}, Style.ActionButton, ellipsis = "...") {
+				}, MinchatStyle.ActionButton, ellipsis = "...") {
 					AuthDialog().apply {
 						hidden(::updateChatUi)
 						show()
 						update()
 					}
-				}.minWidth(200f).padLeft(8f).margin(Style.buttonMargin)
+				}.minWidth(200f).padLeft(8f).margin(MinchatStyle.buttonMargin)
 			}
 			// Notification bar. A table is neccessary to render a background.
 			addTable(Styles.black8) {
@@ -86,54 +92,54 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				translation.y -= 20f // offset it a bit down
 
 				addLabel({ notificationStack.peek()?.content ?: "" }).with {
-					it.setColor(Style.orange)
+					it.setColor(MinchatStyle.orange)
 					it.setFontScale(1.2f)
 				}.pad(12f)
 
 				visible { notificationStack.peek() != null }
 			}
-		}.growX().pad(Style.layoutPad).colspan(3).row()
+		}.growX().pad(MinchatStyle.layoutPad).colspan(3).row()
 
 		hsplitter(padBottom = 0f).colspan(3)
 
 		// left bar: channel list + notification labeo
-		addTable(Style.surfaceBackground) {
-			margin(Style.layoutMargin)
+		addTable(MinchatStyle.surfaceBackground) {
+			margin(MinchatStyle.layoutMargin)
 			channelsBar = this
 
-			addLabel("Channels").color(Style.purple).growX().row()
+			addLabel("Channels").color(MinchatStyle.purple).growX().row()
 
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
 				channelsContainer = this
 			}.grow().row()
-		}.width(150f).minHeight(300f).pad(Style.layoutPad).growY()
+		}.width(150f).minHeight(300f).pad(MinchatStyle.layoutPad).growY()
 
 		vsplitter()
 
 		// right bar: chat
 		addTable {
-			margin(Style.layoutMargin)
+			margin(MinchatStyle.layoutMargin)
 
 			chatBar = this
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
-				setBackground(Style.surfaceBackground)
+				setBackground(MinchatStyle.surfaceBackground)
 
 				chatPane = it
 				chatContainer = this
-			}.grow().pad(Style.layoutPad).row()
+			}.grow().pad(MinchatStyle.layoutPad).row()
 
 			// chatbox
 			addTable {
-				margin(Style.layoutMargin)
+				margin(MinchatStyle.layoutMargin)
 
 				textArea().with {
 					chatField = it
-					it.setStyle(Style.TextInput)
+					it.setStyle(MinchatStyle.TextInput)
 				}.growX()
 
-				textButton(">", Style.ActionButton) {
+				textButton(">", MinchatStyle.ActionButton) {
 					if (Minchat.client.isLoggedIn) {
 						sendCurrentMessage()
 					} else {
@@ -145,8 +151,56 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				}.padLeft(8f).fill().width(80f)
 
 				updateChatbox()
-			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
+			}.growX().padTop(MinchatStyle.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
+
+		// Listen for minchat message events in this channel and update the message list accordingly
+		messageListenerJob = Minchat.gateway.events
+			.onEach { event ->
+				Log.info("Received $event")
+				when (event) {
+					is MinchatMessageCreate -> {
+						val message = event.message
+						if (message.channelId == currentChannel?.id) {
+							val isAtBottom = chatPane.isBottomEdge
+							val element = NormalMinchatMessageElement(this@ChatFragment, message)
+							addMessage(element, 0.5f)
+
+							// Scroll down to show the new message, but only if the bottom was already visible.
+							if (isAtBottom) {
+								chatPane.validate()
+								chatPane.fling(0.3f,  0f, -element.height)
+							}
+						}
+					}
+
+					is MinchatMessageModify -> {
+						val newMessage = event.message
+						if (newMessage.channelId == currentChannel?.id) {
+							// Find and replace the old message element in its cell
+							val messageCell = chatContainer.cells.find {
+								it.getAsOrNull<NormalMinchatMessageElement>()?.message?.id == newMessage.id
+							}
+							messageCell.setElement<Element>(NormalMinchatMessageElement(this@ChatFragment, newMessage))
+							chatContainer.invalidateHierarchy()
+						}
+					}
+
+					is MinchatMessageDelete -> {
+						if (event.channelId == currentChannel?.id) {
+							// Play a shrinking animation and finally rremove the element.
+							chatContainer.children.find {
+								(it as? NormalMinchatMessageElement)?.message?.id == event.messageId
+							}?.let {
+								it.addAction(Actions.sequence(
+									Actions.sizeBy(0f, -it.height, 1f),
+									Actions.remove()
+								))
+							}
+						}
+					}
+				}
+			}.launchIn(this@ChatFragment)
 	}
 
 	fun tick() {
@@ -172,9 +226,16 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 * Show a notification on the top bar.
 	 * [maxTime] defines that maximum time it will be shown for (in seconds).
 	 */
-	fun notification(text: String, maxTime: Long) = 
+	fun notification(text: String, maxTime: Long) =
 		Notification(text, maxTime * 1000)
 			.also { notificationStack.add(it) }
+
+	/** Adds a message to the list of messages. */
+	fun addMessage(element: MinchatMessageElement, animationLegth: Float) = synchronized(chatContainer) {
+		chatContainer.add(element)
+			.padBottom(10f).pad(4f).growX().row()
+		element.animateMoveIn(animationLegth)
+	}
 
 	override fun applied(cell: Cell<Table>) {
 		cell.grow()
@@ -194,7 +255,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 	fun setChannels(channels: List<MinchatChannel>) {
 		channelsContainer.clearChildren()
-		
+
 		channels.forEach { channel ->
 			// TODO: custom style
 			channelsContainer.textButton("#${channel.name}", Styles.flatBordert, align = Align.left) {
@@ -202,7 +263,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				lastChatUpdateJob?.cancel()
 				lastChatUpdateJob = updateChatUi()
 			}.with {
-				it.label.setColor(Style.foreground)
+				it.label.setColor(MinchatStyle.foreground)
 			}.align(Align.left).growX().row()
 		}
 	}
@@ -224,21 +285,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				chatContainer.clearChildren()
 
 				messages.forEachIndexed { index, message ->
-					val element = MinchatMessageElement(message)
-					chatContainer.add(element)
-						.padBottom(10f).pad(4f).growX().row()
-
-					// play a move-in animation, with newer messages appearing first
-					val prolongation = 0.01f * (messages.size - index)
-					element.addAction(sequence(
-						translateBy(chatContainer.width, 0f),
-						translateBy(-chatContainer.width, 0f, 0.5f + prolongation, sineOut)
-					))
-
-					// force the scroll pane to recslculate its dimensions and scroll to the bottom
-					chatPane.validate()
-					chatPane.setScrollYForce(chatPane.maxY)
+					addMessage(NormalMinchatMessageElement(this,message),
+						animationLegth = 0.5f + 0.01f * (messages.size - index))
 				}
+
+				// force the scroll pane to recalculate its dimensions and scroll to the bottom
+				chatPane.validate()
+				chatPane.setScrollYForce(chatPane.maxY)
 			}
 		}.then { notif.cancel() }
 	}
@@ -292,72 +345,6 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	) {
 		fun cancel() {
 			shownUntil = 0
-		}
-	}
-
-	/**
-	 * Displays a MinChat message.
-	 */
-	inner class MinchatMessageElement(val message: MinchatMessage) : Table(Style.surfaceInner) {
-		/** When a DateTimeFormatter has to be used to acquire a timestamp, the result is saved here. */
-		private var cachedLongTimestamp: String? = null
-
-		init {
-			margin(4f)
-
-			val discriminator = message.author.discriminator.toString().padStart(4, '0')
-			
-			// Top row: author tag + timestamp
-			addTable {
-				left()
-				// username
-				addLabel(message.author.username, ellipsis = "...").color(when {
-					message.author.id == Minchat.client.account?.id -> Style.green
-					message.author.isAdmin -> Style.pink // I just like pink~
-					else -> Style.purple
-				}).fillY().get().clicked(::showUserDialog)
-				// tag
-				addLabel("#$discriminator")
-					.fillY().color(Style.comment)
-					.get().clicked(::showUserDialog)
-				// filler + timestamp
-				addSpace().growX()
-				addLabel({ formatTimestamp() })
-					.color(Style.comment).padLeft(20f)
-			}.growX().padBottom(5f).row()
-			// bottom row: message content
-			addLabel(message.content, wrap = true, align = Align.left)
-				.growX().color(Style.foreground)
-		}
-
-		fun showUserDialog() {
-			UserDialog(message.author).apply {
-				show()
-				update()
-			}
-		}
-
-		protected fun formatTimestamp(): String {
-			val minutesSince = (System.currentTimeMillis() - message.timestamp) / 1000 / 60
-			if (minutesSince < 60 * 24) {
-				// less than 1 day ago
-				return when {
-					minutesSince == 0L -> "Just now"
-					minutesSince == 1L -> "A minute ago"
-					minutesSince in 2L..<60L -> "$minutesSince minutes ago"
-					minutesSince in 60L..<120L -> "An hour ago"
-					else -> "${minutesSince / 60} hours ago"
-				}
-			}
-			
-			// more than 1 day ago. try to returned the cached timestamp or create a new one
-			cachedLongTimestamp?.let { return it }
-
-			val longTimestamp = Instant.ofEpochMilli(message.timestamp)
-				.atZone(Minchat.timezone)
-				.let { Minchat.timestampFormatter.format(it) }
-
-			return longTimestamp.also { cachedLongTimestamp = it }
 		}
 	}
 }

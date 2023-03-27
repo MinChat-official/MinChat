@@ -8,9 +8,10 @@ import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.misc.*
-import io.minchat.client.ui.ChatFragment
+import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.common.MINCHAT_VERSION
 import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.gateway.MinchatGateway
 import kotlinx.coroutines.*
 import mindustry.Vars
 import mindustry.game.EventType
@@ -36,9 +37,22 @@ class MinchatMod : Mod(), CoroutineScope {
 	val timestampFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	val timezone = ZoneId.systemDefault()
 
-	/** The main Minchat client used across the mod. */
+	/**
+	 * The main Minchat client used across the mod.
+	 * If it has not been initialised yet ([isConnected] is false), an exception will be thrown upon access.
+	 */
 	@Volatile
 	lateinit var client: MinchatRestClient
+		private set
+	/**
+	 * The gateway used to receive events from the server.
+	 * Accessing it will throw an exception if [client] hasn't been itialised yet.
+	 *
+	 * It's guaranteed that the gateway will be connected by the time it can be accessed.
+	 */
+	@Volatile
+	lateinit var gateway: MinchatGateway
+		private set
 	/** Returns true if [client] is initialised and a connection is established. */
 	val isConnected get() = ::client.isInitialized
 
@@ -117,7 +131,9 @@ class MinchatMod : Mod(), CoroutineScope {
 
 	/**
 	 * Tries to connect to the given server.
-	 * Overrides [client] upon success.
+	 * Overrides [client] and [gateway] upon success.
+	 *
+	 * @throws VersionMismatchException if the server's version is not compatible with the client's.
 	 */
 	fun connectToServer(url: String) = launch {
 		val client = MinchatRestClient(url)
@@ -128,10 +144,14 @@ class MinchatMod : Mod(), CoroutineScope {
 			throw VersionMismatchException(serverVersion, MINCHAT_VERSION)
 		}
 		if (!serverVersion.isInterchangableWith(MINCHAT_VERSION)) {
-			Log.warn("The version of '$url' may not be fully compatible with the client ($serverVersion vs $MINCHAT_VERSION)")
+			val warning = "The version of '$url' may not be fully compatible with the client ($serverVersion vs $MINCHAT_VERSION)"
+
+			Log.warn(warning)
+			Vars.ui.showInfoToast("[!] Minchat warning: $warning", 5f)
 		}
 
 		this@MinchatMod.client = client
+		gateway = MinchatGateway(client).also { it.connectIfNecessary() }
 	}
 
 	/**
