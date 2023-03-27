@@ -21,6 +21,9 @@ dependencies {
 
 	compileOnly("com.github.Anuken", "mindustryjitpack", mindustryVersion)
 	compileOnly("com.github.Anuken.Arc", "arc-core", mindustryVersion)
+
+	// For the new-console integration
+	compileOnly("com.github.mnemotechnician", "new-console", "v1.9.0.2")
 }
 
 /** Android-specific stuff. Do not modify unless you're 100% sure you know what you're doing! If you break this task, mobile users won't be able to use your mod!*/

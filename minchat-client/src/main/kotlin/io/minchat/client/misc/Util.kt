@@ -21,7 +21,7 @@ fun Throwable.userReadable() = when (this) {
 		}
 		val postifx = "(code ${response.status.value})"
 
-		"$prefix: $midfix. $postifx"
+		"$prefix: $midfix." //+ " $postifx"
 	}
 	is ConnectTimeoutException -> {
 		"Timed out. Check your internet connection and try again."

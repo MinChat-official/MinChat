@@ -27,6 +27,10 @@ val Minchat get() = minchatInstance
 	?: throw UninitializedPropertyAccessException("Minchat has not been initialised")
 val MinchatDispatcher = newFixedThreadPoolContext(5, "minchat")
 
+/**
+ * The mai class of the MinChat mod. This class is a singleton:
+ * use [Minchat] to access its only instance.
+ */
 class MinchatMod : Mod(), CoroutineScope {
 	val rootJob = SupervisorJob()
 	val exceptionHandler = CoroutineExceptionHandler { _, e -> 
@@ -68,7 +72,7 @@ class MinchatMod : Mod(), CoroutineScope {
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
 
-		connectToDefault()
+		MinchatPluginHandler.onInit()
 
 		Events.on(EventType.ClientLoadEvent::class.java) {
 			Vars.ui.menufrag.addButton("MinChat", Icon.terminal) {
@@ -93,6 +97,10 @@ class MinchatMod : Mod(), CoroutineScope {
 						setButton { job.cancel() }
 					}
 				}
+			}
+
+			launch {
+				MinchatPluginHandler.onLoad()
 			}
 		}
 
@@ -121,6 +129,9 @@ class MinchatMod : Mod(), CoroutineScope {
 				}.marginBottom(60f).row()
 			}.show()
 		}
+
+		connectToDefault()
+
 	}
 
 	fun showChatDialog() {
@@ -152,6 +163,8 @@ class MinchatMod : Mod(), CoroutineScope {
 
 		this@MinchatMod.client = client
 		gateway = MinchatGateway(client).also { it.connectIfNecessary() }
+
+		MinchatPluginHandler.onConnect()
 	}
 
 	/**
