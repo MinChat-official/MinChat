@@ -64,20 +64,24 @@ class Minchat(
 		gateway.events
 			.filterIsInstance<MinchatEvent<out Event>>()
 			.onEach { event ->
-				when (event) {
-					is MinchatMessageCreate -> if (event.channelId == currentChannel?.id) {
-						currentMessages.add(event.message)
-					}
-					is MinchatMessageModify -> if (event.channelId == currentChannel?.id) {
-						val index = currentMessages.indexOfFirst { it.id == event.message.id }
-						if (index != -1) {
-							currentMessages[index] = event.message
-						} else {
-							System.err.println("Unknown message modified: ${event.message.id}")
+				Snapshot.withMutableSnapshot {
+					when (event) {
+						is MinchatMessageCreate -> if (event.channelId == currentChannel?.id) {
+							currentMessages.add(event.message)
 						}
-					}
-					is MinchatMessageDelete -> {
-						currentMessages.removeAll { it.id == event.messageId }
+
+						is MinchatMessageModify -> if (event.channelId == currentChannel?.id) {
+							val index = currentMessages.indexOfFirst { it.id == event.message.id }
+							if (index != -1) {
+								currentMessages[index] = event.message
+							} else {
+								System.err.println("Unknown message modified: ${event.message.id}")
+							}
+						}
+
+						is MinchatMessageDelete -> {
+							currentMessages.removeAll { it.id == event.messageId }
+						}
 					}
 				}
 			}

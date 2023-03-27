@@ -141,7 +141,7 @@ task("jarAndroid") {
 			if (it % 2 == 0) "--classpath" else dexPathes[it / 2].absolutePath
 		}
 		
-		// now, compile the project
+		// now, dex the project
 		exec {
 			val output = dexCacheRoot.resolve("project").also { it.mkdirs() }
 			commandLine(
@@ -187,7 +187,6 @@ task<Jar>("release") {
 	from(*configurations.runtimeClasspath.get().files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 
 	doLast {
-		delete { delete("$buildDir/libs/${jarName}.jar") }
 		delete { delete("$buildDir/libs/${jarName}-android.jar") }
 	}
 }
