@@ -71,7 +71,7 @@ class UserModule : MinchatServerModule() {
 						userOnly = { Users.token eq token }
 					)) {
 						it[Users.username] = Constants.deletedAccountName
-						it[Users.token] = "" // token() will fail if an empty string is providen
+						it[Users.token] = "" // token() will fail if an empty string is provided
 						it[Users.passwordHash] = Constants.deletedAccountPasswordHash
 
 						it[Users.discriminator] = 0

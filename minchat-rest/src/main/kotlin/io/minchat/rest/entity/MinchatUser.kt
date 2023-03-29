@@ -3,7 +3,7 @@ package io.minchat.rest.entity
 import io.minchat.common.entity.*
 import io.minchat.rest.MinchatRestClient
 
-class MinchatUser(
+data class MinchatUser(
 	val data: User,
 	override val rest: MinchatRestClient
 ) : MinchatEntity<MinchatUser>() {
@@ -42,6 +42,27 @@ class MinchatUser(
 
 	override fun toString() =
 		"MinchatUser(id=$id, tag=$tag, isAdmin=$isAdmin, isBanned=$isBanned, messageCount=$messageCount)"
+
+	/**
+	 * Copies this [MinchatUser] object, allowing to override some of its data values.
+	 */
+	fun copy(
+		username: String = data.username,
+		discriminator: Int = data.discriminator,
+		isAdmin: Boolean = data.isAdmin,
+		isBanned: Boolean = data.isBanned,
+		messageCount: Int = data.messageCount,
+		lastMessageTimestamp: Long = data.lastMessageTimestamp,
+		creationTimestamp: Long = data.creationTimestamp
+	) = MinchatUser(data.copy(
+		username = username,
+		discriminator = discriminator,
+		isAdmin = isAdmin,
+		isBanned = isBanned,
+		messageCount = messageCount,
+		lastMessageTimestamp = lastMessageTimestamp,
+		creationTimestamp = creationTimestamp
+	), rest)
 }
 
 fun User.withClient(rest: MinchatRestClient) =

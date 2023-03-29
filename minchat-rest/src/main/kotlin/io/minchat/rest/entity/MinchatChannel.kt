@@ -4,7 +4,7 @@ import io.minchat.common.entity.Channel
 import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.flow.flow
 
-class MinchatChannel(
+data class MinchatChannel(
 	val data: Channel,
 	override val rest: MinchatRestClient
 ) : MinchatEntity<MinchatChannel>() {
@@ -86,6 +86,12 @@ class MinchatChannel(
 
 	override fun toString() =
 		"MinchatChannel(id=$id, name=$name, description=$description)"
+
+	/**
+	 * Copies this [MinchatChannel] object, allowing to override some of its data values.
+	 */
+	fun copy(name: String = data.name, description: String = data.description) =
+		MinchatChannel(data.copy(name = name, description = description), rest)
 }
 
 fun Channel.withClient(rest: MinchatRestClient) =
