@@ -13,7 +13,8 @@ import kotlinx.coroutines.CoroutineScope
  */
 class NormalMinchatMessageElement(
 	val chat: ChatFragment,
-	val message: MinchatMessage
+	val message: MinchatMessage,
+	val showActionsMenu: Boolean = true
 ) : MinchatMessageElement(), CoroutineScope by chat {
 	override val timestamp get() = message.timestamp
 
@@ -50,5 +51,9 @@ class NormalMinchatMessageElement(
 			show()
 			update()
 		}
+	}
+
+	fun showActionBar() {
+
 	}
 }

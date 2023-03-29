@@ -23,7 +23,7 @@ fun Throwable.userReadable() = when (this) {
 
 		"$prefix: $midfix." //+ " $postifx"
 	}
-	is ConnectTimeoutException -> {
+	is HttpRequestTimeoutException, is ConnectTimeoutException -> {
 		"Timed out. Check your internet connection and try again."
 	}
 	is java.net.ConnectException -> {

@@ -3,7 +3,6 @@ package io.minchat.client.ui.chat
 import arc.Core
 import arc.input.KeyCode
 import arc.scene.Element
-import arc.scene.actions.Actions
 import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
@@ -37,7 +36,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var chatBar: Table
 	/** Wraps [chatContainer]. */
 	lateinit var chatPane: ScrollPane
-	/** Contains a list of message elements. */
+	/** Contains a list of message elements. Each element must be placed on a separate row. */
 	lateinit var chatContainer: Table
 	/** A field that allows either to enter a new message or edit an existing one. */
 	lateinit var chatField: TextField
@@ -95,10 +94,10 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				touchable = Touchable.disabled
 				translation.y -= 20f // offset it a bit down
 
-				addLabel({ notificationStack.peek()?.content ?: "" }).with {
+				addLabel({ notificationStack.peek()?.content ?: "" }, wrap = true).with {
 					it.setColor(MinchatStyle.orange)
 					it.setFontScale(1.2f)
-				}.pad(12f)
+				}.growX().pad(12f)
 
 				visible { notificationStack.peek() != null }
 			}
@@ -165,21 +164,14 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 		// Listen for minchat message events in this channel and update the message list accordingly
 		messageListenerJob = Minchat.gateway.events
-			.filter { scene != null } // only receive events if the chat is visible
+			.filter { scene != null } // only react to events if the chat is visible
 			.onEach { event ->
 				when (event) {
 					is MinchatMessageCreate -> {
 						val message = event.message
 						if (message.channelId == currentChannel?.id) {
-							val isAtBottom = chatPane.isBottomEdge
 							val element = NormalMinchatMessageElement(this@ChatFragment, message)
 							addMessage(element, 0.5f)
-
-							// Scroll down to show the new message, but only if the bottom was already visible.
-							if (isAtBottom) {
-								chatPane.validate()
-								chatPane.fling(0.3f,  0f, -element.height)
-							}
 						}
 					}
 
@@ -202,10 +194,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 							chatContainer.children.find {
 								(it as? NormalMinchatMessageElement)?.message?.id == event.messageId
 							}?.let {
-								it.addAction(Actions.sequence(
-									Actions.sizeBy(0f, -it.height, 1f),
-									Actions.remove()
-								))
+								(it as NormalMinchatMessageElement).animateDisappear(1f)
 							}
 						}
 					}
@@ -260,11 +249,28 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		Notification(text, maxTime * 1000)
 			.also { notificationStack.add(it) }
 
-	/** Adds a message to the list of messages. */
-	fun addMessage(element: MinchatMessageElement, animationLength: Float) = synchronized(chatContainer) {
+	/**
+	 * Adds a message to the list of messages.
+	 *
+	 * If [autoscroll] is true and the chat is already scrolled to the bottom,
+	 * it will be scrolled down more to show the message.
+	 */
+	fun addMessage(
+		element: MinchatMessageElement,
+		animationLength: Float,
+		autoscroll: Boolean = true
+	) = synchronized(chatContainer) {
+		val isAtBottom = chatPane.isBottomEdge
+
 		chatContainer.add(element)
 			.padBottom(10f).pad(4f).growX().row()
 		element.animateMoveIn(animationLength)
+
+		// Scroll down to show the new message, but only if the bottom was already visible.
+		if (isAtBottom) {
+			chatPane.validate()
+			chatPane.fling(0.3f,  0f, -element.height)
+		}
 	}
 
 	override fun applied(cell: Cell<Table>) {
@@ -304,7 +310,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 		return launch {
 			val messages = runSafe {
-				channel.getAllMessages(limit = 60).toList().reversed()
+				channel.getAllMessages(limit = 50).toList().reversed()
 			}.getOrThrow()
 			// if the channel was changed, return
 			if (channel != currentChannel) return@launch
@@ -312,11 +318,50 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			runUi {
 				updateChatbox()
 
-				chatContainer.clearChildren()
+				// take a sample and determine if the messages are from the same channel as before
+				val sameChannel = chatContainer.children.find { it is NormalMinchatMessageElement }
+					?.let { it as NormalMinchatMessageElement }
+					?.message?.channelId == currentChannel?.id
 
-				messages.forEachIndexed { index, message ->
-					addMessage(NormalMinchatMessageElement(this@ChatFragment, message),
-						animationLength = 0.5f + 0.01f * (messages.size - index))
+				if (!sameChannel) {
+					// If not, replace everything and play an incrementing move-in animation
+					chatContainer.clearChildren()
+					messages.forEachIndexed { index, message ->
+						addMessage(NormalMinchatMessageElement(this@ChatFragment, message),
+							animationLength = 0.5f + 0.01f * (messages.size - index))
+					}
+				} else {
+					// Otherwise, immediately remove normal message elements that should not be here anymore
+					chatContainer.children.forEach { element ->
+						if (element !is NormalMinchatMessageElement) return@forEach
+						if (messages.none { it.id ==  element.message.id }) {
+							element.animateDisappear(0.5f)
+						}
+					}
+					// Then add all the missing message elements
+					messages.forEach { message ->
+						if (chatContainer.children.none { it is NormalMinchatMessageElement && it.message.id == message.id }) {
+							addMessage(NormalMinchatMessageElement(this@ChatFragment, message), 1f)
+						}
+					}
+					// ...And then sort the cells in the most brutal way, leaving the table confused
+					// (pro-tip: never let silly idiots like me write front-end code)
+					chatContainer.cells.sort { cellA, cellB ->
+						val a = cellA.get()
+						val b = cellB.get()
+
+						when {
+							a is MinchatMessageElement && b is MinchatMessageElement -> {
+								a.timestamp.compareTo(b.timestamp)
+							}
+							a is MinchatMessageElement -> 1
+							b is MinchatMessageElement -> -1
+							else -> 0
+						}
+					}
+					// finally, help the table recover from the moral trauma we just gave it
+					chatContainer.invalidate()
+					chatContainer.validate()
 				}
 
 				// force the scroll pane to recalculate its dimensions and scroll to the bottom

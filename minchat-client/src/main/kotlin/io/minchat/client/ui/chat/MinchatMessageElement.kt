@@ -53,4 +53,16 @@ abstract class MinchatMessageElement : Table(MinchatStyle.surfaceInner) {
 			Actions.translateBy(-parent.width, 0f, length, Interp.sineOut)
 		))
 	}
+
+	/**
+	 * Animates this message element by playing a shrink animation and removing it..
+	 *
+	 * @param length The length of the animation
+	 */
+	fun animateDisappear(length: Float) {
+		addAction(Actions.sequence(
+			Actions.sizeBy(0f, -height, length),
+			Actions.remove()
+		))
+	}
 }
