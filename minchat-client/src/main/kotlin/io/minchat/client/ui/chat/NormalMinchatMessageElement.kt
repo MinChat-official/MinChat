@@ -12,9 +12,9 @@ import kotlinx.coroutines.CoroutineScope
  * Displays a MinChat message sent by a real user or a bot.
  */
 class NormalMinchatMessageElement(
-	scope: CoroutineScope,
+	val chat: ChatFragment,
 	val message: MinchatMessage
-) : MinchatMessageElement(), CoroutineScope by scope {
+) : MinchatMessageElement(), CoroutineScope by chat {
 	override val timestamp get() = message.timestamp
 
 	init {

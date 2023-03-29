@@ -44,7 +44,7 @@ class ChannelModule : MinchatServerModule() {
 							(Messages.timestamp lessEq toTimestamp)
 					}
 						.orderBy(Messages.id to SortOrder.DESC)
-						.limit(20) // this will take the 20 last messages in a descending order
+						.limit(Channel.messagesPerFetch) // this takes N last messages in descending order
 						.toList()
 						.reversed() // this makes the order correct
 						.map {

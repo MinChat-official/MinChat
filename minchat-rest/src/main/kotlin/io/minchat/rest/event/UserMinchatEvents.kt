@@ -4,6 +4,7 @@ import io.minchat.common.event.UserModifyEvent
 import io.minchat.rest.MinchatRestClient
 import io.minchat.rest.entity.withClient
 
+/** @see UserModifyEvent */
 class MinchatUserModify(
 	data: UserModifyEvent,
 	client: MinchatRestClient

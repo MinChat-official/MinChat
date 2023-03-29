@@ -19,7 +19,7 @@ class NewConsoleIntegrationPlugin : MinchatPlugin("new-console-integration") {
 			// This is just to check whether the class is loaded or not.
 			ConsoleVars.console
 		} catch (e: NoClassDefFoundError) {
-			Log.info("NewConsole is not loaded or cannot be detected; skipping the NewConsole integration plugin.")
+			Log.info("NewConsole is either not loaded or cannot be detected; skipping the NewConsole integration plugin.")
 			return@run
 		}
 
@@ -35,7 +35,7 @@ class NewConsoleIntegrationPlugin : MinchatPlugin("new-console-integration") {
 					if (b >= 32 || b == 0x001b || b == Console.dontResend.code) {
 						builder.append(b.toChar())
 					}
-				} else {
+				} else if (builder.isNotEmpty()) {
 					val string = builder.toString()
 
 					if (!string.startsWith(Console.dontResendStr) && !string.startsWith("\u001b[")) {

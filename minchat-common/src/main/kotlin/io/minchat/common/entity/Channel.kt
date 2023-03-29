@@ -11,5 +11,7 @@ data class Channel(
 	companion object {
 		val nameLength = 3..64
 		val descriptionLength = 0..512
+		/** The maximum number of messages returned by the `channel/.../messages` route. */
+		val messagesPerFetch = 50
 	}
 }
