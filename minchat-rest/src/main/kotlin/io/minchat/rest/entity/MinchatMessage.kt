@@ -3,7 +3,7 @@ package io.minchat.rest.entity
 import io.minchat.common.entity.*
 import io.minchat.rest.MinchatRestClient
 
-class MinchatMessage(
+data class MinchatMessage(
 	val data: Message,
 	override val rest: MinchatRestClient
 ) : MinchatEntity<MinchatMessage>() {
@@ -35,6 +35,17 @@ class MinchatMessage(
 	 */
 	suspend fun delete() =
 		rest.deleteMessage(id)
+
+	/**
+	 * Copies this [MinchatMessage] object, allowing to override some of its data values.
+	 */
+	fun copy(
+		content: String = data.content,
+		author: User = data.author,
+		channel: Channel = data.channel,
+		timestamp: Long = data.timestamp
+	) =
+		MinchatMessage(data.copy(content = content, author = author, channel = channel, timestamp = timestamp), rest)
 }
 
 fun Message.withClient(rest: MinchatRestClient) =
