@@ -35,6 +35,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var channelsContainer: Table
 
 	lateinit var chatBar: Table
+	/** Wraps [chatContainer]. */
 	lateinit var chatPane: ScrollPane
 	/** Contains a list of message elements. */
 	lateinit var chatContainer: Table
@@ -42,6 +43,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var chatField: TextField
 	lateinit var sendButton: TextButton
 
+	// TODO: message editing
 	/** If present, a message being edited. This listener overrides the default "send" action, but only once. */
 	private var editListener: ((String) -> Unit)? = null
 	private var closeListener: (() -> Unit)? = null
@@ -86,7 +88,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 				}.minWidth(200f).padLeft(8f).margin(MinchatStyle.buttonMargin)
 			}
-			// Notification bar. A table is neccessary to render a background.
+			// Notification bar. A table is necessary to render a background.
 			addTable(Styles.black8) {
 				center()
 				notificationBar = this
@@ -104,7 +106,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 		hsplitter(padBottom = 0f).colspan(3)
 
-		// left bar: channel list + notification labeo
+		// left bar: channel list + notification label
 		addTable(MinchatStyle.surfaceBackground) {
 			margin(MinchatStyle.layoutMargin)
 			channelsBar = this
@@ -186,7 +188,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 						if (newMessage.channelId == currentChannel?.id) {
 							// Find and replace the old message element in its cell
 							val messageCell = chatContainer.cells.find {
-								it.getAsOrNull<NormalMinchatMessageElement>()?.message?.id == newMessage.id
+								// getAsOrNull won't work for some reason
+								(it.get() as? NormalMinchatMessageElement)?.message?.id == newMessage.id
 							}
 							messageCell.setElement<Element>(NormalMinchatMessageElement(this@ChatFragment, newMessage))
 							chatContainer.invalidateHierarchy()
@@ -215,18 +218,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 
 					is MinchatUserModify -> {
-						//println("received user modify event: ${event.user}")
 						val newUser = event.user
-						// FIXME: doesn't work, the container seems empty?
 						chatContainer.cells.forEach {
-							val element = it.getAsOrNull<NormalMinchatMessageElement>()?.let { old ->
-								println("old: $old")
+							val element = (it.get() as? NormalMinchatMessageElement)?.let { old ->
 								old.takeIf { it.message.authorId == newUser.id }?.let {
 									NormalMinchatMessageElement(old.chat, old.message.copy(author = newUser.data))
 								}
-							} ?: return@onEach
-
-							println("replaced with ${newUser.username}")
+							} ?: return@forEach
 
 							it.setElement<NormalMinchatMessageElement>(element)
 						}
@@ -263,10 +261,10 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			.also { notificationStack.add(it) }
 
 	/** Adds a message to the list of messages. */
-	fun addMessage(element: MinchatMessageElement, animationLegth: Float) = synchronized(chatContainer) {
+	fun addMessage(element: MinchatMessageElement, animationLength: Float) = synchronized(chatContainer) {
 		chatContainer.add(element)
 			.padBottom(10f).pad(4f).growX().row()
-		element.animateMoveIn(animationLegth)
+		element.animateMoveIn(animationLength)
 	}
 
 	override fun applied(cell: Cell<Table>) {
@@ -318,7 +316,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 				messages.forEachIndexed { index, message ->
 					addMessage(NormalMinchatMessageElement(this@ChatFragment, message),
-						animationLegth = 0.5f + 0.01f * (messages.size - index))
+						animationLength = 0.5f + 0.01f * (messages.size - index))
 				}
 
 				// force the scroll pane to recalculate its dimensions and scroll to the bottom
@@ -360,7 +358,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		}.then { notif.cancel() }
 	}
 
-	/** Executes an action when the close button is pressed. Overrires the previous listener. */
+	/** Executes an action when the close button is pressed. Overrides the previous listener. */
 	fun onClose(action: () -> Unit) {
 		closeListener = action
 	}
