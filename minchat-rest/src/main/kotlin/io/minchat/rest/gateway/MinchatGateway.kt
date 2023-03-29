@@ -29,10 +29,14 @@ class MinchatGateway(
 	 * transformed to their respective high-level types.
 	 */
 	val events: Flow<MinchatEvent<out Event>> =
-		rawGateway.events.map {
+		rawGateway.events.mapNotNull {
 			val transformation = transformationForClass<Event>(it::class)
-				?: error("No transformation found for event class ${it::class}")
-			transformation.transform(it, client)
+
+			transformation?.run { transform(it, client) }
+				?: run {
+					println("No transformation found for event class ${it::class.qualifiedName}")
+					null
+				}
 		}
 	
 	/** See [RawGateway.connectIfNecessary]. */
