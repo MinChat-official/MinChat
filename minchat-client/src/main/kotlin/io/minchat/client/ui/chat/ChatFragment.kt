@@ -1,11 +1,13 @@
 package io.minchat.client.ui.chat
 
+import arc.Core
+import arc.input.KeyCode
 import arc.scene.Element
 import arc.scene.actions.Actions
 import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
-import arc.util.*
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
@@ -137,18 +139,23 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				textArea().with {
 					chatField = it
 					it.setStyle(MinchatStyle.TextInput)
+
+					// Send the current message when the user presses shift+enter
+					it.keyDown(KeyCode.enter) {
+						if (it.content.isEmpty()) return@keyDown
+						if (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight)) {
+							sendCurrentMessage()
+						}
+					}
 				}.growX()
 
-				textButton(">", MinchatStyle.ActionButton) {
-					if (Minchat.client.isLoggedIn) {
-						sendCurrentMessage()
-					} else {
-						Vars.ui.showInfo("You must login or register first.")
+				textButton(">", MinchatStyle.ActionButton) { sendCurrentMessage() }
+					.with { sendButton = it }
+					.disabled {
+						!Minchat.client.isLoggedIn || currentChannel == null ||
+							chatField.content.length !in Message.contentLength
 					}
-				}.with { sendButton = it }.disabled {
-					!Minchat.client.isLoggedIn || currentChannel == null ||
-						chatField.content.length !in Message.contentLength
-				}.padLeft(8f).fill().width(80f)
+					.padLeft(8f).fill().width(80f)
 
 				updateChatbox()
 			}.growX().padTop(MinchatStyle.layoutPad).padLeft(10f).padRight(10f)
@@ -156,8 +163,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 		// Listen for minchat message events in this channel and update the message list accordingly
 		messageListenerJob = Minchat.gateway.events
+			.filter { scene != null } // only receive events if the chat is visible
 			.onEach { event ->
-				Log.info("Received $event")
 				when (event) {
 					is MinchatMessageCreate -> {
 						val message = event.message
@@ -197,6 +204,31 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 									Actions.remove()
 								))
 							}
+						}
+					}
+
+					is MinchatChannelCreate,
+					is MinchatChannelModify,
+					is MinchatChannelDelete -> {
+						// TODO properly handle this
+						reloadChannels()
+					}
+
+					is MinchatUserModify -> {
+						//println("received user modify event: ${event.user}")
+						val newUser = event.user
+						// FIXME: doesn't work, the container seems empty?
+						chatContainer.cells.forEach {
+							val element = it.getAsOrNull<NormalMinchatMessageElement>()?.let { old ->
+								println("old: $old")
+								old.takeIf { it.message.authorId == newUser.id }?.let {
+									NormalMinchatMessageElement(old.chat, old.message.copy(author = newUser.data))
+								}
+							} ?: return@onEach
+
+							println("replaced with ${newUser.username}")
+
+							it.setElement<NormalMinchatMessageElement>(element)
 						}
 					}
 				}
@@ -285,7 +317,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				chatContainer.clearChildren()
 
 				messages.forEachIndexed { index, message ->
-					addMessage(NormalMinchatMessageElement(this,message),
+					addMessage(NormalMinchatMessageElement(this@ChatFragment, message),
 						animationLegth = 0.5f + 0.01f * (messages.size - index))
 				}
 
@@ -311,14 +343,21 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		val channel = currentChannel ?: return null
 		chatField.content = ""
 
-		return if (content.isNotEmpty()) {
-			val notif = notification("Sending...", 1)
-			launch {
-				runSafe {
-					channel.createMessage(content)
-				}
-			}.then { notif.cancel() }
-		} else null
+		if (!Minchat.client.isLoggedIn) {
+			Vars.ui.showInfo("You must login or register to send messages.")
+			return null
+		}
+		if (content.length !in Message.contentLength) {
+			Vars.ui.showInfo("Messages must have a length of ${Message.contentLength} characters")
+			return null
+		}
+
+		val notif = notification("Sending...", 1)
+		return launch {
+			runSafe {
+				channel.createMessage(content)
+			}
+		}.then { notif.cancel() }
 	}
 
 	/** Executes an action when the close button is pressed. Overrires the previous listener. */
