@@ -166,7 +166,7 @@ open class MinchatLauncher : Runnable {
 
 							else -> {
 								Log.error(cause) { "Exception thrown when processing $call" }
-								call.respondText(text = "500: An abnormal exception was thrown while processing the request.",
+								call.respondText(text = "Server error (500): An abnormal exception was thrown while processing the request.",
 									status = HttpStatusCode.InternalServerError)
 							}
 						}

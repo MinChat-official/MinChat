@@ -59,9 +59,10 @@ class GatewayModule : MinchatServerModule() {
 					val event = pendingEvents.remove()
 					val frame = jsonConverter.serialize(event)
 
+					Log.lifecycle { "Sending $event to ${connections.size} connections" }
+
 					connections.forEach {
 						it.session.outgoing.send(frame)
-						Log.info { "Sending $event to ${it.id}" }
 					}
 				}
 				delay(20L)
