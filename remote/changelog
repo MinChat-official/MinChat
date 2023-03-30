@@ -1,3 +1,6 @@
+#VERSION 0.3.0
+Separated User.username and User.nickname
+
 #VERSION 0.2.0
 Added an event gateway, allowing to update the state of the chat in real time.
 
