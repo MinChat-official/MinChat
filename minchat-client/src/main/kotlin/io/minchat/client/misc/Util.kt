@@ -3,6 +3,7 @@ package io.minchat.client.misc
 import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
 import kotlinx.coroutines.*
+import java.nio.channels.UnresolvedAddressException
 
 fun Throwable.userReadable() = when (this) {
 	is ResponseException -> {
@@ -21,7 +22,9 @@ fun Throwable.userReadable() = when (this) {
 		}
 		val postifx = "(code ${response.status.value})"
 
-		"$prefix: $midfix." //+ " $postifx"
+		//"$prefix: $midfix. $postifx"
+		// TODO: do I need the prefix and the postfix?
+		midfix
 	}
 	is HttpRequestTimeoutException, is ConnectTimeoutException -> {
 		"Timed out. Check your internet connection and try again."
@@ -29,8 +32,11 @@ fun Throwable.userReadable() = when (this) {
 	is java.net.ConnectException -> {
 		"Could not connect to the server. Check your internet connection."
 	}
+	is UnresolvedAddressException -> {
+		"Could not resolve the server. Check your internet connection or make sure you're connecting to a valid MinChat server."
+	}
 	is RuntimeException -> {
-		"Mod error: $message"
+		"Mod error: ${toString()}"
 	}
 	else -> "Unknown error: $this. Please, report to the developer."
 }
