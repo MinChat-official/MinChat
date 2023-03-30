@@ -97,8 +97,9 @@ class ChannelModule : MinchatServerModule() {
 			// Admin-only
 			post(Route.Channel.create) {
 				val data = call.receive<ChannelCreateRequest>()
+				val channelName = data.name.nameConvention()
 
-				data.name.requireLength(Channel.nameLength) { 
+				channelName.requireLength(Channel.nameLength) {
 					"Name length must be in range of Channels.nameLength"
 				}
 				data.description.requireLength(Channel.descriptionLength) { 
@@ -109,7 +110,7 @@ class ChannelModule : MinchatServerModule() {
 					call.requireAdmin()
 
 					val channelRow = Channels.insert {
-						it[name] = data.name
+						it[name] = channelName
 						it[description] = data.description
 					}.resultedValues!!.first()
 
@@ -124,8 +125,9 @@ class ChannelModule : MinchatServerModule() {
 			post(Route.Channel.edit) {
 				val id = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<ChannelModifyRequest>()
+				val newName = data.newName?.nameConvention()
 
-				data.newName?.requireLength(Channel.nameLength) { 
+				newName?.requireLength(Channel.nameLength) {
 					"Name length must be in range of Channels.nameLength"
 				}
 				data.newDescription?.requireLength(Channel.descriptionLength) { 
@@ -136,7 +138,7 @@ class ChannelModule : MinchatServerModule() {
 					call.requireAdmin()
 
 					Channels.update({ Channels.id eq id }) {
-						data.newName?.let { newName ->
+						newName?.let { newName ->
 							it[Channels.name] = newName
 						}
 						data.newDescription?.let { newDescription ->

@@ -23,11 +23,9 @@ class AuthModule : MinchatServerModule() {
 
 				val response = transaction {
 					val userRow = Users
-						.select { Users.username eq data.username }
+						.select { Users.username.lowerCase() eq data.username.lowercase() }
 						.find {
-							// todo: this is a potential vulnerability.
-							// for now, I have to prevent users from having identical namws
-							// later, I should allow them but require email or other kind of auth
+							// There should be only 1 matching user... Normally.
 							BCrypt.checkpw(data.passwordHash, it[Users.passwordHash])
 						} 
 						?: accessDenied("Incorrect login or password")
@@ -49,10 +47,14 @@ class AuthModule : MinchatServerModule() {
 
 			post(Route.Auth.register) {
 				val data = call.receive<UserRegisterRequest>()
-				val name = data.username.trim()
+				val name = data.username.nameConvention()
+				val nickname = data.nickname?.nameConvention()
 
 				name.requireLength(User.nameLength) {
 					"Username length must be in the range of ${User.nameLength} characters!" 
+				}
+				nickname?.requireLength(User.nameLength) {
+					"Nickname length must be in the range of ${User.nameLength} characters!"
 				}
 
 				val complexity = Constants.hashComplexityPre
@@ -63,10 +65,10 @@ class AuthModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					// ensure the name is vacant
 					if (Users.select { Users.username.lowerCase() eq name.lowercase() }.empty().not()) {
-						illegalInput("This username is already taken. Accounts with identical namss are not yet supported.")
+						illegalInput("This username is already taken. Create a unique username; you will use it to log in later.")
 					}
 					
-					val userRow = Users.register(name, data.passwordHash, false)
+					val userRow = Users.register(name, nickname, data.passwordHash, false)
 
 					UserRegisterRequest.Response(
 						token = userRow[Users.token],

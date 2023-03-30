@@ -21,12 +21,12 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 	suspend fun editUser(
 		id: Long,
 		token: String,
-		newUsername: String?
+		newNickname: String?
 	) = run {
 		client.post(makeRouteUrl(Route.User.edit, id)) {
 			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
-			setBody(UserModifyRequest(newUsername = newUsername))
+			setBody(UserModifyRequest(newNickname = newNickname))
 		}.body<User>()
 	}
 
@@ -45,25 +45,24 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 	/** Hashes and validates the password and performs authorization. Returns a logged-in MinchatAccount. */
 	suspend fun login(username: String, password: String): MinchatAccount {
 		val hash = hashPasswordLocal(password)
-		return loginOrRegister(Route.Auth.login, username, hash)
+		val response = client.post(makeRouteUrl(Route.Auth.login)) {
+			contentType(ContentType.Application.Json)
+			// UserLoginRequest and UserRegisterRequest are the same. just as their responses
+			setBody(UserLoginRequest(username, hash))
+		}.body<UserLoginRequest.Response>()
+
+		return response.user.withToken(response.token)
+
 	}
 
 	/** Hashes and validates the password and tries to register a new account. Returns a logged-in MinchatAccount. */
-	suspend fun register(username: String, password: String): MinchatAccount {
+	suspend fun register(username: String, nickname: String?, password: String): MinchatAccount {
 		val hash = hashPasswordLocal(password)
-		return loginOrRegister(Route.Auth.register, username, hash)
-	}
 
-	// for now, login and register routes use the same pattern, so we can just share the code
-	private inline suspend fun loginOrRegister(
-		route: String, 
-		username: String,
-		passwordHash: String
-	): MinchatAccount {	
-		val response = client.post(makeRouteUrl(route)) {
+		val response = client.post(makeRouteUrl(Route.Auth.register)) {
 			contentType(ContentType.Application.Json)
 			// UserLoginRequest and UserRegisterRequest are the same. just as their responses
-			setBody(UserLoginRequest(username, passwordHash))
+			setBody(UserRegisterRequest(username, nickname, hash))
 		}.body<UserLoginRequest.Response>()
 
 		return response.user.withToken(response.token)

@@ -10,6 +10,8 @@ abstract class MinchatServerModule {
 
 	val name = createServiceName()
 
+	private val illegalCharRegex = """[^a-zA-Z0-9\-_()\[\]]""".toRegex()
+
 	@JvmName("onLoadPublic")
 	fun onLoad(application: Application) {
 		require(::server.isInitialized.not()) { "Module '$name' has already been loaded!" }
@@ -64,6 +66,10 @@ abstract class MinchatServerModule {
 				}
 			}
 		} ?: "anonymous-module"
+
+	/** Converts the given string to a conventional name string. */
+	fun String.nameConvention() =
+		trim().replace(illegalCharRegex, "-")
 
 	override fun toString() =
 		"Module(name = $name)"

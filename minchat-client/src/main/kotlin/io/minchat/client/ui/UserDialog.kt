@@ -1,16 +1,13 @@
 package io.minchat.client.ui
 
-import arc.scene.*
-import arc.scene.style.*
 import arc.scene.ui.*
-import arc.scene.ui.layout.*
-import arc.util.*
+import arc.scene.ui.layout.Table
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
-import com.github.mnemotechnician.mkui.extensions.groups.*
-import io.minchat.client.*
+import io.minchat.client.Minchat
 import io.minchat.client.misc.*
-import io.minchat.rest.entity.*
+import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.*
 import java.time.Instant
 import kotlin.coroutines.EmptyCoroutineContext
@@ -59,6 +56,7 @@ abstract class UserDialog(
 		cont.addTable {
 			statsTable = this
 
+			addStat("Username") { user?.username }
 			addStat("ID") { user?.id?.toString() }
 			addStat("Is admin") { user?.isAdmin }
 			addStat("Is banned") { user?.isBanned }
@@ -189,22 +187,22 @@ abstract class UserDialog(
 		val user = this@UserDialog.user!!
 
 		init {
-			fields.addLabel("Editing user ${user.tag}.", align = Align.left)
+			fields.addLabel("Editing user ${user.tag} (${user.username}).", align = Align.left)
 				.fillX().row()
 
-			val usernameField = field("New username", false) {
+			val usernameField = field("New nickname", false) {
 				it.length in 3..40
 			}.also {
-				it.content = user.username
+				it.content = user.nickname ?: user.username
 			}
 
 			action("Confirm") {
 				hide()
-				launchWithStatus("Editing user ${user.tag}...") {
+				launchWithStatus("Editing user ${user.username}...") {
 					runSafe {
 						// This will also update the minchat account
 						this@UserDialog.user = user.edit(
-							newUsername = usernameField.content
+							newNickname = usernameField.content
 						)
 					}
 				}

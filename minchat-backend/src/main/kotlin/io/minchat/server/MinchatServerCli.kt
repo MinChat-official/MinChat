@@ -236,7 +236,7 @@ open class DbManager : Runnable {
 					} ?: "<THIS WILL BE REPLACED>"
 					
 					transaction {
-						val row = Users.register(name, hash, isAdmin)
+						val row = Users.register(name, null, hash, isAdmin)
 						// if password generation was skipped, substitute the password hash in the db
 						if (password == null) {
 							Users.update({ Users.id eq row[Users.id] }) {

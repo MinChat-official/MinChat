@@ -41,7 +41,7 @@ class MinchatRestClient(
 	val messageService = MessageService(baseUrl, httpClient)
 
 	/** 
-	 * Attempts to log into the providen Minchat account.
+	 * Attempts to log into the provided Minchat account.
 	 * Must be called before using most other methods.
 	 *
 	 * Length ranges:
@@ -52,9 +52,16 @@ class MinchatRestClient(
 		account = userService.login(username, password)
 	}
 
-	/** See [login]. */
-	suspend fun register(username: String, password: String) {
-		account = userService.register(username, password)
+	/**
+	 * Attempts to create a new Minchat account and log into it.
+	 * Can be called instead of [login].
+	 *
+	 * Length ranges:
+	 * * [username], [nickname] - 3..40 characters (server-side)
+	 * * [password] - 8..40 characters (client-side only)
+	 */
+	suspend fun register(username: String, nickname: String?, password: String) {
+		account = userService.register(username, nickname, password)
 	}
 
 	/** Logs out of the current account. */
@@ -158,13 +165,13 @@ class MinchatRestClient(
 	 * Requires a registered account.
 	 * Accounts of others can only be edited by admins.
 	 */
-	suspend fun editUser(id: Long, newUsername: String?) =
-		userService.editUser(id, account().token, newUsername)
+	suspend fun editUser(id: Long, newNickname: String?) =
+		userService.editUser(id, account().token, newNickname)
 			.withClient(this)
 
 	/** Edits the currently logged-in account. */
-	suspend fun editSelf(newUsername: String?) =
-		editUser(account().id, newUsername).also {
+	suspend fun editSelf(newNickname: String?) =
+		editUser(account().id, newNickname).also {
 			account().user = it.data
 		}
 	

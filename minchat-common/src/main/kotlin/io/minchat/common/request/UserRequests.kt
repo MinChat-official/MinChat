@@ -20,6 +20,7 @@ class UserLoginRequest(
 @Serializable
 class UserRegisterRequest(
 	val username: String,
+	val nickname: String?,
 	val passwordHash: String
 ) {
 	@Serializable
@@ -35,7 +36,7 @@ class UserRegisterRequest(
  */
 @Serializable
 data class UserModifyRequest(
-	val newUsername: String?
+	val newNickname: String?
 )
 
 /** 

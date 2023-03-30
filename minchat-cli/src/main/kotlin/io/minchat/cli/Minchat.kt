@@ -2,11 +2,11 @@ package io.minchat.cli
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.*
-import com.jakewharton.mosaic.*
+import com.jakewharton.mosaic.runMosaic
 import com.jakewharton.mosaic.ui.*
 import io.minchat.cli.ui.*
-import io.minchat.common.*
-import io.minchat.common.event.*
+import io.minchat.common.MINCHAT_VERSION
+import io.minchat.common.event.Event
 import io.minchat.rest.MinchatRestClient
 import io.minchat.rest.entity.*
 import io.minchat.rest.event.*
@@ -213,7 +213,7 @@ class Minchat(
 							// should be safe since the user can't change the mode here
 							when (currentMode) {
 								MinchatMode.LOGIN -> client.login(username!!, password!!)
-								MinchatMode.REGISTER -> client.register(username!!, password!!)
+								MinchatMode.REGISTER -> client.register(username!!, null, password!!)
 								else -> error("What have you done...")
 							}
 						}.onFailure {

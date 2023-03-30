@@ -6,10 +6,12 @@ import org.jetbrains.exposed.sql.*
 import org.mindrot.jbcrypt.BCrypt
 import java.math.BigInteger
 import java.security.MessageDigest
-import kotlin.math.abs
+import kotlin.random.Random
 
 object Users : MinchatEntityTable<User>() {
 	val username = varchar("name", User.nameLength.endInclusive)
+	val nickname = varchar("nickname", User.nameLength.endInclusive).nullable().default(null)
+
 	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
 	val isAdmin = bool("admin").default(false)
@@ -40,6 +42,7 @@ object Users : MinchatEntityTable<User>() {
 		User(
 			id = row[id].value,
 			username = row[username],
+			nickname = row[nickname],
 			discriminator = row[discriminator],
 			isAdmin = row[isAdmin],
 
@@ -68,10 +71,22 @@ object Users : MinchatEntityTable<User>() {
 	fun isAdminToken(token: String) =
 		select { Users.token eq token }.firstOrNull()?.get(isAdmin) ?: false
 
-	fun register(name: String, passwordHash: String, admin: Boolean): ResultRow {
+	/**
+	 * Registers a new user.
+	 *
+	 * This function does not check if the name is already taken.
+	 *
+	 * @param nickname the nickname of the user, or null if they did not choose one.
+	 */
+	fun register(
+		name: String,
+		nickname: String?,
+		passwordHash: String,
+		admin: Boolean
+	): ResultRow {
 		val salt = BCrypt.gensalt(12)
 		val hashedHash = BCrypt.hashpw(passwordHash, salt)
-		
+
 		lateinit var userToken: String
 
 		// generate a token; repeat if the token is already used (this should never happen normally)
@@ -90,10 +105,11 @@ object Users : MinchatEntityTable<User>() {
 		// create a new user and get the created row
 		val userRow = Users.insert {
 			it[username] = name
+			it[Users.nickname] = nickname
 			it[Users.passwordHash] = hashedHash
 			it[token] = userToken
-			
-			it[discriminator] = abs((System.nanoTime() xor 0xAAAA).toInt() % 10000)
+
+			it[discriminator] = nextDiscriminator(nickname ?: name)
 			it[isAdmin] = admin
 
 			it[creationTimestamp] = System.currentTimeMillis()
@@ -101,5 +117,28 @@ object Users : MinchatEntityTable<User>() {
 		}.resultedValues!!.first()
 
 		return userRow
+	}
+
+	/** Returns a random unique discriminator for the provided nickname. */
+	fun nextDiscriminator(forNickname: String): Int {
+		val taken = Users.select { username.lowerCase() eq forNickname.lowercase() }
+			.map { it[discriminator] }
+
+		if (taken.size >= 100) {
+			error("The nickname $forNickname is too popular.")
+		}
+
+		val random = Random(System.currentTimeMillis())
+		repeat(100) {
+			val discriminator = random.nextInt(1, 10000)
+			if (discriminator !in taken) {
+				return discriminator
+			}
+		}
+		// Fall back to a simpler approach after too many attempts
+		for (i in 1..<10000) {
+			if (i !in taken) return i
+		}
+		error("unreachable")
 	}
 }

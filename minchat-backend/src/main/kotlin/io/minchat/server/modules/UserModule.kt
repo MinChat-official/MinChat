@@ -32,25 +32,24 @@ class UserModule : MinchatServerModule() {
 				val data = call.receive<UserModifyRequest>()
 				val token = call.token()
 
-				data.newUsername?.requireLength(User.nameLength) {
+				val newNickname = data.newNickname?.nameConvention()
+
+				newNickname?.requireLength(User.nameLength) {
 					"Username length must be in the range of ${User.nameLength} characters!" 
 				}
 
 				newSuspendedTransaction {
-					data.newUsername?.let { name ->
-						// the name must be unused
-						if (Users.select {Users.username.lowerCase() eq name.lowercase() }.empty().not()) {
-							illegalInput("this username is already claimed.")
-						}
-					}
-
 					Users.update(opWithAdminAccess(Users.isAdminToken(token),
 						common = { Users.id eq id },
 						userOnly = { Users.token eq token }
 					)) { row ->
 						// todo: support more fields
-						data.newUsername?.let { row[Users.username] = it }
-					}.throwIfNotFound { "user with the providen id-token pair does not exist." }
+						newNickname?.let {
+							row[Users.nickname] = it
+							// generate a new unique discriminator on name change
+							row[discriminator] = Users.nextDiscriminator(it)
+						}
+					}.throwIfNotFound { "user with the provided id-token pair does not exist." }
 
 					val newUser = Users.getById(id)
 
@@ -76,7 +75,7 @@ class UserModule : MinchatServerModule() {
 
 						it[Users.discriminator] = 0
 						it[Users.isDeleted] = true
-					}.throwIfNotFound { "user with the providen id-token pair does not exist." }
+					}.throwIfNotFound { "user with the provide id-token pair does not exist." }
 				}
 				call.response.statusOk()
 

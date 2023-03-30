@@ -46,7 +46,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 
-			val usernameField = field("Username", false) { 
+			val usernameField = field("Username", false) {
 				it.trim().length in User.nameLength
 			}
 			val passwordField = field("Password", true) {
@@ -78,6 +78,9 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 			val usernameField = field("Username", false) { 
 				it.trim().length in User.nameLength
 			}
+			val nicknameField = field("Nickname (can be empty)", false) {
+				it.isEmpty() || it.isNotBlank()
+			}
 			val passwordField = field("Confirm password", true) {
 				it.length in User.passwordLength
 			}
@@ -87,12 +90,13 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 
 			action("Register") {
 				val username = usernameField.content
+				val nickname = nicknameField.content.takeIf { it.isNotBlank() }
 				val password = passwordField.content
 				hide()
 
 				launchWithStatus("Registering as $username...") {
 					runSafe {
-						Minchat.client.register(username, password)
+						Minchat.client.register(username, nickname, password)
 					}
 					createActions()
 				}

@@ -26,8 +26,8 @@ class NormalMinchatMessageElement(
 		// Top row: author tag + timestamp
 		addTable {
 			left()
-			// username
-			addLabel(message.author.username, ellipsis = "...").color(when {
+			// display name
+			addLabel(message.author.displayName, ellipsis = "...").color(when {
 				message.author.id == Minchat.client.account?.id -> MinchatStyle.green
 				message.author.isAdmin -> MinchatStyle.pink // I just like pink~
 				else -> MinchatStyle.purple
