@@ -18,6 +18,9 @@ dependencies {
 	implementation("com.github.mnemotechnician", "mkui", "v1.2.1")
 
 	implementation("io.ktor", "ktor-client-core", ktorVersion)
+	implementation("io.ktor", "ktor-client-cio", ktorVersion)
+	implementation("io.ktor", "ktor-client-content-negotiation", ktorVersion)
+	implementation("io.ktor", "ktor-serialization-kotlinx-json", ktorVersion)
 
 	compileOnly("com.github.Anuken", "mindustryjitpack", mindustryVersion)
 	compileOnly("com.github.Anuken.Arc", "arc-core", mindustryVersion)

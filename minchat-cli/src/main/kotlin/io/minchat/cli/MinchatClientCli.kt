@@ -54,7 +54,7 @@ open class CliClientLauncher : Runnable {
 				println("$MINCHAT_VERSION vs $serverVersion")
 				exitProcess(1)
 			}
-			!MINCHAT_VERSION.isInterchangableWith(serverVersion) -> {
+			!MINCHAT_VERSION.isInterchangeableWith(serverVersion) -> {
 				println("Caution: the server version is not the same as thge client version. Some issues may arise.")
 				println("$MINCHAT_VERSION vs $serverVersion.")
 				delay(1000L)

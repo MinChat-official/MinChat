@@ -7,6 +7,7 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
+import io.minchat.client.config.MinchatGithubClient
 import io.minchat.client.misc.*
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.common.MINCHAT_VERSION
@@ -38,8 +39,8 @@ class MinchatMod : Mod(), CoroutineScope {
 	}
  	override val coroutineContext = rootJob + exceptionHandler + MinchatDispatcher
 
-	val timestampFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
-	val timezone = ZoneId.systemDefault()
+	val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+	val timezone: ZoneId = ZoneId.systemDefault()
 
 	/**
 	 * The main Minchat client used across the mod.
@@ -67,6 +68,9 @@ class MinchatMod : Mod(), CoroutineScope {
 		it.titleTable.remove()
 		cell()?.grow()?.pad(10f)
 	} }
+
+	/** The main MinChat GitHub client used across the mod. */
+	val githubClient = MinchatGithubClient()
 
 	init {
 		require(minchatInstance == null) { "Do not." }
@@ -131,7 +135,6 @@ class MinchatMod : Mod(), CoroutineScope {
 		}
 
 		connectToDefault()
-
 	}
 
 	fun showChatDialog() {
@@ -154,7 +157,7 @@ class MinchatMod : Mod(), CoroutineScope {
 			Log.err("'$url' uses an incompatible version of MinChat: $serverVersion. The client uses $MINCHAT_VERSION.")
 			throw VersionMismatchException(serverVersion, MINCHAT_VERSION)
 		}
-		if (!serverVersion.isInterchangableWith(MINCHAT_VERSION)) {
+		if (!serverVersion.isInterchangeableWith(MINCHAT_VERSION)) {
 			val warning = "The version of '$url' may not be fully compatible with the client ($serverVersion vs $MINCHAT_VERSION)"
 
 			Log.warn(warning)
@@ -171,10 +174,15 @@ class MinchatMod : Mod(), CoroutineScope {
 	 * Connects to the default server.
 	 * Overrides [client] upon success.
 	 */
-	fun connectToDefault() = run {
-		// TODO: UNHARDCODE THIS!
-		// this must be overridable + must be fetched from github by default
-		connectToServer("https://vps76238.xxvps.net:8443")
+	fun connectToDefault() = launch {
+		// TODO: must be overridable by the user
+		val url = githubClient.getDefaultUrl()
+
+		connectToServer(url).join()
+
+		// TODO: ONLY FOR TESTING!! REMOVE BEFORE COMMITTING!
+		Log.info("Changelog: ${githubClient.getChangelog()}")
+		Log.info("Latest version: ${githubClient.getLatestStableVersion()}")
 	}
 
 }
