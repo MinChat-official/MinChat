@@ -7,6 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.BuildVersion
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 /**
@@ -16,7 +17,7 @@ class MinchatGithubClient {
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
 		install(ContentNegotiation) {
-			json(Json { ignoreUnknownKeys = true })
+			json()
 		}
 	}
 
@@ -28,7 +29,8 @@ class MinchatGithubClient {
 	/** Fetches the latest [BuildVersion] of the MinChat client from GitHub. */
 	suspend fun getLatestStableVersion() =
 		httpClient.get("$rawMinchatRepoUrl/remote/latest-stable.json")
-			.body<BuildVersion>()
+			.body<String>() // body<BuildVersion> doesn't work
+			.let { Json.decodeFromString<BuildVersion>(it) }
 
 	/**
 	 * Fetches the changelog of the MinChat client from GitHub,

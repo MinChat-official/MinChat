@@ -179,10 +179,6 @@ class MinchatMod : Mod(), CoroutineScope {
 		val url = githubClient.getDefaultUrl()
 
 		connectToServer(url).join()
-
-		// TODO: ONLY FOR TESTING!! REMOVE BEFORE COMMITTING!
-		Log.info("Changelog: ${githubClient.getChangelog()}")
-		Log.info("Latest version: ${githubClient.getLatestStableVersion()}")
 	}
 
 }
