@@ -37,6 +37,13 @@ open class CliClientLauncher : Runnable {
 	lateinit var channels: List<MinchatChannel>
 
 	val nameColumnWidth = 30
+	val minchatFiglet = """
+		 __  __   _            ____   _               _
+		|  \/  | (_)  _ __    / ___| | |__     __ _  | |_ 
+		| |\/| | | | | '_ \  | |     | '_ \   / _` | | __|
+		| |  | | | | | | | | | |___  | | | | | (_| | | |_ 
+		|_|  |_| |_| |_| |_|  \____| |_| |_|  \__,_|  \__|
+	""".trimIndent()
 
 	override fun run() = runBlocking {
 		// add the url protocol, if necessary
@@ -44,6 +51,7 @@ open class CliClientLauncher : Runnable {
 			serverUrl = "http://$serverUrl"
 		}
 
+		println(minchatFiglet)
 		println("Connecting to $serverUrl.")
 		
 		// Check for compatibility
