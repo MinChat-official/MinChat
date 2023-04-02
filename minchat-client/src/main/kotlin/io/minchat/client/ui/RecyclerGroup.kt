@@ -7,7 +7,7 @@ import arc.scene.*
  * without a big performance overhead.
  *
  * This is achieved by reusing the same elements as they come
- * in and out of the viewport rather than holding allocating
+ * in and out of the viewport rather than allocating
  * many elements and storing them in-memory.
  *
  * Elements of this group must not store any data on their own,

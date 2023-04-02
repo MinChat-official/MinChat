@@ -1,5 +1,10 @@
 package io.minchat.client.misc
 
+import arc.Core
+import arc.input.KeyCode
+import arc.scene.Element
+import arc.scene.ui.TextField
+import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
 import kotlinx.coroutines.*
@@ -49,4 +54,19 @@ fun Throwable.isImportant() = when (this) {
 /** Same as [Job.invokeOnCompletion], but returns [this]. */
 fun Job.then(handler: CompletionHandler) = this.also {
 	invokeOnCompletion(handler)
+}
+
+/**
+ * When the user presses enter while typing in this field,
+ * provided element is clicked and the text is trimmed.
+ */
+fun TextField.then(element: Element) = apply {
+	keyDown(KeyCode.enter) {
+		content = content.trim()
+
+		element.fireClick()
+		if (element is TextField) {
+			Core.scene.setKeyboardFocus(element)
+		}
+	}
 }

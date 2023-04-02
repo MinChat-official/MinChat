@@ -1,9 +1,11 @@
 package io.minchat.client.ui
 
+import arc.scene.ui.TextField
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
+import io.minchat.client.misc.then
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +30,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		headerTable.row().addTable {
 			textButton("LOG IN", Style.ActionButton) {
 				LoginDialog().show()
-			}.disabled { user != null }
+			} //.disabled { user != null }
 				.pad(Style.layoutPad).margin(Style.buttonMargin)
 				.uniformX().growX()
 
@@ -41,15 +43,18 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 	}
 
 	inner class LoginDialog : ModalDialog() {
+		val usernameField: TextField
+		val passwordField: TextField
+
 		init {
 			fields.addLabel("Enter your credentials:", Style.Label, align = Align.left)
 				.growX().pad(Style.layoutPad)
 				.row()
 
-			val usernameField = field("Username", false) {
+			usernameField = field("Username", false) {
 				it.trim().length in User.nameLength
 			}
-			val passwordField = field("Password", true) {
+			passwordField = field("Password", true) {
 				it.length in User.passwordLength
 			}
 
@@ -65,26 +70,34 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 					// Update AuthDialog
 					createActions()
 				}
-			}.disabled { !usernameField.isValid || !passwordField.isValid }
+			}.disabled { !usernameField.isValid || !passwordField.isValid }.with {
+				usernameField.then(passwordField)
+				passwordField.then(it)
+			}
 		}
 	}
 
 	inner class RegisterDialog : ModalDialog() {
+		val usernameField: TextField
+		val nicknameField: TextField
+		val passwordField: TextField
+		val passwordConfirmField: TextField
+
 		init {
 			fields.addLabel("Create a new MinChat account:", Style.Label, align = Align.left)
 				.growX().pad(Style.layoutPad)
 				.row()
 			
-			val usernameField = field("Username", false) { 
+			usernameField = field("Username", false) {
 				it.trim().length in User.nameLength
 			}
-			val nicknameField = field("Nickname (can be empty)", false) {
+			nicknameField = field("Nickname (can be empty)", false) {
 				it.isEmpty() || it.isNotBlank()
 			}
-			val passwordField = field("Confirm password", true) {
+			passwordField = field("Confirm password", true) {
 				it.length in User.passwordLength
 			}
-			val passwordConfirmField = field("Password", true) {
+			passwordConfirmField = field("Password", true) {
 				it == passwordField.content
 			}
 
@@ -103,6 +116,11 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 			}.disabled {
 				!usernameField.isValid || !passwordField.isValid
 					|| passwordField.content != passwordConfirmField.content
+			}.with {
+				usernameField.then(nicknameField)
+				nicknameField.then(passwordField)
+				passwordField.then(passwordConfirmField)
+				passwordConfirmField.then(it)
 			}
 		}
 	}
