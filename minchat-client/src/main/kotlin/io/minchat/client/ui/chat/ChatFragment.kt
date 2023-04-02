@@ -87,12 +87,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 				}.minWidth(200f).padLeft(8f).margin(MinchatStyle.buttonMargin)
 			}
-			// Notification bar. A table is necessary to render a background.
+			// An overlay notification bar. A table is necessary to render a background.
 			addTable(Styles.black8) {
 				center()
 				notificationBar = this
 				touchable = Touchable.disabled
-				translation.y -= 20f // offset it a bit down
+				translation.y -= 20f // offset it down by a little bit
 
 				addLabel({ notificationStack.peek()?.content ?: "" }, wrap = true).with {
 					it.setColor(MinchatStyle.orange)
@@ -269,7 +269,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		// Scroll down to show the new message, but only if the bottom was already visible.
 		if (isAtBottom) {
 			chatPane.validate()
-			chatPane.fling(0.3f,  0f, -element.height)
+			Core.app.post {
+				chatPane.fling(0.1f, 0f, -element.height)
+			}
 		}
 	}
 
@@ -304,7 +306,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		}
 	}
 
-	fun updateChatUi(): Job? {
+	/**
+	 * Reloads messages from the server and updates the chat pane.
+	 *
+	 * @param forcibly if true, even unchanged messages will be updated.
+	 */
+	fun updateChatUi(forcibly: Boolean = false): Job? {
 		val channel = currentChannel ?: return null
 		val notif = notification("Loading messages...", 10)
 
@@ -323,7 +330,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					?.let { it as NormalMinchatMessageElement }
 					?.message?.channelId == currentChannel?.id
 
-				if (!sameChannel) {
+				if (forcibly || !sameChannel) {
 					// If not, replace everything and play an incrementing move-in animation
 					chatContainer.clearChildren()
 					messages.forEachIndexed { index, message ->
@@ -334,13 +341,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					// Otherwise, immediately remove normal message elements that should not be here anymore
 					chatContainer.children.forEach { element ->
 						if (element !is NormalMinchatMessageElement) return@forEach
-						if (messages.none { it.id ==  element.message.id }) {
+						if (element.message !in messages) {
 							element.animateDisappear(0.5f)
 						}
 					}
 					// Then add all the missing message elements
 					messages.forEach { message ->
-						if (chatContainer.children.none { it is NormalMinchatMessageElement && it.message.id == message.id }) {
+						if (chatContainer.children.none { it is NormalMinchatMessageElement && it.message == message }) {
 							addMessage(NormalMinchatMessageElement(this@ChatFragment, message), 1f)
 						}
 					}
