@@ -87,6 +87,14 @@ data class MinchatChannel(
 	override fun toString() =
 		"MinchatChannel(id=$id, name=$name, description=$description)"
 
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+		return data == (other as MinchatChannel).data
+	}
+
+	override fun hashCode(): Int = data.hashCode()
+
 	/**
 	 * Copies this [MinchatChannel] object, allowing to override some of its data values.
 	 */

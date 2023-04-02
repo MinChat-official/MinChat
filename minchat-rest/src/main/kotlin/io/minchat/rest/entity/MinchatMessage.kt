@@ -29,12 +29,23 @@ data class MinchatMessage(
 	suspend fun edit(newContent: String) =
 		rest.editMessage(id, newContent)
 
-	/** 
-	 * Deletes this message. Unless this message was sent by [rest.account.user], 
-	 * requires admin rights. 
+	/**
+	 * Deletes this message. Unless this message was sent by [rest.account.user],
+	 * requires admin rights.
 	 */
 	suspend fun delete() =
 		rest.deleteMessage(id)
+
+	override fun toString(): String =
+		"MinchatMessage(id=$id, channelId=$channelId, authorId=$authorId, content=$content, timestamp=$timestamp)"
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+		return data == (other as MinchatMessage).data
+	}
+
+	override fun hashCode(): Int = data.hashCode()
 
 	/**
 	 * Copies this [MinchatMessage] object, allowing to override some of its data values.

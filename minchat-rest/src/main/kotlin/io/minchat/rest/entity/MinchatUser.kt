@@ -18,7 +18,7 @@ data class MinchatUser(
 
 	/** A unique discriminator used to distinguish users with the same display names. */
 	val discriminator by data::discriminator
-	/** A display name of this user in the form of displayName#discriminator. */
+ 	/** A display name of this user in the form of displayName#discriminator. */
 	val tag by data::tag
 
 	val isAdmin by data::isAdmin
@@ -49,6 +49,14 @@ data class MinchatUser(
 
 	override fun toString() =
 		"MinchatUser(id=$id, tag=$tag, isAdmin=$isAdmin, isBanned=$isBanned, messageCount=$messageCount)"
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+		return data == (other as MinchatUser).data
+	}
+
+	override fun hashCode(): Int = data.hashCode()
 
 	/**
 	 * Copies this [MinchatUser] object, allowing to override some of its data values.
