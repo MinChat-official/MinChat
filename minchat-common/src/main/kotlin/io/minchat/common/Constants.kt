@@ -1,6 +1,9 @@
 package io.minchat.common
 
 object Constants {
+	// TODO:
+	//  this must be randomly generated and stored on the server
+	//  and sent to the client before it makes an authorization attempt!!!
 	/**
 	 * Passwords must be hashed witn bcrypt before being sent to the server.
 	 * This string is the default hash salt.
