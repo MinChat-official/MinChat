@@ -8,7 +8,7 @@ import mindustry.ui.Styles
 import arc.scene.ui.Label as MindustryLabel
 
 object MinchatStyle {
-	val layoutMargin = 3f
+	val layoutMargin = 5f
 	val buttonMargin = 10f
 	val layoutPad = 4f
 
@@ -64,7 +64,7 @@ object MinchatStyle {
 		init {
 			fontColor = foreground
 		
-			up = surfaceBackground
+			up = surfaceInner
 			down = surfaceDown
 			over = surfaceOver
 

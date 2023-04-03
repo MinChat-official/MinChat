@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.*
 import mindustry.Vars
 import mindustry.ui.Styles
 import java.util.concurrent.ConcurrentLinkedQueue
+import io.minchat.client.misc.MinchatStyle as Style
 
 class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentScope) {
 	@Volatile var currentChannel: MinchatChannel? = null
@@ -61,31 +62,31 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			addTable {
 				setFillParent(true)
 
-				textButton("[#${MinchatStyle.red}]X", MinchatStyle.ActionButton) {
+				textButton("[#${Style.red}]X", Style.ActionButton) {
 					closeListener?.invoke() ?: Vars.ui.showInfo("No close listener.")
-				}.padRight(10f).margin(MinchatStyle.buttonMargin).fill()
+				}.padRight(10f).margin(Style.buttonMargin).fill()
 
-				addTable(MinchatStyle.surfaceBackground) {
-					margin(MinchatStyle.layoutMargin)
+				addTable(Style.surfaceBackground) {
+					margin(Style.layoutMargin)
 
-					addLabel("MinChat", MinchatStyle.Label)
-						.color(MinchatStyle.purple).scaleFont(1.3f)
+					addLabel("MinChat", Style.Label)
+						.color(Style.purple).scaleFont(1.3f)
 					// channel name
 					addLabel({
 						currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
-					}, MinchatStyle.Label, ellipsis = "...").growX()
+					}, Style.Label, ellipsis = "...").growX()
 				}.growX().fillY()
 
 				// account button
 				textButton({
 					Minchat.client.account?.user?.tag ?: "[Not logged in]"
-				}, MinchatStyle.ActionButton, ellipsis = "...") {
+				}, Style.ActionButton, ellipsis = "...") {
 					AuthDialog().apply {
 						hidden(::updateChatUi)
 						show()
 						update()
 					}
-				}.minWidth(200f).padLeft(8f).margin(MinchatStyle.buttonMargin)
+				}.minWidth(200f).padLeft(8f).margin(Style.buttonMargin)
 			}
 			// An overlay notification bar. A table is necessary to render a background.
 			addTable(Styles.black8) {
@@ -95,51 +96,51 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				translation.y -= 20f // offset it down by a little bit
 
 				addLabel({ notificationStack.peek()?.content ?: "" }, wrap = true).with {
-					it.setColor(MinchatStyle.orange)
+					it.setColor(Style.orange)
 					it.setFontScale(1.2f)
 				}.growX().pad(12f)
 
 				visible { notificationStack.peek() != null }
 			}
-		}.growX().pad(MinchatStyle.layoutPad).colspan(3).row()
+		}.growX().pad(Style.layoutPad).colspan(3).row()
 
 		hsplitter(padBottom = 0f).colspan(3)
 
 		// left bar: channel list + notification label
-		addTable(MinchatStyle.surfaceBackground) {
-			margin(MinchatStyle.layoutMargin)
+		addTable(Style.surfaceBackground) {
+			margin(Style.layoutMargin)
 			channelsBar = this
 
-			addLabel("Channels").color(MinchatStyle.purple).growX().row()
+			addLabel("Channels").color(Style.purple).growX().row()
 
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
 				channelsContainer = this
 			}.grow().row()
-		}.width(150f).minHeight(300f).pad(MinchatStyle.layoutPad).growY()
+		}.width(150f).minHeight(300f).pad(Style.layoutPad).growY()
 
 		vsplitter()
 
 		// right bar: chat
 		addTable {
-			margin(MinchatStyle.layoutMargin)
+			margin(Style.layoutMargin)
 
 			chatBar = this
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
-				setBackground(MinchatStyle.surfaceBackground)
+				setBackground(Style.surfaceBackground)
 
 				chatPane = it
 				chatContainer = this
-			}.grow().pad(MinchatStyle.layoutPad).row()
+			}.grow().pad(Style.layoutPad).row()
 
 			// chatbox
 			addTable {
-				margin(MinchatStyle.layoutMargin)
+				margin(Style.layoutMargin)
 
 				textArea().with {
 					chatField = it
-					it.setStyle(MinchatStyle.TextInput)
+					it.setStyle(Style.TextInput)
 
 					// Send the current message when the user presses shift+enter
 					it.keyDown(KeyCode.enter) {
@@ -150,7 +151,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 				}.growX()
 
-				textButton(">", MinchatStyle.ActionButton) { sendCurrentMessage() }
+				textButton(">", Style.ActionButton) { sendCurrentMessage() }
 					.with { sendButton = it }
 					.disabled {
 						!Minchat.client.isLoggedIn || currentChannel == null ||
@@ -159,7 +160,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					.padLeft(8f).fill().width(80f)
 
 				updateChatbox()
-			}.growX().padTop(MinchatStyle.layoutPad).padLeft(10f).padRight(10f)
+			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
 
 		// Listen for minchat message events in this channel and update the message list accordingly
@@ -295,14 +296,16 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		channelsContainer.clearChildren()
 
 		channels.forEach { channel ->
-			// TODO: custom style
-			channelsContainer.textButton("#${channel.name}", Styles.flatBordert, align = Align.left) {
+			// TODO: make a separate class
+			channelsContainer.textButton("#${channel.name}", Style.ChannelButton, align = Align.left) {
 				currentChannel = channel
 				lastChatUpdateJob?.cancel()
 				lastChatUpdateJob = updateChatUi()
 			}.with {
-				it.label.setColor(MinchatStyle.foreground)
-			}.align(Align.left).growX().row()
+				it.label.setColor(Style.foreground)
+			}
+				.pad(Style.layoutPad).margin(Style.buttonMargin)
+				.align(Align.left).growX().row()
 		}
 	}
 

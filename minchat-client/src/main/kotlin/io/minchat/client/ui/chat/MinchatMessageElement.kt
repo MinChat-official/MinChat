@@ -4,14 +4,14 @@ import arc.math.Interp
 import arc.scene.actions.Actions
 import arc.scene.ui.layout.Table
 import io.minchat.client.Minchat
-import io.minchat.client.misc.MinchatStyle
 import java.time.Instant
+import io.minchat.client.misc.MinchatStyle as Style
 
 /**
  * Displays a message in MinChat. It's not guaranteed that a message represented with this class actually exists
  * and/or visible to others.
  */
-abstract class MinchatMessageElement : Table(MinchatStyle.surfaceInner) {
+abstract class MinchatMessageElement : Table(Style.surfaceInner) {
 	abstract val timestamp: Long
 	/** When a DateTimeFormatter has to be used to acquire a timestamp, the result is saved here. */
 	private var cachedLongTimestamp: String? = null
