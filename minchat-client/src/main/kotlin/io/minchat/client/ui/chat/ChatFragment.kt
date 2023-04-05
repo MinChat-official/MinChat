@@ -6,7 +6,6 @@ import arc.scene.Element
 import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
-import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
@@ -296,16 +295,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		channelsContainer.clearChildren()
 
 		channels.forEach { channel ->
-			// TODO: make a separate class
-			channelsContainer.textButton("#${channel.name}", Style.ChannelButton, align = Align.left) {
-				currentChannel = channel
-				lastChatUpdateJob?.cancel()
-				lastChatUpdateJob = updateChatUi()
-			}.with {
-				it.label.setColor(Style.foreground)
-			}
-				.pad(Style.layoutPad).margin(Style.buttonMargin)
-				.align(Align.left).growX().row()
+			channelsContainer.add(ChannelButton(this, channel))
+				.pad(Style.layoutPad).growX().row()
 		}
 	}
 
@@ -317,6 +308,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	fun updateChatUi(forcibly: Boolean = false): Job? {
 		val channel = currentChannel ?: return null
 		val notif = notification("Loading messages...", 10)
+
+		lastChatUpdateJob?.cancel()
 
 		return launch {
 			val messages = runSafe {
@@ -378,6 +371,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				chatPane.validate()
 				chatPane.setScrollYForce(chatPane.maxY)
 			}
+		}.also {
+			lastChatUpdateJob = it
 		}.then { notif.cancel() }
 	}
 

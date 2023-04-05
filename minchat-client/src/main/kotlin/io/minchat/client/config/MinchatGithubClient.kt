@@ -7,7 +7,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.BuildVersion
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
 
 /**
@@ -17,14 +17,20 @@ class MinchatGithubClient {
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
 		install(ContentNegotiation) {
-			json()
+			json(Json {
+				ignoreUnknownKeys = true
+			})
 		}
 	}
 
 	/** "raw.GithubUserContent.com" */
 	val rawGithubUrl = "https://raw.githubusercontent.com"
+	/** "api.github.com" */
+	val githubApiUrl = "https://api.github.com"
 	/** The raw GitHub user content url of the official minchat repo. */
 	val rawMinchatRepoUrl = "$rawGithubUrl/minchat-official/minchat/main"
+	/** The GitHub api url of the official minchat repo. */
+	val minchatRepoApiUrl = "$githubApiUrl/repos/minchat-official/minchat"
 
 	/** Fetches the latest [BuildVersion] of the MinChat client from GitHub. */
 	suspend fun getLatestStableVersion() =
@@ -76,8 +82,35 @@ class MinchatGithubClient {
 		httpClient.get("$rawMinchatRepoUrl/remote/default-url")
 			.body<String>()
 
+	/**
+	 * Returns a list of [GithubRelease]s associated with the official MinChat repo,
+	 * sorted by date in a descending manner.
+	 */
+	suspend fun getReleases(): List<GithubRelease> =
+		httpClient.get("$minchatRepoApiUrl/releases")
+			.body<List<GithubRelease>>()
+
 	data class ChangelogEntry(
 		val version: BuildVersion,
 		val description: String
+	)
+
+	@Serializable
+	data class GithubRelease(
+		val url: String,
+		val id: Int,
+		val name: String,
+		@SerialName("tag_name")
+		val tag: String,
+		val description: String,
+		val assets: List<GithubAsset>
+	)
+
+	@Serializable
+	data class GithubAsset(
+		val url: String,
+		@SerialName("browser_download_url")
+		val downloadUrl: String,
+		val name: String
 	)
 }

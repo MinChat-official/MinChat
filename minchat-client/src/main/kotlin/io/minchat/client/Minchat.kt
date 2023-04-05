@@ -9,6 +9,7 @@ import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.config.MinchatGithubClient
 import io.minchat.client.misc.*
+import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.common.MINCHAT_VERSION
 import io.minchat.rest.MinchatRestClient
@@ -34,8 +35,10 @@ val MinchatDispatcher = newFixedThreadPoolContext(5, "minchat")
  */
 class MinchatMod : Mod(), CoroutineScope {
 	val rootJob = SupervisorJob()
-	val exceptionHandler = CoroutineExceptionHandler { _, e -> 
- 		Log.err("An exception has occurred in MinChat", e)
+	val exceptionHandler = CoroutineExceptionHandler { _, e ->
+		if (e !is CancellationException) {
+			Log.err("An exception has occurred in MinChat", e)
+		}
 	}
  	override val coroutineContext = rootJob + exceptionHandler + MinchatDispatcher
 

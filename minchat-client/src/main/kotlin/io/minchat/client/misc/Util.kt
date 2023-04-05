@@ -40,8 +40,12 @@ fun Throwable.userReadable() = when (this) {
 	is UnresolvedAddressException -> {
 		"Could not resolve the server. Check your internet connection or make sure you're connecting to a valid MinChat server."
 	}
+	is IllegalStateException -> {
+		// Caused by calls to error()
+		"Error: ${message}"
+	}
 	is RuntimeException -> {
-		"Mod error: ${toString()}"
+		"Mod error: $this"
 	}
 	else -> "Unknown error: $this. Please, report to the developer."
 }

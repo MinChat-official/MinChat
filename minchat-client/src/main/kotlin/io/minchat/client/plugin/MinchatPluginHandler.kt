@@ -1,8 +1,7 @@
-package io.minchat.client
+package io.minchat.client.plugin
 
 import arc.util.Log
-import io.minchat.client.plugin.MinchatPlugin
-import io.minchat.client.plugin.impl.NewConsoleIntegrationPlugin
+import io.minchat.client.plugin.impl.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 object MinchatPluginHandler {
@@ -28,7 +27,8 @@ object MinchatPluginHandler {
 
 	init {
 		// default
-		register(NewConsoleIntegrationPlugin())
+		// TODO: broken: register(NewConsoleIntegrationPlugin())
+		register(AutoupdatePlugin())
 	}
 
 	/**
