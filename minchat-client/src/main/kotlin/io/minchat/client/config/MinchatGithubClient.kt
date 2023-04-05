@@ -102,6 +102,7 @@ class MinchatGithubClient {
 		val name: String,
 		@SerialName("tag_name")
 		val tag: String,
+		@SerialName("body")
 		val description: String,
 		val assets: List<GithubAsset>
 	)

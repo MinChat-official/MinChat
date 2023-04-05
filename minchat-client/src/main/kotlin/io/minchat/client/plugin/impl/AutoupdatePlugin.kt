@@ -4,9 +4,12 @@ import arc.Core
 import arc.graphics.Color
 import arc.util.Log
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import io.ktor.client.call.*
-import io.ktor.client.plugins.*
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.utils.io.core.*
 import io.minchat.client.Minchat
 import io.minchat.client.misc.userReadable
 import io.minchat.client.plugin.MinchatPlugin
@@ -14,10 +17,17 @@ import io.minchat.client.ui.ModalDialog
 import io.minchat.common.*
 import kotlinx.coroutines.*
 import mindustry.Vars
+import java.io.RandomAccessFile
 import io.minchat.client.misc.MinchatStyle as Style
 
 class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 	val maxAttempts = 3
+	val httpClient = HttpClient(CIO) {
+		expectSuccess = true
+		engine {
+			requestTimeout = 0 // Disabled
+		}
+	}
 
 	override suspend fun onLoad() {
 		lateinit var latestVersion: BuildVersion
@@ -53,7 +63,7 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 			job = Minchat.launch {
 				runCatching {
 					// Firstly, determine where the mod is located
-					val file = Vars.mods.getMod(Minchat.javaClass)?.file
+					val file = Vars.mods.getMod(Minchat.javaClass)?.file?.file()
 						?: error("Cannot locate the MinChat mod file.")
 					if (file.isDirectory) error("MinChat mod file is a directory. This is not supported.")
 
@@ -73,15 +83,38 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 					val modAsset = latestRelease?.assets?.find { it.name.startsWith("minchat-client", true) }
 						?: error("Cannot locate a suitable mod file. Please, try again later.")
 
-					// Download the asset and overwrite the mod file
-					Minchat.githubClient.httpClient.get(modAsset.downloadUrl) {
-						onDownload { received, length ->
-							Vars.ui.loadfrag.setProgress(received.toFloat() / length)
-						}
-					}.body<ByteArray>().let { file.writeBytes(it) }
+					val tmpFilePath = file.resolveSibling("minchat-download-tmp")
+					RandomAccessFile(tmpFilePath, "rw").use { tmpFile ->
+						Minchat.gateway.disconnect()
+						Minchat.client.account = null
 
-					RestartPromptDialog().show()
+						// Download the asset and overwrite the mod file
+						httpClient.prepareGet(modAsset.downloadUrl).execute {
+							val length = it.contentLength() ?: error("what???")
+							tmpFile.setLength(length)
+							val channel = it.bodyAsChannel()
+							var read = 0L
+
+							while (!channel.isClosedForRead) {
+								val packet = channel.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
+								while (!packet.isEmpty) {
+									val bytes = packet.readBytes()
+									tmpFile.write(bytes)
+
+									read += bytes.size
+									setProgress(read.toFloat() / length)
+								}
+							}
+						}
+
+						hide()
+						RestartPromptDialog().show()
+					}
+					// After this, new MinChat classes can no longer be loaded.
+					tmpFilePath.copyTo(file, overwrite = true)
+					tmpFilePath.delete()
 				}.onFailure { exception ->
+					hide()
 					if (exception is CancellationException) return@onFailure
 
 					SimpleInfoDialog("""
@@ -90,7 +123,6 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 						Reason: ${exception.userReadable()}
 					""".trimIndent()).show()
 				}
-				Vars.ui.loadfrag.hide()
 			}
 		}
 	}
@@ -163,7 +195,7 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 					.pad(Style.layoutPad)
 
 				update {
-					if (scene != null && System.currentTimeMillis() - begin >= 5) {
+					if (scene != null && System.currentTimeMillis() - begin >= 5000) {
 						Core.app.exit()
 					}
 				}

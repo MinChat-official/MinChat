@@ -8,7 +8,7 @@ plugins {
 	kotlin("plugin.serialization") version "1.8.0"
 }
 
-val jarName = "minchat"
+val jarName = "minchat-client"
 val mindustryVersion: String by rootProject
 val ktorVersion: String by rootProject
 
