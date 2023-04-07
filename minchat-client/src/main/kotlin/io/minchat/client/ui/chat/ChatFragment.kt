@@ -12,6 +12,7 @@ import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
 import io.minchat.client.ui.*
+import io.minchat.client.ui.dialog.AuthDialog
 import io.minchat.common.entity.Message
 import io.minchat.rest.entity.MinchatChannel
 import io.minchat.rest.event.*

@@ -1,4 +1,4 @@
-package io.minchat.client.ui
+package io.minchat.client.ui.dialog
 
 import arc.scene.ui.TextField
 import arc.util.Align

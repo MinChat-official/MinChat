@@ -3,7 +3,7 @@ package io.minchat.client.ui.chat
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.Minchat
-import io.minchat.client.ui.UserDialog
+import io.minchat.client.ui.dialog.UserDialog
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.CoroutineScope
 import io.minchat.client.misc.MinchatStyle as Style

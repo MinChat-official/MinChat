@@ -13,7 +13,7 @@ import io.ktor.utils.io.core.*
 import io.minchat.client.Minchat
 import io.minchat.client.misc.userReadable
 import io.minchat.client.plugin.MinchatPlugin
-import io.minchat.client.ui.ModalDialog
+import io.minchat.client.ui.dialog.ModalDialog
 import io.minchat.common.*
 import kotlinx.coroutines.*
 import mindustry.Vars
