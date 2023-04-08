@@ -12,7 +12,7 @@ import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
 import io.minchat.client.ui.Fragment
-import io.minchat.client.ui.dialog.AuthDialog
+import io.minchat.client.ui.dialog.*
 import io.minchat.common.entity.Message
 import io.minchat.rest.entity.MinchatChannel
 import io.minchat.rest.event.*
@@ -64,17 +64,38 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 				textButton("[#${Style.red}]X", Style.ActionButton) {
 					closeListener?.invoke() ?: Vars.ui.showInfo("No close listener.")
-				}.padRight(10f).margin(Style.buttonMargin).fill()
+				}
+					.fill()
+					.padRight(10f).margin(Style.buttonMargin)
 
 				addTable(Style.surfaceBackground) {
+					touchable = Touchable.enabled
 					margin(Style.layoutMargin)
 
 					addLabel("MinChat", Style.Label)
+						.fill()
 						.color(Style.purple).scaleFont(1.3f)
 					// channel name
 					addLabel({
 						currentChannel?.let { "#${it.name}" } ?: "Choose a channel"
-					}, Style.Label, ellipsis = "...").growX()
+					}, Style.Label, ellipsis = "...")
+						.growX().fillY()
+						.row()
+					// Empty left cell
+					addSpace()
+					// Channel description
+					hider(hideVertical = { currentChannel?.description?.isEmpty() ?: true }) {
+						addLabel({
+							currentChannel?.description.orEmpty()
+						}, ellipsis = "...")
+							.grow().color(Style.comment)
+					}.growX().fillY()
+
+					clicked {
+						if (currentChannel == null) return@clicked
+
+						ChannelDialog(currentChannel!!).show()
+					}
 				}.growX().fillY()
 
 				// account button
@@ -86,14 +107,16 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 						show()
 						update()
 					}
-				}.minWidth(200f).padLeft(8f).margin(Style.buttonMargin)
+				}
+					.minWidth(200f).fillY()
+					.padLeft(8f).margin(Style.buttonMargin)
 			}
 			// An overlay notification bar. A table is necessary to render a background.
 			addTable(Styles.black8) {
 				center()
 				notificationBar = this
 				touchable = Touchable.disabled
-				translation.y -= 20f // offset it down by a little bit
+				translation.y -= 10f // offset it down by a little bit
 
 				addLabel({ notificationStack.peek()?.content ?: "" }, wrap = true).with {
 					it.setColor(Style.orange)

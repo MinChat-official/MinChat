@@ -51,10 +51,10 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 
-			usernameField = field("Username", false) {
+			usernameField = addField("Username", false) {
 				it.trim().length in User.nameLength
 			}
-			passwordField = field("Password", true) {
+			passwordField = addField("Password", true) {
 				it.length in User.passwordLength
 			}
 
@@ -88,16 +88,16 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 			
-			usernameField = field("Username", false) {
+			usernameField = addField("Username", false) {
 				it.trim().length in User.nameLength
 			}
-			nicknameField = field("Nickname (can be empty)", false) {
+			nicknameField = addField("Nickname (can be empty)", false) {
 				it.isEmpty() || it.isNotBlank()
 			}
-			passwordField = field("Confirm password", true) {
+			passwordField = addField("Confirm password", true) {
 				it.length in User.passwordLength
 			}
-			passwordConfirmField = field("Password", true) {
+			passwordConfirmField = addField("Password", true) {
 				it == passwordField.content
 			}
 

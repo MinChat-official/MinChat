@@ -57,7 +57,7 @@ abstract class StatDialog(
 
 		statTable.addTable(MinchatStyle.surfaceBackground) {
 			margin(MinchatStyle.buttonMargin)
-			addLabel({ value() ?: "N/A" }, MinchatStyle.Label, align = Align.right)
+			addLabel({ value() ?: "N/A" }, MinchatStyle.Label, align = Align.right, wrap = true)
 				.grow().color(MinchatStyle.foreground)
 		}.pad(MinchatStyle.layoutPad).growX().uniformX().fillY()
 	}

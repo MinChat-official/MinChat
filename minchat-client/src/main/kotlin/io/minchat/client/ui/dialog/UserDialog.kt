@@ -92,10 +92,10 @@ abstract class UserDialog(
 		val user = this@UserDialog.user!!
 
 		init {
-			fields.addLabel("Editing user ${user.tag} (${user.username}).", align = Align.left)
+			fields.addLabel("Editing user ${user.tag} (${user.username}).", align = Align.left, wrap = true)
 				.fillX().row()
 
-			val usernameField = field("New nickname", false) {
+			val usernameField = addField("New nickname", false) {
 				it.length in 3..40
 			}.also {
 				it.content = user.nickname ?: user.username
@@ -125,7 +125,7 @@ abstract class UserDialog(
 				Type "$confirmNumber" to confirm your intention.
 			""".trimIndent(), wrap = true).fillX().row()
 
-			val confirmField = field("Type $confirmNumber", false) {
+			val confirmField = addField("Type $confirmNumber", false) {
 				it == confirmNumber
 			}
 

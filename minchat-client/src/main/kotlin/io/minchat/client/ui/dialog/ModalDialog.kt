@@ -33,7 +33,7 @@ abstract class ModalDialog : Dialog() {
 	}
 	
 
-	protected fun field(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) = 
+	protected fun addField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) =
 		fields.textField(style = Style.TextInput)
 			.growX().pad(Style.layoutPad)
 			.minWidth(250f)
