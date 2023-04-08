@@ -184,4 +184,10 @@ class MinchatMod : Mod(), CoroutineScope {
 		connectToServer(url).join()
 	}
 
+	/** Suspends until a connection to the MinChat server gets established. */
+	suspend fun awaitConnection() {
+		while (!isConnected) {
+			delay(50)
+		}
+	}
 }

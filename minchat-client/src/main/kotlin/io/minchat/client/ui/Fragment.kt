@@ -26,7 +26,8 @@ abstract class Fragment<Parent: Table, Type: Element>(
 	 * The current instance of this fragment.
 	 * Null if this fragment hasn't been applied anywhere.
 	 */
-	private var instance: Type? = null
+	var instance: Type? = null
+		private set
 
 	/** Whether this fragment is applied to any group */
 	val isApplied get() = instance.let { it != null && it.parent != null && it.scene != null }
