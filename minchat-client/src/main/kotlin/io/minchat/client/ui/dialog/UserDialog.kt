@@ -39,18 +39,18 @@ abstract class UserDialog(
 		createActions()
 	}
 
-	/** Clears [actionsTable] and fills it using [addAction]. */
+	/** Clears [actionsTable] and fills it using [action]. */
 	open fun createActions() {
 		actionsTable.clearChildren()
 
-		addAction("Close", ::hide)
+		action("Close", ::hide)
 		// only add the "edit" and "delete" options if the user can be modified
 		if (Minchat.client.account?.user?.let { it.isAdmin || it.id == user?.id } ?: false) {
-			addAction("Edit") {
+			action("Edit") {
 				UserEditDialog().show()
 			}.disabled { user == null }
 
-			addAction("Delete") {
+			action("Delete") {
 				UserDeleteConfirmDialog().show()
 			}.disabled { user == null }
 		}

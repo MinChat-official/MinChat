@@ -1,11 +1,17 @@
 package io.minchat.client.ui.chat
 
-import arc.util.Align
+import arc.Core
+import arc.scene.style.Drawable
+import arc.scene.ui.Dialog
+import arc.scene.ui.layout.Table
+import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.Minchat
 import io.minchat.client.ui.dialog.UserDialog
 import io.minchat.rest.entity.MinchatMessage
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import mindustry.Vars
+import mindustry.gen.Icon
 import io.minchat.client.misc.MinchatStyle as Style
 
 /**
@@ -14,8 +20,8 @@ import io.minchat.client.misc.MinchatStyle as Style
 class NormalMinchatMessageElement(
 	val chat: ChatFragment,
 	val message: MinchatMessage,
-	val showActionsMenu: Boolean = true
-) : MinchatMessageElement(), CoroutineScope by chat {
+	addContextActions: Boolean = true
+) : MinchatMessageElement(addContextActions), CoroutineScope by chat {
 	override val timestamp get() = message.timestamp
 
 	init {
@@ -38,7 +44,7 @@ class NormalMinchatMessageElement(
 				.get().clicked(::showUserDialog)
 			// filler + timestamp
 			addSpace().growX()
-			addLabel({ formatTimestamp() })
+			addLabel({ formatTimestamp() }, ellipsis = "...")
 				.color(Style.comment).padLeft(20f)
 		}.growX().padBottom(5f).row()
 		// bottom row: message content
@@ -53,7 +59,76 @@ class NormalMinchatMessageElement(
 		}
 	}
 
-	fun showActionBar() {
+	override fun onRightClick() {
+		MessageContextMenu().show()
+	}
 
+	inner class MessageContextMenu : Dialog() {
+		val messageElementCopy = NormalMinchatMessageElement(chat, message, false)
+
+		lateinit var actionTable: Table
+
+		init {
+			closeOnBack()
+
+			titleTable.remove()
+			buttons.remove()
+
+			cont.apply {
+				addTable(Style.surfaceBackground) {
+					margin(Style.layoutMargin)
+
+					add(messageElementCopy).minWidth(400f)
+				}.fill().pad(Style.layoutPad).row()
+
+				hsplitter(Style.foreground)
+
+				addTable {
+					actionTable = this
+				}.fill()
+			}
+
+			action(Icon.copy, "Copy text") {
+				Core.app.clipboardText = messageElementCopy.message.content
+			}
+
+			action(Icon.pencil, "Edit message") {
+				// TODO
+				Vars.ui.showInfo("TODO: Edit message")
+			}
+
+			action(Icon.trash.tint(Style.red), "Delete message") {
+				// TODO: should there be a confirmation dialog?
+				launch {
+					runCatching {
+						messageElementCopy.message.delete()
+					}.onFailure {
+						Log.err("Failed to delete message", it)
+					}
+				}
+				hide()
+			}
+
+			action(Icon.exit, "Close") {
+				hide()
+			}
+		}
+
+		inline fun action(icon: Drawable?, text: String, crossinline listener: () -> Unit) {
+			actionTable.customButton({
+				margin(Style.buttonMargin)
+
+				addLabel(text, Style.Label).growX()
+
+				if (icon != null) {
+					addImage(icon, Scaling.fit)
+						.minSize(30f).fill()
+						.padLeft(20f)
+				}
+			}, Style.ActionButton) {
+				listener()
+			}.pad(Style.layoutPad).growX()
+				.row()
+		}
 	}
 }

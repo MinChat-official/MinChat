@@ -71,7 +71,7 @@ abstract class StatDialog(
 		}
 
 	/** Adds an action button to the button table. */
-	inline fun addAction(text: String, crossinline action: () -> Unit) =
+	inline fun action(text: String, crossinline action: () -> Unit) =
 		actionsTable.textButton(text, MinchatStyle.ActionButton) {
 			action()
 		}.growX().uniformX().margin(MinchatStyle.buttonMargin).pad(MinchatStyle.layoutPad)

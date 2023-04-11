@@ -35,10 +35,10 @@ class ChannelDialog(
 
 		// It is assumed that the admin status of a user cannot change while they see this dialog.
 		if (Minchat.client.selfOrNull()?.isAdmin ?: false) {
-			addAction("Edit") {
+			action("Edit") {
 				ChannelEditDialog().show()
 			}
-			addAction("Delete") {
+			action("Delete") {
 				ChannelDeleteConfirmDialog().show()
 			}
 		}
