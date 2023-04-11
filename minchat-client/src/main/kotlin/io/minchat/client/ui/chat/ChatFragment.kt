@@ -299,7 +299,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		if (isAtBottom) {
 			chatPane.validate()
 			Core.app.post {
-				chatPane.fling(0.1f, 0f, -element.height)
+				chatPane.scrollY = chatPane.maxY
 			}
 		}
 	}

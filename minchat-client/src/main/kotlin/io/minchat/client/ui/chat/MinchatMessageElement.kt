@@ -27,11 +27,12 @@ abstract class MinchatMessageElement(
 	abstract fun onRightClick()
 
 	private var longClickBegin = -1L
+	private var tempDisableLayout = false
 
 	init {
 		touchable = Touchable.enabled
 
-		addListener(object : InputListener() {
+		addCaptureListener(object : InputListener() {
 			override fun enter(event: InputEvent?, x: Float, y: Float, pointer: Int, fromActor: Element?): Unit =
 				updateBackground()
 
@@ -105,14 +106,24 @@ abstract class MinchatMessageElement(
 	}
 
 	/**
-	 * Animates this message element by playing a shrink animation and removing it..
+	 * Animates this message element by playing a shrink animation and removing it.
+	 *
+	 * If this animation is interrupted, this element is likely to become unusable.
 	 *
 	 * @param length The length of the animation
 	 */
 	fun animateDisappear(length: Float) {
+		val clipWasEnabled = clip
+		clip = true
+		tempDisableLayout = true
+
 		addAction(Actions.sequence(
 			Actions.sizeBy(0f, -height, length),
-			Actions.remove()
+			Actions.remove(),
+			Actions.run {
+				tempDisableLayout = false
+				clip = clipWasEnabled
+			}
 		))
 	}
 
@@ -131,5 +142,13 @@ abstract class MinchatMessageElement(
 			// Normal: surface inner
 			background(Style.surfaceInner)
 		}
+	}
+
+	override fun layout() {
+		// Do not lay out if the message is currently disappearing.
+		if (tempDisableLayout) {
+			return
+		}
+		super.layout()
 	}
 }
