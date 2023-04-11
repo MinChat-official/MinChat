@@ -1,3 +1,9 @@
+#VERSION 0.3.3
+Added context menus for channels and messages, allowing to see their stats and modify them.
+
+#VERSION 0.3.1
+Added an auto-update plugin.
+
 #VERSION 0.3.0
 Separated User.username and User.nickname
 
