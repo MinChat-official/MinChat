@@ -6,7 +6,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
-import io.minchat.rest.entity.withClient
+import io.minchat.rest.entity.*
 import io.minchat.rest.ratelimit.*
 import io.minchat.rest.service.*
 import kotlinx.coroutines.*
@@ -192,7 +192,7 @@ class MinchatRestClient(
 		messageService.editMessage(id, account().token, newContent)
 			.withClient(this)
 	
-	// deleteX methodw
+	// deleteX methods
 	/**	
 	 * Deleted the user with the specified ID.
 	 * Requires a registered account.
@@ -218,4 +218,33 @@ class MinchatRestClient(
 	 */
 	suspend fun deleteMessage(id: Long) =
 		messageService.deleteMessage(id, account().token)
+
+	// canX methods
+	/**
+	 * Returns true if the currently logged-in user can edit the specified user.
+	 *
+	 * True is returned if the current user is an admin or is the same user as
+	 * the provided user.
+	 */
+	fun canEditUser(user: MinchatUser) =
+		selfOrNull()?.let {
+			it.id == user.id || it.isAdmin
+		} ?: false
+
+	/**
+	 * Returns true if and only if the currently logged-in user is an admin.
+	 */
+	@Suppress("UNUSED_PARAMETER")
+	fun canEditChannel(channel: MinchatChannel) =
+		selfOrNull()?.isAdmin ?: false
+
+	/**
+	 * Returns true if the currently logged-in user can edit the specified message.
+	 *
+	 * True is returned if the current user is an admin or is the author of the message.
+	 */
+	fun canEditMessage(message: MinchatMessage) =
+		selfOrNull()?.let {
+			it.isAdmin || message.author.id == it.id
+		} ?: false
 }

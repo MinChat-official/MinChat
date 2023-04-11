@@ -35,7 +35,7 @@ class ChannelDialog(
 
 		action("Close", ::hide)
 		// It is assumed that the admin status of a user cannot change while they see this dialog.
-		if (Minchat.client.selfOrNull()?.isAdmin ?: false) {
+		if (Minchat.client.canEditChannel(channel)) {
 			action("Edit") {
 				ChannelEditDialog().show()
 			}

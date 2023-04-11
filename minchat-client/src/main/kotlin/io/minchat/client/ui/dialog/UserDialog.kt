@@ -45,7 +45,7 @@ abstract class UserDialog(
 
 		action("Close", ::hide)
 		// only add the "edit" and "delete" options if the user can be modified
-		if (Minchat.client.account?.user?.let { it.isAdmin || it.id == user?.id } ?: false) {
+		if (user?.let(Minchat.client::canEditUser) ?: false) {
 			action("Edit") {
 				UserEditDialog().show()
 			}.disabled { user == null }

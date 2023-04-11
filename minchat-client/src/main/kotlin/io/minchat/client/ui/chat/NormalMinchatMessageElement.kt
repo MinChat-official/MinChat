@@ -93,21 +93,23 @@ class NormalMinchatMessageElement(
 				Core.app.clipboardText = messageElementCopy.message.content
 			}
 
-			action(Icon.pencil, "Edit message") {
-				// TODO
-				Vars.ui.showInfo("TODO: Edit message")
-			}
-
-			action(Icon.trash.tint(Style.red), "Delete message") {
-				// TODO: should there be a confirmation dialog?
-				launch {
-					runCatching {
-						messageElementCopy.message.delete()
-					}.onFailure {
-						Log.err("Failed to delete message", it)
-					}
+			if (Minchat.client.canEditMessage(messageElementCopy.message)) {
+				action(Icon.pencil, "Edit message") {
+					// TODO
+					Vars.ui.showInfo("TODO: Edit message")
 				}
-				hide()
+
+				action(Icon.trash.tint(Style.red), "Delete message") {
+					// TODO: should there be a confirmation dialog?
+					launch {
+						runCatching {
+							messageElementCopy.message.delete()
+						}.onFailure {
+							Log.err("Failed to delete message", it)
+						}
+					}
+					hide()
+				}
 			}
 
 			action(Icon.exit, "Close") {
