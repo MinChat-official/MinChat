@@ -37,14 +37,15 @@ class NormalMinchatMessageElement(
 				message.author.id == Minchat.client.account?.id -> Style.green
 				message.author.isAdmin -> Style.pink // I just like pink~
 				else -> Style.purple
-			}).fillY().get().clicked(::showUserDialog)
+			}).fillY()
+				.get().clicked(::showUserDialog)
 			// tag
 			addLabel("#$discriminator")
 				.fillY().color(Style.comment)
 				.get().clicked(::showUserDialog)
-			// filler + timestamp
-			addSpace().growX()
-			addLabel({ formatTimestamp() }, ellipsis = "...")
+			// timestamp
+			addLabel({ formatTimestamp() }, ellipsis = "...", align = Align.right)
+				.growX()
 				.color(Style.comment).padLeft(20f)
 		}.growX().padBottom(5f).row()
 		// bottom row: message content
