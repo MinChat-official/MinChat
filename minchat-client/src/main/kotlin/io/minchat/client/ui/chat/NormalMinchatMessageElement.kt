@@ -1,17 +1,11 @@
 package io.minchat.client.ui.chat
 
-import arc.Core
-import arc.scene.style.Drawable
-import arc.scene.ui.Dialog
-import arc.scene.ui.layout.Table
-import arc.util.*
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.Minchat
-import io.minchat.client.ui.dialog.UserDialog
+import io.minchat.client.ui.dialog.*
 import io.minchat.rest.entity.MinchatMessage
-import kotlinx.coroutines.*
-import mindustry.Vars
-import mindustry.gen.Icon
+import kotlinx.coroutines.CoroutineScope
 import io.minchat.client.misc.MinchatStyle as Style
 
 /**
@@ -61,77 +55,7 @@ class NormalMinchatMessageElement(
 	}
 
 	override fun onRightClick() {
-		MessageContextMenu().show()
+		MessageContextMenu(chat, message).show()
 	}
 
-	inner class MessageContextMenu : Dialog() {
-		val messageElementCopy = NormalMinchatMessageElement(chat, message, false)
-
-		lateinit var actionTable: Table
-
-		init {
-			closeOnBack()
-
-			titleTable.remove()
-			buttons.remove()
-
-			cont.apply {
-				addTable(Style.surfaceBackground) {
-					margin(Style.layoutMargin)
-
-					add(messageElementCopy).minWidth(400f)
-				}.fill().pad(Style.layoutPad).row()
-
-				hsplitter(Style.foreground)
-
-				addTable {
-					actionTable = this
-				}.fill()
-			}
-
-			action(Icon.copy, "Copy text") {
-				Core.app.clipboardText = messageElementCopy.message.content
-			}
-
-			if (Minchat.client.canEditMessage(messageElementCopy.message)) {
-				action(Icon.pencil, "Edit message") {
-					// TODO
-					Vars.ui.showInfo("TODO: Edit message")
-				}
-
-				action(Icon.trash.tint(Style.red), "Delete message") {
-					// TODO: should there be a confirmation dialog?
-					launch {
-						runCatching {
-							messageElementCopy.message.delete()
-						}.onFailure {
-							Log.err("Failed to delete message", it)
-						}
-					}
-					hide()
-				}
-			}
-
-			action(Icon.exit, "Close") {
-				hide()
-			}
-		}
-
-		inline fun action(icon: Drawable?, text: String, crossinline listener: () -> Unit) {
-			actionTable.customButton({
-				margin(Style.buttonMargin)
-
-				addLabel(text, Style.Label).growX()
-
-				if (icon != null) {
-					addImage(icon, Scaling.fit)
-						.minSize(30f).fill()
-						.padLeft(20f)
-				}
-			}, Style.ActionButton) {
-				listener()
-			}.pad(Style.layoutPad).growX()
-				.row()
-		}
-	}
 }
