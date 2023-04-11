@@ -43,6 +43,8 @@ abstract class MinchatMessageElement(
 				false.also { updateBackground() }
 
 			override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?): Boolean {
+				if (!addContextActions) return false
+
 				if (Vars.mobile) {
 					updateBackground()
 					longClickBegin = System.currentTimeMillis()
@@ -55,6 +57,8 @@ abstract class MinchatMessageElement(
 			}
 
 			override fun touchUp(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?) {
+				if (!addContextActions) return
+
 				if (Vars.mobile && longClickBegin > 0L) {
 					if (System.currentTimeMillis() - longClickBegin > 400L) {
 						onRightClick()
