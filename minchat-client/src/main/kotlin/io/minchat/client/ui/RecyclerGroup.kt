@@ -1,175 +1,372 @@
 package io.minchat.client.ui
 
-import arc.scene.*
+import arc.input.KeyCode
+import arc.math.Mathf
+import arc.math.geom.Vec2
+import arc.scene.Element
+import arc.scene.event.*
+import arc.util.pooling.Pool
+import java.util.*
+import javax.naming.OperationNotSupportedException
+import kotlin.math.*
 
 /**
- * A group that displays an arbitrarily large list of elements 
- * without a big performance overhead.
+ * A group that displays data as a list of elements of the same type.
  *
- * This is achieved by reusing the same elements as they come
- * in and out of the viewport rather than allocating
- * many elements and storing them in-memory.
- *
- * Elements of this group must not store any data on their own,
- * as it can be overridden at any moment. Instead, the data
- * must be stored in lightweight data classes extending
- * [RecyclerGroup.DataEntry] and loaded from them as needed.
- *
- * @param E the type of elements stored in this group.
- * @param T the type of a data class storing data of induvidual entries
+ * This group is meant to display a large or even infinite number of elements.
+ * This is possible because this group uses the minimum possible number of elements,
+ * removing and recycling elements that are no longer visible.
  */
-// abstract class RecyclerGroup<T : DataEntry, E : Element> : MutableList<T> {
-// 	/** 
-// 	 * All data entries stored in this recycler. 
-// 	 * NEVER modify manually without calling [onDatasetModified].
-// 	 */
-// 	val entries = ArrayList<T>()
-// 	/** 
-// 	 * A list of elements and data entries currently associated
-// 	 * with them used by this recycler. NEVER modify manually.
-// 	 */
-// 	protected val elements = ArrayList<ElementEntry>()
-// 	/** A list of unused but pooled elements. */
-// 	private val unusedElements = ArrayList<ElementEntry>()
-//
-// 	val size get() = entries.size
-// 	private var oldSize = size
-//
-// 	/** 
-// 	 * Maximum count of elements this recycler is allowed to show on the screen. 
-// 	 * Actual size will be as low as possible and will never exceed this number.
-// 	 */
-// 	var sizeLimit = 50
-//
-// 	/** A relative value. Doesn't represent the actual scroll depth. */
-// 	var scrollAmount = 0f
-// 		private set
-// 	/** Positive is downwards, negative is upwards. */
-// 	var scrollVelocity = 0f
-// 		private set
-// 	/** The topmost shown data entry relatively to which [scrollAmount] is calclated. */
-// 	var topElementIndex get() = 
-// 		elements.firstOrNull()?.let { entries.indexOf(it.data) }?.coerceAtLeast(0) ?: 0
-// 	var bottomElementIndex get() = 
-// 		elements.lastOrNull()?.let { entries.indexOf(it.data) }?.coerceAtLeast(0) ?: 0
-// 
-// 	/** Margin between induvidual elements. */
-// 	var margin = 0f
-//
-// 	/** 
-// 	 * Called when this group needs to allocated another element,
-// 	 * right after [createData]. Must create a blank element 
-// 	 * that will later be configured.
-// 	 *
-// 	 * If the element stores some data, it must be saved in the properties
-// 	 * of [entry.data] whenever the state of the element is modified.
-// 	 */
-// 	protected abstract fun createElement(entry: ElementEntry): E
-//
-// 	/**
-// 	 * Called when an element comes into the viewport,
-// 	 * either because it was just added or because it was recycled.
-// 	 *
-// 	 * This methos must load data from the data entry into the element.
-// 	 * Do not add any callbacks inside this method.
-// 	 */
-// 	protected abstract fun configureElement(data: T, element: E)
-//
-// 	override fun update(delta: Float) {
-// 		super.update(delta)
-// 		if (size == 0) return
-// 	
-// 		scrollAmount += scrollVelocity * delta
-// 		if (scrollVelocity > 0) {
-// 			if (canScrollDown() && scrollAmount > elements.first().height) {
-// 				val element = elements.removeAt(0)
-// 			
-// 			}
-// 		}
-// 	}
-//
-// 	/**
-// 	 * Must load the data from the element onto
-// 	 */
-// 	protected abatract fun recycle(
-//
-// 	fun canScrollUp() =
-// 		topElementIndex > 0 || scrollAmount > 0
-// 	fun canScrollDown() when {
-// 		size == 0 -> false
-// 		else -> bottomElementIndex < size - 1 || scrollAmount < elements.last().element.height
-// 	}
-//
-// 	/** 
-// 	 * Called whenever the dataset changes.
-// 	 * Must update the list of elements accordingly.
-// 	 */
-// 	open fun onDatasetModified() {
-// 		if (size < oldSize) {
-// 			// find all unused elements and remove them, hoping update() will reuse them
-// 			var iterator = elements.listIterator()
-// 			for (element in iterator) {
-// 				if (element.data !in entries) {
-// 					iterator.remove()
-// 					unusedElements.add(element)
-// 				}
-// 			}
-// 		}
-// 		oldSize = size
-// 	}
-// 
-// 	/** Get the element entry at the specified position. */
-// 	operator fun get(position: Int) =
-// 		elements[position]
-// 
-// 	/** Add new data to this recycler. */
-// 	fun add(data: T, position: Int = size - 1) {
-// 		entries.add(position, data)
-// 		onDatasetModified()
-// 	}
-//
-// 	/** Remove existing data at the specified position. */
-// 	fun removeAt(index: Int) = entries.removeAt(index).also {
-// 		onDatasetModified()
-// 	}
-// 
-// 	/** Remove the specified data. */
-// 	fun remove(data: T): Boolean {
-// 		val index = entries.indexOf(data)
-//
-// 		return (index != -1).also {
-// 			if (it) removeAt(index)
-// 		}
-// 	}
-//
-// 	/** Replace the data at the specified position. */
-// 	operator fun set(position: Int, data: T) {
-// 		entries[position] = data
-// 		onDatasetModified()
-// 	}
-//
-// 	/** 
-// 	 * Represents a data entry of a recycler group.
-// 	 * This class should be extended to store element-specific data.
-// 	 */
-// 	open inner class DataEntry
-//
-// 	/**
-// 	 * Represents a link between an element and a data entry
-// 	 * __currently__ associated with it.
-// 	 */
-// 	open inner class ElementEntry(val element: E) {
-// 		/**
-// 		 * The data entry currently associated with this element.
-// 		 *
-// 		 * An element must __not__ store a reference to this value under
-// 		 * any circumstances, as it can be changed when the element
-// 		 * is reused. Instead, this property must be accessed every
-// 		 * time the element needs to save some data.
-// 		 */
-// 		lateinit var data: T
-// 			internal set
-// 		var position = 0
-// 			internal set
-// 	}
-// }
+class RecyclerGroup<Data, E: Element>(
+	val adapter: Adapter<Data, E>
+) : Element() {
+	val links = LinkedList<Link>()
+	var firstShownPosition = 0
+	/**
+	 * Scroll offset relative to the top of the first visible element.
+	 *
+	 * If this value is positive, the next element will be shown on the next frame
+	 * and this value will change to negative.
+	 * If its absolute value is greater than
+	 * the height of the first visible element, then the top element will be freed on
+	 * the next frame.
+	 *
+	 * If it's already negative, then the top of the first visible element is invisible.
+	 */
+	var relativeScrollOffset = 0f
+	var scrollSpeed = 0f
+
+	/** Additional empty space around this element's borders. */
+	val padding = Padding(0f, 0f, 0f, 0f)
+	/** Additional empty space around each element. */
+	val elementMargin = Padding(0f, 0f, 0f, 0f)
+
+	val elementPool = object : Pool<E>() {
+		override fun newObject() = adapter.createElement()
+
+		override fun obtain(): E {
+			while (true) {
+				if (free <= 0) return newObject()
+
+				val element = super.obtain()
+				if (adapter.isReusable(element)) return element
+			}
+		}
+	}
+
+	var datasetInvalid: Boolean = true
+		private set
+	private val computedSize = Vec2()
+
+	init {
+		adapter.parent = this
+
+		addCaptureListener(object : ElementGestureListener() {
+			override fun fling(event: InputEvent?, velocityX: Float, velocityY: Float, button: KeyCode?) {
+				if (button != KeyCode.mouseLeft) return
+
+				scrollSpeed += velocityY
+			}
+		})
+	}
+
+	/**
+	 * Adds a data entry to this recycler.
+	 * May throw an exception if this recycler's adapter doesn't support adding new data.
+	 */
+	fun addEntry(data: Data) =
+		adapter.addEntry(data)
+
+	/**
+	 * Removes a data entry from this recycler.
+	 * May throw an exception if this recycler's adapter doesn't support removing data.
+	 */
+	fun removeEntry(data: Data) =
+		adapter.removeEntry(data)
+
+	/** Forces this recycler to reinterpret the dataset on the next frame. */
+	fun invalidateDataset() {
+		datasetInvalid = true
+		invalidate()
+	}
+
+	override fun layout() {
+		if (datasetInvalid) {
+			datasetInvalid = false
+			layoutDataset()
+		}
+
+		computeSize()
+
+		// Firstly, we need to determine how much height the elements want to know
+		// where to start laying them out
+		val startHeight = if (links.size >= adapter.dataset.size) {
+			// Shortcut: all space will be taken
+			height - padding.top - padding.bottom
+		} else {
+			links.sumOf {
+				it.element.prefHeight.toDouble() + elementMargin.top + elementMargin.bottom
+			}.toFloat().coerceAtMost(height - padding.top - padding.bottom)
+		}
+
+		// Lay elements out on the screen as they go in the link list
+		// Scroll offset is ignored here as it is only applied during drawing and event processing.
+		var heightOccupied = 0f
+		val availableWidth = width - padding.left - padding.right
+
+		links.forEach {
+			val element = it.element
+
+			element.x = padding.left + elementMargin.left
+			element.y = padding.bottom + startHeight - heightOccupied + elementMargin.top
+			element.setSize(
+				availableWidth - padding.left - padding.right - elementMargin.left - elementMargin.right,
+				max(element.prefHeight - elementMargin.top - elementMargin.bottom, 5f)
+			)
+			element.validate()
+
+			heightOccupied += element.prefHeight + elementMargin.top + elementMargin.bottom
+		}
+	}
+
+	/**
+	 * Forcibly updates all shown elements.
+	 *
+	 * Additionally, updates [firstShownPosition].
+	 */
+	fun layoutDataset() {
+		val dataset = adapter.dataset
+
+		firstShownPosition = firstShownPosition.coerceIn(0, dataset.lastIndex)
+
+		val firstLink = links.first
+		val firstElementDataIndex = dataset.indexOfFirst { it == firstLink.data }.let {
+			if (it == -1) 0 else it
+		}
+
+		// Firstly, free all links and clear the link list
+		links.forEach {
+			it.free()
+		}
+		links.clear()
+
+		if (dataset.isEmpty()) return
+
+		// Then, recreate the link list.
+		// This may allocate more elements if needed.
+		// To avoid overhead, we lay elements out right away
+		var dataIndex = firstElementDataIndex
+		var heightOccupied = 0f
+		while (true) {
+			val data = dataset[dataIndex]
+			val element = elementPool.obtain()
+
+			adapter.updateElement(element, data, dataIndex)
+
+			element.validate()
+			heightOccupied += element.prefHeight
+
+			val link = Link(element, data)
+			links.add(link)
+
+			if (heightOccupied >= height) {
+				break
+			} else {
+				dataIndex++
+			}
+		}
+	}
+
+	/** Updates [computedSize]. */
+	protected fun computeSize() {
+		computedSize.x = links.maxOf {
+			it.element.prefWidth
+		} + padding.left + padding.right + elementMargin.left + elementMargin.right
+
+		computedSize.y = links.sumOf {
+			it.element.prefHeight.toDouble() + elementMargin.top + elementMargin.bottom
+		}.toFloat() + padding.top + padding.bottom
+	}
+
+	override fun act(delta: Float) {
+		super.act(delta)
+
+		if (links.isEmpty()) {
+			relativeScrollOffset = 0f
+			scrollSpeed = 0f
+			return
+		}
+
+		val dataset = adapter.dataset
+
+		relativeScrollOffset += scrollSpeed * delta
+		scrollSpeed = Mathf.lerpDelta(scrollSpeed, 0f, 0.9f)
+
+		if (abs(scrollSpeed) < 0.01f) scrollSpeed = 0f
+
+		val topLink = links.first
+		if (relativeScrollOffset > 0f) {
+			if (firstShownPosition > 0) {
+				// Add a new link at the top
+				val element = elementPool.obtain()
+				val data = dataset[--firstShownPosition]
+				val link = Link(element, data)
+
+				adapter.updateElement(element, data, firstShownPosition)
+				links.addFirst(link)
+				invalidate()
+			} else {
+				relativeScrollOffset = 0f
+			}
+		} else if (relativeScrollOffset < 0f) {
+			if (firstShownPosition < dataset.lastIndex - links.size) {
+				if (relativeScrollOffset < -topLink.element.height - elementMargin.top - elementMargin.bottom) {
+					// Remove the topmost link
+					links.removeFirst().free()
+					firstShownPosition++
+					invalidate()
+				}
+			} else {
+				relativeScrollOffset = 0f
+			}
+		}
+
+		if (links.size > dataset.size) {
+			// Ensure there's no free space at the end.
+			// If there is, add more links.
+			// If there are invisible elements at the end, remove them
+			var occupiedHeight = relativeScrollOffset
+			val availableHeight = height - padding.top - padding.bottom
+
+			val iterator = links.listIterator()
+			for (link in iterator) {
+				if (occupiedHeight > availableHeight) {
+					iterator.remove()
+					invalidate()
+				} else {
+					occupiedHeight += link.element.prefHeight + elementMargin.top + elementMargin.bottom
+				}
+			}
+
+			if (occupiedHeight < availableHeight && dataset.size > firstShownPosition + links.size) {
+				val element = elementPool.obtain()
+				val data = dataset[firstShownPosition + links.size]
+				val link = Link(element, data)
+
+				adapter.updateElement(element, data, firstShownPosition + links.size)
+
+				links.addLast(link)
+				invalidate()
+			}
+		}
+
+		validate()
+	}
+
+	override fun getMinWidth() = computedSize.x
+
+	override fun getMinHeight() = computedSize.y
+
+	abstract class Adapter<Data, T : Element> {
+		internal var parent: RecyclerGroup<Data, T>? = null
+
+		/**
+		 * The dataset of this adapter.
+		 * When the underlying list is changed, [datasetChanged] must be called.
+		 */
+		abstract val dataset: List<Data>
+
+		/**
+		 * Called when the parent group needs to allocate a new element.
+		 *
+		 * This function mustn't assign any data to the element in any way.
+		 * The element will immediately be passed to [updateElement] which should
+		 * do that.
+		 *
+		 * If the returned element has some listeners, they must be set up here.
+		 */
+		abstract fun createElement() : T
+
+		/**
+		 * Called when the parent group needs to display new data and
+		 * there is a recycling candidate.
+		 *
+		 * If this function returns false for all candidates, a new element will be allocated by
+		 * invoking [createElement]. Otherwise, this element will be passed to [updateElement].
+		 */
+		abstract fun isReusable(element: T): Boolean
+
+		/**
+		 * Must update the element in accordance with the provided data entry.
+		 *
+		 * This function mustn't add any listeners to the element.
+		 */
+		abstract fun updateElement(element: T, data: Data, position: Int)
+
+		/** Throw an [OperationNotSupportedException] by default. */
+		open fun addEntry(data: Data): Boolean =
+			throw OperationNotSupportedException("$this does not support adding new data.")
+
+		/** Throw an [OperationNotSupportedException] by default. */
+		open fun removeEntry(data: Data): Boolean =
+			throw OperationNotSupportedException("$this does not support removing data.")
+
+		open fun datasetChanged() {
+			parent?.datasetInvalid = true
+		}
+	}
+
+	/**
+	 * Represents a link between an element and a data entry.
+	 */
+	inner class Link(
+		var element: E,
+		var data: Data
+	) {
+		override fun toString(): String {
+			return "Link(element=$element, data=$data)"
+		}
+
+		/** Frees the element. */
+		fun free() {
+			elementPool.free(element)
+		}
+	}
+
+	inner class Padding(top: Float, bottom: Float, left: Float, right: Float) {
+		var top = top
+			set(value) {
+				field = value
+				invalidate()
+			}
+		var bottom = bottom
+			set(value) {
+				field = value
+				invalidate()
+			}
+		var left = left
+			set(value) {
+				field = value
+				invalidate()
+			}
+		var right = right
+			set(value) {
+				field = value
+				invalidate()
+			}
+
+		fun set(top: Float, bottom: Float, left: Float, right: Float) {
+			this.top = top
+			this.bottom = bottom
+			this.left = left
+			this.right = right
+		}
+
+		fun set(all: Float) =
+			set(all, all, all, all)
+
+		override fun toString(): String {
+			return "Padding(top=$top, bottom=$bottom, left=$left, right=$right)"
+		}
+	}
+}
