@@ -1,10 +1,13 @@
 package io.minchat.client.ui
 
+import arc.graphics.g2d.Draw
 import arc.input.KeyCode
 import arc.math.Mathf
 import arc.math.geom.Vec2
-import arc.scene.Element
+import arc.scene.*
 import arc.scene.event.*
+import arc.scene.style.Drawable
+import arc.util.Log
 import arc.util.pooling.Pool
 import java.util.*
 import javax.naming.OperationNotSupportedException
@@ -16,10 +19,14 @@ import kotlin.math.*
  * This group is meant to display a large or even infinite number of elements.
  * This is possible because this group uses the minimum possible number of elements,
  * removing and recycling elements that are no longer visible.
+ *
+ * Important: despite being a [Group], this element doesn't use the [children]
+ * property. An attempt to add a child will throw an exception. Any modification
+ * of that property will be ignored.
  */
 class RecyclerGroup<Data, E: Element>(
 	val adapter: Adapter<Data, E>
-) : Element() {
+) : Group() {
 	val links = LinkedList<Link>()
 	var firstShownPosition = 0
 	/**
@@ -36,6 +43,7 @@ class RecyclerGroup<Data, E: Element>(
 	var relativeScrollOffset = 0f
 	var scrollSpeed = 0f
 
+	var background: Drawable? = null
 	/** Additional empty space around this element's borders. */
 	val padding = Padding(0f, 0f, 0f, 0f)
 	/** Additional empty space around each element. */
@@ -46,7 +54,9 @@ class RecyclerGroup<Data, E: Element>(
 
 		override fun obtain(): E {
 			while (true) {
-				if (free <= 0) return newObject()
+				if (free <= 0) return newObject().also {
+					it.parent = this@RecyclerGroup
+				}
 
 				val element = super.obtain()
 				if (adapter.isReusable(element)) return element
@@ -60,12 +70,37 @@ class RecyclerGroup<Data, E: Element>(
 
 	init {
 		adapter.parent = this
+		touchable = Touchable.enabled
 
-		addCaptureListener(object : ElementGestureListener() {
+		// Flick & pan listener
+		addListener(object : ElementGestureListener() {
+			// The below methods use subtraction because we are doing realistic scrolling here
+			override fun pan(event: InputEvent?, x: Float, y: Float, deltaX: Float, deltaY: Float) {
+				relativeScrollOffset -= deltaY
+			}
+
 			override fun fling(event: InputEvent?, velocityX: Float, velocityY: Float, button: KeyCode?) {
-				if (button != KeyCode.mouseLeft) return
+				if (button != KeyCode.mouseLeft && button != null) return
 
-				scrollSpeed += velocityY
+				scrollSpeed -= velocityY
+			}
+		})
+
+		// Scroll listener
+		addListener(object : InputListener() {
+			override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?): Boolean {
+				if (button == KeyCode.mouseLeft || button == null) scrollSpeed = 0f
+				return false
+			}
+
+			override fun scrolled(event: InputEvent?, x: Float, y: Float, amountX: Float, amountY: Float): Boolean {
+				relativeScrollOffset += amountY
+				return true
+			}
+
+			override fun mouseMoved(event: InputEvent?, x: Float, y: Float): Boolean {
+				requestScroll()
+				return false
 			}
 		})
 	}
@@ -83,6 +118,18 @@ class RecyclerGroup<Data, E: Element>(
 	 */
 	fun removeEntry(data: Data) =
 		adapter.removeEntry(data)
+
+	override fun addChild(actor: Element?): Unit =
+		error("RecyclerGroup doesn't support custom children")
+
+	override fun addChildAfter(actorAfter: Element?, actor: Element?): Unit =
+		error("RecyclerGroup doesn't support custom children")
+
+	override fun addChildAt(index: Int, actor: Element?): Unit =
+		error("RecyclerGroup doesn't support custom children")
+
+	override fun addChildBefore(actorBefore: Element?, actor: Element?): Unit =
+		error("RecyclerGroup doesn't support custom children")
 
 	/** Forces this recycler to reinterpret the dataset on the next frame. */
 	fun invalidateDataset() {
@@ -139,8 +186,8 @@ class RecyclerGroup<Data, E: Element>(
 
 		firstShownPosition = firstShownPosition.coerceIn(0, dataset.lastIndex)
 
-		val firstLink = links.first
-		val firstElementDataIndex = dataset.indexOfFirst { it == firstLink.data }.let {
+		val firstLink = links.firstOrNull()
+		val firstElementDataIndex = dataset.indexOfFirst { it == firstLink?.data }.let {
 			if (it == -1) 0 else it
 		}
 
@@ -154,7 +201,7 @@ class RecyclerGroup<Data, E: Element>(
 
 		// Then, recreate the link list.
 		// This may allocate more elements if needed.
-		// To avoid overhead, we lay elements out right away
+		// To avoid overhead, we validate elements right away
 		var dataIndex = firstElementDataIndex
 		var heightOccupied = 0f
 		while (true) {
@@ -179,6 +226,11 @@ class RecyclerGroup<Data, E: Element>(
 
 	/** Updates [computedSize]. */
 	protected fun computeSize() {
+		if (links.isEmpty()) {
+			computedSize.setZero()
+			return
+		}
+
 		computedSize.x = links.maxOf {
 			it.element.prefWidth
 		} + padding.left + padding.right + elementMargin.left + elementMargin.right
@@ -186,6 +238,13 @@ class RecyclerGroup<Data, E: Element>(
 		computedSize.y = links.sumOf {
 			it.element.prefHeight.toDouble() + elementMargin.top + elementMargin.bottom
 		}.toFloat() + padding.top + padding.bottom
+
+		background?.let { background ->
+			computedSize.set(
+				min(computedSize.x, background.minWidth),
+				min(computedSize.y, background.minHeight)
+			)
+		}
 	}
 
 	override fun act(delta: Float) {
@@ -200,67 +259,123 @@ class RecyclerGroup<Data, E: Element>(
 		val dataset = adapter.dataset
 
 		relativeScrollOffset += scrollSpeed * delta
-		scrollSpeed = Mathf.lerpDelta(scrollSpeed, 0f, 0.9f)
+		scrollSpeed = Mathf.lerpDelta(scrollSpeed, 0f, 0.4f)
 
 		if (abs(scrollSpeed) < 0.01f) scrollSpeed = 0f
 
 		val topLink = links.first
 		if (relativeScrollOffset > 0f) {
-			if (firstShownPosition > 0) {
+			while (relativeScrollOffset > 0f) {
+				if (firstShownPosition <= 0) {
+					relativeScrollOffset = 0f
+					break
+				}
+
 				// Add a new link at the top
 				val element = elementPool.obtain()
 				val data = dataset[--firstShownPosition]
 				val link = Link(element, data)
 
 				adapter.updateElement(element, data, firstShownPosition)
+				element.validate()
 				links.addFirst(link)
 				invalidate()
-			} else {
-				relativeScrollOffset = 0f
+				Log.info("added at top")
+
+				relativeScrollOffset -= link.prefHeight
 			}
-		} else if (relativeScrollOffset < 0f) {
-			if (firstShownPosition < dataset.lastIndex - links.size) {
-				if (relativeScrollOffset < -topLink.element.height - elementMargin.top - elementMargin.bottom) {
-					// Remove the topmost link
-					links.removeFirst().free()
-					firstShownPosition++
-					invalidate()
+		} else if (relativeScrollOffset < -topLink.height) {
+			// Height is used here instead of prefHeight because these elements are already valid
+			do {
+				if (firstShownPosition < dataset.lastIndex - links.size) {
+					relativeScrollOffset = 0f
+					break
 				}
+
+				// Remove the topmost link
+				val link = links.removeFirst()
+				link.free()
+				invalidate()
+				relativeScrollOffset += link.height
+				firstShownPosition++
+				Log.info("removed at top")
+
+				val newTopLink = links.first
+			} while (relativeScrollOffset < -newTopLink.height)
+		}
+
+		// Ensure there's no free space at the end.
+		// If there is, add more links.
+		// If there are invisible elements at the end, remove them
+		var occupiedHeight = relativeScrollOffset
+		val availableHeight = height - padding.top - padding.bottom
+
+		val iterator = links.listIterator()
+		for (link in iterator) {
+			if (occupiedHeight > availableHeight) {
+				iterator.remove()
+				invalidate()
+				Log.info("removed at bottom")
+
 			} else {
-				relativeScrollOffset = 0f
+				// Using prefHeight because some elements may have an invalid size.
+				occupiedHeight += link.prefHeight
 			}
 		}
 
-		if (links.size > dataset.size) {
-			// Ensure there's no free space at the end.
-			// If there is, add more links.
-			// If there are invisible elements at the end, remove them
-			var occupiedHeight = relativeScrollOffset
-			val availableHeight = height - padding.top - padding.bottom
+		while (occupiedHeight < availableHeight && dataset.size > firstShownPosition + links.size) {
+			val element = elementPool.obtain()
+			val data = dataset[firstShownPosition + links.size]
+			val link = Link(element, data)
 
-			val iterator = links.listIterator()
-			for (link in iterator) {
-				if (occupiedHeight > availableHeight) {
-					iterator.remove()
-					invalidate()
-				} else {
-					occupiedHeight += link.element.prefHeight + elementMargin.top + elementMargin.bottom
-				}
-			}
+			adapter.updateElement(element, data, firstShownPosition + links.size)
+			element.validate()
 
-			if (occupiedHeight < availableHeight && dataset.size > firstShownPosition + links.size) {
-				val element = elementPool.obtain()
-				val data = dataset[firstShownPosition + links.size]
-				val link = Link(element, data)
+			links.addLast(link)
+			Log.info("added at bottom")
+			invalidate()
 
-				adapter.updateElement(element, data, firstShownPosition + links.size)
-
-				links.addLast(link)
-				invalidate()
-			}
+			occupiedHeight += link.prefHeight
 		}
 
 		validate()
+
+		links.forEach {
+			it.element.act(delta)
+		}
+	}
+
+	override fun draw() {
+		applyTransform(computeTransform())
+
+		background?.let { background ->
+			Draw.color(color.r, color.g, color.b, color.a * parentAlpha)
+			background.draw(0f, 0f, width, height)
+			Draw.color()
+		}
+
+		Draw.flush()
+		if (clipBegin(
+			padding.left,
+			padding.top,
+			width - padding.right - padding.left,
+			height - padding.bottom - padding.top
+		)) {
+			for (link in links) {
+				val element = link.element
+
+				element.x += element.translation.x
+				element.y += element.translation.y + relativeScrollOffset.toInt()
+				element.draw()
+				element.x -= element.translation.x
+				element.y -= element.translation.y + relativeScrollOffset.toInt()
+			}
+
+			Draw.flush()
+			clipEnd()
+		}
+
+		resetTransform()
 	}
 
 	override fun getMinWidth() = computedSize.x
@@ -323,6 +438,9 @@ class RecyclerGroup<Data, E: Element>(
 		var element: E,
 		var data: Data
 	) {
+		val height get() = element.height + elementMargin.top + elementMargin.bottom
+		val prefHeight get() = element.prefHeight + elementMargin.top + elementMargin.bottom
+
 		override fun toString(): String {
 			return "Link(element=$element, data=$data)"
 		}
