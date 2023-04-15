@@ -12,6 +12,7 @@ import arc.util.pooling.Pool
 import java.util.*
 import javax.naming.OperationNotSupportedException
 import kotlin.math.*
+import kotlin.properties.Delegates
 
 /**
  * A group that displays data as a list of elements of the same type.
@@ -28,9 +29,16 @@ class RecyclerGroup<Data, E: Element>(
 	val adapter: Adapter<Data, E>
 ) : Group() {
 	val links = LinkedList<Link>()
+	/**
+	 * Position of the first visible element in [adapter.dataset].
+	 * May be invalid if the underlying dataset was changed but not invalidated.
+	 */
 	var firstShownPosition = 0
 	/**
-	 * Scroll offset relative to the top of the first visible element.
+	 * Vertical scroll offset relative to the top of the first visible element.
+	 * Lower value means the recycler was scrolled down more.
+	 *
+	 * 0 means that the top element is perfectly visible.
 	 *
 	 * If this value is positive, the next element will be shown on the next frame
 	 * and this value will change to negative.
@@ -40,7 +48,9 @@ class RecyclerGroup<Data, E: Element>(
 	 *
 	 * If it's already negative, then the top of the first visible element is invisible.
 	 */
-	var relativeScrollOffset = 0f
+	var relativeScrollOffset by Delegates.observable(0f) { prop, old, new ->
+		if (old != new) Log.info("RecyclerGroup.relativeScrollOffset: $old -> $new")
+	}
 	var scrollSpeed = 0f
 
 	var background: Drawable? = null
@@ -74,7 +84,6 @@ class RecyclerGroup<Data, E: Element>(
 
 		// Flick & pan listener
 		addListener(object : ElementGestureListener() {
-			// The below methods use subtraction because we are doing realistic scrolling here
 			override fun pan(event: InputEvent?, x: Float, y: Float, deltaX: Float, deltaY: Float) {
 				relativeScrollOffset -= deltaY
 			}
@@ -82,7 +91,7 @@ class RecyclerGroup<Data, E: Element>(
 			override fun fling(event: InputEvent?, velocityX: Float, velocityY: Float, button: KeyCode?) {
 				if (button != KeyCode.mouseLeft && button != null) return
 
-				scrollSpeed -= velocityY
+				scrollSpeed += velocityY
 			}
 		})
 
@@ -94,7 +103,7 @@ class RecyclerGroup<Data, E: Element>(
 			}
 
 			override fun scrolled(event: InputEvent?, x: Float, y: Float, amountX: Float, amountY: Float): Boolean {
-				relativeScrollOffset += amountY
+				relativeScrollOffset -= amountY * 10f
 				return true
 			}
 
@@ -280,14 +289,14 @@ class RecyclerGroup<Data, E: Element>(
 				element.validate()
 				links.addFirst(link)
 				invalidate()
-				Log.info("added at top")
+			//	Log.info("added at top")
 
 				relativeScrollOffset -= link.prefHeight
 			}
 		} else if (relativeScrollOffset < -topLink.height) {
 			// Height is used here instead of prefHeight because these elements are already valid
 			do {
-				if (firstShownPosition < dataset.lastIndex - links.size) {
+				if (firstShownPosition > dataset.lastIndex - links.size) {
 					relativeScrollOffset = 0f
 					break
 				}
@@ -298,7 +307,7 @@ class RecyclerGroup<Data, E: Element>(
 				invalidate()
 				relativeScrollOffset += link.height
 				firstShownPosition++
-				Log.info("removed at top")
+			//	Log.info("removed at top")
 
 				val newTopLink = links.first
 			} while (relativeScrollOffset < -newTopLink.height)
@@ -315,8 +324,7 @@ class RecyclerGroup<Data, E: Element>(
 			if (occupiedHeight > availableHeight) {
 				iterator.remove()
 				invalidate()
-				Log.info("removed at bottom")
-
+			//	Log.info("removed at bottom")
 			} else {
 				// Using prefHeight because some elements may have an invalid size.
 				occupiedHeight += link.prefHeight
@@ -332,7 +340,7 @@ class RecyclerGroup<Data, E: Element>(
 			element.validate()
 
 			links.addLast(link)
-			Log.info("added at bottom")
+			//Log.info("added at bottom")
 			invalidate()
 
 			occupiedHeight += link.prefHeight
@@ -365,10 +373,10 @@ class RecyclerGroup<Data, E: Element>(
 				val element = link.element
 
 				element.x += element.translation.x
-				element.y += element.translation.y + relativeScrollOffset.toInt()
+				element.y += element.translation.y - relativeScrollOffset.toInt()
 				element.draw()
 				element.x -= element.translation.x
-				element.y -= element.translation.y + relativeScrollOffset.toInt()
+				element.y -= element.translation.y - relativeScrollOffset.toInt()
 			}
 
 			Draw.flush()
