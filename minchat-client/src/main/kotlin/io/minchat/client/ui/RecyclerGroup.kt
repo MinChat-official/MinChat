@@ -49,7 +49,7 @@ class RecyclerGroup<Data, E: Element>(
 	 * If it's already negative, then the top of the first visible element is invisible.
 	 */
 	var relativeScrollOffset by Delegates.observable(0f) { prop, old, new ->
-		if (old != new) Log.info("RecyclerGroup.relativeScrollOffset: $old -> $new")
+		//if (old != new) Log.info("RecyclerGroup.relativeScrollOffset: $old -> $new")
 	}
 	var scrollSpeed = 0f
 
