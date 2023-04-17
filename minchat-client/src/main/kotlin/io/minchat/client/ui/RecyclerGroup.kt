@@ -218,7 +218,7 @@ class RecyclerGroup<Data, E: Element>(
 		// To avoid overhead, we validate elements right away
 		var dataIndex = firstElementDataIndex
 		var heightOccupied = 0f
-		while (true) {
+		while (dataIndex < dataset.lastIndex) {
 			val data = dataset[dataIndex]
 			val element = elementPool.obtain()
 
