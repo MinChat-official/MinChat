@@ -2,17 +2,14 @@ package io.minchat.client.ui
 
 import arc.graphics.g2d.Draw
 import arc.input.KeyCode
-import arc.math.Mathf
 import arc.math.geom.Vec2
 import arc.scene.*
 import arc.scene.event.*
 import arc.scene.style.Drawable
-import arc.util.Log
 import arc.util.pooling.Pool
 import java.util.*
 import javax.naming.OperationNotSupportedException
 import kotlin.math.*
-import kotlin.properties.Delegates
 
 /**
  * A group that displays data as a list of elements of the same type.
@@ -48,10 +45,13 @@ class RecyclerGroup<Data, E: Element>(
 	 *
 	 * If it's already negative, then the top of the first visible element is invisible.
 	 */
-	var relativeScrollOffset by Delegates.observable(0f) { prop, old, new ->
-		//if (old != new) Log.info("RecyclerGroup.relativeScrollOffset: $old -> $new")
-	}
+	var relativeScrollOffset = 0f
 	var scrollSpeed = 0f
+	/**
+	 * When the user does a fling gesture, this variable
+	 * indicates the remaining time of the fling effect.
+	 */
+	var flingTimer = 0f
 
 	var background: Drawable? = null
 	/** Additional empty space around this element's borders. */
@@ -91,14 +91,18 @@ class RecyclerGroup<Data, E: Element>(
 			override fun fling(event: InputEvent?, velocityX: Float, velocityY: Float, button: KeyCode?) {
 				if (button != KeyCode.mouseLeft && button != null) return
 
-				scrollSpeed += velocityY
+				flingTimer = 1f
+				scrollSpeed -= velocityY
 			}
 		})
 
 		// Scroll listener
 		addListener(object : InputListener() {
 			override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?): Boolean {
-				if (button == KeyCode.mouseLeft || button == null) scrollSpeed = 0f
+				if (button == KeyCode.mouseLeft || button == null) {
+					scrollSpeed = 0f
+					flingTimer = 0f
+				}
 				return false
 			}
 
@@ -156,7 +160,7 @@ class RecyclerGroup<Data, E: Element>(
 
 		// Firstly, we need to determine how much height the elements want to know
 		// where to start laying them out
-		val startHeight = if (links.size >= adapter.dataset.size) {
+		val startHeight = if (links.size < adapter.dataset.size) {
 			// Shortcut: all space will be taken
 			height - padding.top - padding.bottom
 		} else {
@@ -177,8 +181,9 @@ class RecyclerGroup<Data, E: Element>(
 			element.y = padding.bottom + startHeight - heightOccupied + elementMargin.top
 			element.setSize(
 				availableWidth - padding.left - padding.right - elementMargin.left - elementMargin.right,
-				max(element.prefHeight - elementMargin.top - elementMargin.bottom, 5f)
+				max(element.prefHeight, 5f)
 			)
+			element.y -= element.prefHeight - padding.top
 			element.validate()
 
 			heightOccupied += element.prefHeight + elementMargin.top + elementMargin.bottom
@@ -267,10 +272,12 @@ class RecyclerGroup<Data, E: Element>(
 
 		val dataset = adapter.dataset
 
-		relativeScrollOffset += scrollSpeed * delta
-		scrollSpeed = Mathf.lerpDelta(scrollSpeed, 0f, 0.4f)
-
-		if (abs(scrollSpeed) < 0.01f) scrollSpeed = 0f
+		relativeScrollOffset += scrollSpeed * flingTimer * delta
+		flingTimer -= delta
+		if (flingTimer <= 0f) {
+			scrollSpeed = 0f
+			flingTimer = 0f
+		}
 
 		val topLink = links.first
 		if (relativeScrollOffset > 0f) {
@@ -289,31 +296,30 @@ class RecyclerGroup<Data, E: Element>(
 				element.validate()
 				links.addFirst(link)
 				invalidate()
-			//	Log.info("added at top")
 
 				relativeScrollOffset -= link.prefHeight
 			}
 		} else if (relativeScrollOffset < -topLink.height) {
 			// Height is used here instead of prefHeight because these elements are already valid
+			var currentTopLink = topLink
 			do {
 				if (firstShownPosition > dataset.lastIndex - links.size) {
-					relativeScrollOffset = 0f
+					relativeScrollOffset = -currentTopLink.height
 					break
 				}
 
 				// Remove the topmost link
-				val link = links.removeFirst()
-				link.free()
+				currentTopLink = links.removeFirst()
+				currentTopLink.free()
 				invalidate()
-				relativeScrollOffset += link.height
+				relativeScrollOffset += currentTopLink.height
 				firstShownPosition++
-			//	Log.info("removed at top")
 
-				val newTopLink = links.first
+				val newTopLink = links.peek() ?: break
 			} while (relativeScrollOffset < -newTopLink.height)
 		}
 
-		// Ensure there's no free space at the end.
+		// Ensure there's no free space at the end
 		// If there is, add more links.
 		// If there are invisible elements at the end, remove them
 		var occupiedHeight = relativeScrollOffset
@@ -321,10 +327,9 @@ class RecyclerGroup<Data, E: Element>(
 
 		val iterator = links.listIterator()
 		for (link in iterator) {
-			if (occupiedHeight > availableHeight) {
+			if (occupiedHeight > availableHeight + link.prefHeight) {
 				iterator.remove()
 				invalidate()
-			//	Log.info("removed at bottom")
 			} else {
 				// Using prefHeight because some elements may have an invalid size.
 				occupiedHeight += link.prefHeight
@@ -340,7 +345,6 @@ class RecyclerGroup<Data, E: Element>(
 			element.validate()
 
 			links.addLast(link)
-			//Log.info("added at bottom")
 			invalidate()
 
 			occupiedHeight += link.prefHeight
