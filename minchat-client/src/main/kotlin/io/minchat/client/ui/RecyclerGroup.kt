@@ -6,6 +6,7 @@ import arc.math.geom.Vec2
 import arc.scene.*
 import arc.scene.event.*
 import arc.scene.style.Drawable
+import arc.util.Tmp
 import arc.util.pooling.Pool
 import java.util.*
 import javax.naming.OperationNotSupportedException
@@ -65,7 +66,8 @@ class RecyclerGroup<Data, E: Element>(
 		override fun obtain(): E {
 			while (true) {
 				if (free <= 0) return newObject().also {
-					it.parent = this@RecyclerGroup
+					// Necessary to set its scene.
+					addChild(it)
 				}
 
 				val element = super.obtain()
@@ -132,18 +134,6 @@ class RecyclerGroup<Data, E: Element>(
 	fun removeEntry(data: Data) =
 		adapter.removeEntry(data)
 
-	override fun addChild(actor: Element?): Unit =
-		error("RecyclerGroup doesn't support custom children")
-
-	override fun addChildAfter(actorAfter: Element?, actor: Element?): Unit =
-		error("RecyclerGroup doesn't support custom children")
-
-	override fun addChildAt(index: Int, actor: Element?): Unit =
-		error("RecyclerGroup doesn't support custom children")
-
-	override fun addChildBefore(actorBefore: Element?, actor: Element?): Unit =
-		error("RecyclerGroup doesn't support custom children")
-
 	/** Forces this recycler to reinterpret the dataset on the next frame. */
 	fun invalidateDataset() {
 		datasetInvalid = true
@@ -200,10 +190,7 @@ class RecyclerGroup<Data, E: Element>(
 
 		firstShownPosition = firstShownPosition.coerceIn(0, dataset.lastIndex)
 
-		val firstLink = links.firstOrNull()
-		val firstElementDataIndex = dataset.indexOfFirst { it == firstLink?.data }.let {
-			if (it == -1) 0 else it
-		}
+		val firstElementDataIndex = firstShownPosition.coerceIn(dataset.indices)
 
 		// Firstly, free all links and clear the link list
 		links.forEach {
@@ -284,6 +271,7 @@ class RecyclerGroup<Data, E: Element>(
 			while (relativeScrollOffset > 0f) {
 				if (firstShownPosition <= 0) {
 					relativeScrollOffset = 0f
+					adapter.topReached()
 					break
 				}
 
@@ -305,6 +293,7 @@ class RecyclerGroup<Data, E: Element>(
 			do {
 				if (firstShownPosition > dataset.lastIndex - links.size) {
 					relativeScrollOffset = -currentTopLink.height
+					adapter.bottomReached()
 					break
 				}
 
@@ -318,6 +307,10 @@ class RecyclerGroup<Data, E: Element>(
 				val newTopLink = links.peek() ?: break
 			} while (relativeScrollOffset < -newTopLink.height)
 		}
+
+		// At the end of this process, the scroll offset must remain in the correct range
+		val bottomLinkHeight = links.peekLast()?.height ?: 0f
+		relativeScrollOffset = relativeScrollOffset.coerceIn(-bottomLinkHeight..0f)
 
 		// Ensure there's no free space at the end
 		// If there is, add more links.
@@ -390,6 +383,30 @@ class RecyclerGroup<Data, E: Element>(
 		resetTransform()
 	}
 
+	override fun hit(x: Float, y: Float, touchable: Boolean): Element? {
+		// First, try to hit one of the links
+		val scrollOffset = relativeScrollOffset.toInt()
+		for (link in links) {
+			val element = link.element
+			val position = element.parentToLocalCoordinates(Tmp.v1.set(x, y + scrollOffset))
+
+			element.hit(position.x, position.y, touchable)?.let { return it }
+		}
+
+		if (x in 0f..width && y in 0f..height) {
+			return this
+		}
+		return null
+	}
+
+	override fun notify(event: SceneEvent?, capture: Boolean): Boolean {
+		// Notify the links
+		for (link in links) {
+			link.element.notify(event, capture)
+		}
+		return super.notify(event, capture)
+	}
+
 	override fun getMinWidth() = computedSize.x
 
 	override fun getMinHeight() = computedSize.y
@@ -437,6 +454,12 @@ class RecyclerGroup<Data, E: Element>(
 		/** Throw an [OperationNotSupportedException] by default. */
 		open fun removeEntry(data: Data): Boolean =
 			throw OperationNotSupportedException("$this does not support removing data.")
+
+		/** Called when the bottom of the list is reached and scrolled beyond. */
+		open fun bottomReached() {}
+
+		/** Called when the top of the list is reached and scrolled beyond. */
+		open fun topReached() {}
 
 		open fun datasetChanged() {
 			parent?.datasetInvalid = true
