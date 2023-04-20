@@ -11,4 +11,4 @@ Separated User.username and User.nickname
 Added an event gateway, allowing to update the state of the chat in real time.
 
 #VERSION 0.1.0
-The inital release of MinChat.
+The initial release of MinChat.

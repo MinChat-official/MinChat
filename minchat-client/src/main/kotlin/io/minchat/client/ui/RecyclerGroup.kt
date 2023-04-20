@@ -1,5 +1,6 @@
 package io.minchat.client.ui
 
+import arc.graphics.Color
 import arc.graphics.g2d.Draw
 import arc.input.KeyCode
 import arc.math.geom.Vec2
@@ -8,6 +9,7 @@ import arc.scene.event.*
 import arc.scene.style.Drawable
 import arc.util.Tmp
 import arc.util.pooling.Pool
+import io.minchat.client.misc.MinchatStyle
 import java.util.*
 import javax.naming.OperationNotSupportedException
 import kotlin.math.*
@@ -32,6 +34,8 @@ class RecyclerGroup<Data, E: Element>(
 	 * May be invalid if the underlying dataset was changed but not invalidated.
 	 */
 	var firstShownPosition = 0
+	/** Used internally to restore the scroll position after dataset modification. */
+	private var firstShownLink: Link? = null
 	/**
 	 * Vertical scroll offset relative to the top of the first visible element.
 	 * Lower value means the recycler was scrolled down more.
@@ -109,7 +113,7 @@ class RecyclerGroup<Data, E: Element>(
 			}
 
 			override fun scrolled(event: InputEvent?, x: Float, y: Float, amountX: Float, amountY: Float): Boolean {
-				relativeScrollOffset -= amountY * 10f
+				relativeScrollOffset -= amountY * 30f
 				return true
 			}
 
@@ -188,9 +192,12 @@ class RecyclerGroup<Data, E: Element>(
 	fun layoutDataset() {
 		val dataset = adapter.dataset
 
-		firstShownPosition = firstShownPosition.coerceIn(0, dataset.lastIndex)
+		// If possible, restore the first shown position.
+		val firstElementDataIndex =
+			firstShownLink?.let { dataset.indexOf(it.data) }?.takeIf { it != -1 }
+				?: firstShownPosition.coerceIn(dataset.indices)
 
-		val firstElementDataIndex = firstShownPosition.coerceIn(dataset.indices)
+		firstShownPosition = firstElementDataIndex
 
 		// Firstly, free all links and clear the link list
 		links.forEach {
@@ -254,6 +261,8 @@ class RecyclerGroup<Data, E: Element>(
 		if (links.isEmpty()) {
 			relativeScrollOffset = 0f
 			scrollSpeed = 0f
+			firstShownPosition = 0
+			firstShownLink = null
 			return
 		}
 
@@ -264,6 +273,11 @@ class RecyclerGroup<Data, E: Element>(
 		if (flingTimer <= 0f) {
 			scrollSpeed = 0f
 			flingTimer = 0f
+		}
+
+		// The dataset must be laid out before the scroll is performed
+		if (datasetInvalid) {
+			layoutDataset()
 		}
 
 		val topLink = links.first
@@ -345,6 +359,8 @@ class RecyclerGroup<Data, E: Element>(
 
 		validate()
 
+		firstShownLink = links.peek()
+
 		links.forEach {
 			it.element.act(delta)
 		}
@@ -361,11 +377,11 @@ class RecyclerGroup<Data, E: Element>(
 
 		Draw.flush()
 		if (clipBegin(
-			padding.left,
-			padding.top,
-			width - padding.right - padding.left,
-			height - padding.bottom - padding.top
-		)) {
+				padding.left,
+				padding.top,
+				width - padding.right - padding.left,
+				height - padding.bottom - padding.top
+			)) {
 			for (link in links) {
 				val element = link.element
 
@@ -380,8 +396,36 @@ class RecyclerGroup<Data, E: Element>(
 			clipEnd()
 		}
 
+		// Draw a semi-transparent bar showing the position of the viewport if necessary
+		if (links.size < adapter.dataset.size) {
+			val perElement = (height - padding.top - padding.bottom) / adapter.dataset.size
+			val barWidth = 3f
+			val barHeight = perElement * links.size
+			val barOffset = perElement * (adapter.dataset.size - firstShownPosition)
+
+			Draw.color(Color.white, parentAlpha * color.a * 0.6f)
+			Draw.z(zIndex.toFloat())
+
+			Draw.rect(
+				MinchatStyle.surfaceWhite.region,
+				width - padding.right - barWidth / 2f,
+				padding.bottom + barOffset - barHeight / 2f,
+				barWidth,
+				barHeight
+			)
+		}
+
 		resetTransform()
 	}
+
+	/** Returns true if the recycler is scrolled to the top. */
+	fun isAtTop(): Boolean =
+		relativeScrollOffset >= 0f && firstShownPosition == 0
+
+	/** Returns true if the recycler is scrolled to the bottom. */
+	fun isAtBottom(): Boolean =
+		links.isEmpty()
+			|| (relativeScrollOffset <= links.last.height && firstShownPosition == links.lastIndex)
 
 	override fun hit(x: Float, y: Float, touchable: Boolean): Element? {
 		// First, try to hit one of the links
