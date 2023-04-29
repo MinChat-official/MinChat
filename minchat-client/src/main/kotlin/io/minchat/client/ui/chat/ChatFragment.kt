@@ -11,10 +11,10 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
-import io.minchat.client.ui.Fragment
+import io.minchat.client.ui.*
 import io.minchat.client.ui.dialog.*
 import io.minchat.common.entity.Message
-import io.minchat.rest.entity.MinchatChannel
+import io.minchat.rest.entity.*
 import io.minchat.rest.event.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -37,8 +37,10 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var chatBar: Table
 	/** Wraps [chatContainer]. */
 	lateinit var chatPane: ScrollPane
-	/** Contains a list of message elements. Each element must be placed on a separate row. */
-	lateinit var chatContainer: Table
+	/** A recycler containing all the messages sent in the current channel. */
+	val chatRecycler = RecyclerGroup(ChatRecyclerAdapter(this))
+	/** A message recycler adapter used by [chatRecycler]. All message elements are managed by it. */
+	val chatAdapter get() = chatRecycler.adapter as ChatRecyclerAdapter
 	/** A field that allows either to enter a new message or edit an existing one. */
 	lateinit var chatField: TextField
 	lateinit var sendButton: TextButton
@@ -149,13 +151,11 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 
 			chatBar = this
-			limitedScrollPane {
-				it.isScrollingDisabledX = true
-				setBackground(Style.surfaceBackground)
+			add(chatRecycler).grow().pad(Style.layoutPad).row()
 
-				chatPane = it
-				chatContainer = this
-			}.grow().pad(Style.layoutPad).row()
+			chatRecycler.apply {
+				background = Style.surfaceBackground
+			}
 
 			// chatbox
 			addTable {
@@ -200,32 +200,25 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				is MinchatMessageCreate -> {
 					val message = event.message
 					if (message.channelId == currentChannel?.id) {
-						val element = NormalMinchatMessageElement(this@ChatFragment, message)
-						addMessage(element, 0.5f)
+						chatAdapter.addEntry(message)
 					}
 				}
 
 				is MinchatMessageModify -> {
 					val newMessage = event.message
 					if (newMessage.channelId == currentChannel?.id) {
-						// Find and replace the old message element in its cell
-						val messageCell = chatContainer.cells.find {
-							// getAsOrNull won't work for some reason
-							(it.get() as? NormalMinchatMessageElement)?.message?.id == newMessage.id
+						val index = chatAdapter.dataset.indexOfFirst { it.id == newMessage.id }
+
+						if (index >= 0) {
+							chatAdapter.dataset[index] = newMessage
+							chatAdapter.datasetChanged()
 						}
-						messageCell.setElement<Element>(NormalMinchatMessageElement(this@ChatFragment, newMessage))
-						chatContainer.invalidateHierarchy()
 					}
 				}
 
 				is MinchatMessageDelete -> {
 					if (event.channelId == currentChannel?.id) {
-						// Play a shrinking animation and finally rremove the element.
-						chatContainer.children.find {
-							(it as? NormalMinchatMessageElement)?.message?.id == event.messageId
-						}?.let {
-							(it as NormalMinchatMessageElement).animateDisappear(1f)
-						}
+						chatAdapter.removeEntry(event.messageId)
 					}
 				}
 
@@ -238,14 +231,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 				is MinchatUserModify -> {
 					val newUser = event.user
-					chatContainer.cells.forEach {
-						val element = (it.get() as? NormalMinchatMessageElement)?.let { old ->
-							old.takeIf { it.message.authorId == newUser.id }?.let {
-								NormalMinchatMessageElement(old.chat, old.message.copy(author = newUser.data))
-							}
-						} ?: return@forEach
+					val iterator = chatAdapter.dataset.listIterator()
 
-						it.setElement<NormalMinchatMessageElement>(element)
+					iterator.forEach {
+						if (it.authorId == newUser.id) {
+							iterator.remove()
+							iterator.add(it.copy(author = newUser.data))
+						}
 					}
 				}
 			}
@@ -285,22 +277,19 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 * it will be scrolled down more to show the message.
 	 */
 	fun addMessage(
-		element: MinchatMessageElement,
-		animationLength: Float,
+		message: MinchatMessage,
 		autoscroll: Boolean = true
-	) = synchronized(chatContainer) {
-		val isAtBottom = chatPane.isBottomEdge
+	) {
+		val isAtBottom = chatRecycler.isAtBottom()
 
-		chatContainer.add(element)
-			.padBottom(10f).pad(4f).growX().row()
-		element.animateMoveIn(animationLength)
+		chatAdapter.addEntry(message)
 
 		// Scroll down to show the new message, but only if the bottom was already visible.
-		if (isAtBottom) {
-			chatPane.validate()
-			Core.app.post {
-				chatPane.scrollY = chatPane.maxY
-			}
+		if (autoscroll && isAtBottom) {
+			chatRecycler.validate()
+			// TODO: find a way to do this in a more safe manner
+			val lastLinkHeight = chatRecycler.links.last.height
+			chatRecycler.scrollBy(lastLinkHeight)
 		}
 	}
 
