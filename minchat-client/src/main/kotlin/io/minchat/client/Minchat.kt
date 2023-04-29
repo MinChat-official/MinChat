@@ -7,7 +7,7 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
-import io.minchat.client.config.MinchatGithubClient
+import io.minchat.client.config.*
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.ui.chat.ChatFragment
@@ -65,7 +65,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	val isConnected get() = ::client.isInitialized
 
 	val chatFragment by lazy { ChatFragment(this) }
-	val chatDialog by lazy { createDialog(title = "") {
+	private val chatDialog by lazy { createDialog(title = "") {
 		it.setFillParent(true)
 		it.setBackground(Styles.none)
 		it.titleTable.remove()
@@ -83,32 +83,14 @@ class MinchatMod : Mod(), CoroutineScope {
 
 		Events.on(EventType.ClientLoadEvent::class.java) {
 			Vars.ui.menufrag.addButton("MinChat", Icon.terminal) {
-				if (isConnected) {
-					showChatDialog()
-				} else {
-					// If not yet connected, show a loading fragment and connect
-					val job = connectToDefault().then { exception ->
-						runUi {
-							if (exception != null && exception !is CancellationException) {
-								Vars.ui.showErrorMessage(
-									"Failed to connect to the Minchst server: ${exception.userReadable()}")
-							} else if (exception == null) {
-								showChatDialog()
-							}
-							Vars.ui.loadfrag.hide()
-						}
-					}
-
-					Vars.ui.loadfrag.apply {
-						show("Couldn't connect to the MinChat server before. Retrying...")
-						setButton { job.cancel() }
-					}
-				}
+				showChatDialog()
 			}
 
 			launch {
 				MinchatPluginHandler.onLoad()
 			}
+
+			MinchatBackgroundHandler.start()
 		}
 
 		Events.on(EventType.ClientLoadEvent::class.java) {
@@ -137,13 +119,42 @@ class MinchatMod : Mod(), CoroutineScope {
 			}.show()
 		}
 
+		MinchatSettings.createSettings()
+		MinchatKeybinds.registerDefaultKeybinds()
+
 		connectToDefault()
 	}
 
+	/**
+	 * Shows the chat dialog.
+	 * May show a loading screen if the server hasn't been reached yet.
+	 */
 	fun showChatDialog() {
-		chatFragment.apply(chatDialog.cont)
-		chatFragment.onClose(chatDialog::hide)
-		chatDialog.show()
+		if (isConnected) {
+			chatFragment.apply(chatDialog.cont)
+			chatFragment.onClose(chatDialog::hide)
+			chatDialog.show()
+		} else {
+			// If not yet connected, show a loading fragment and connect
+			val job = connectToDefault().then { exception ->
+				runUi {
+					if (exception != null && exception !is CancellationException) {
+						Vars.ui.showErrorMessage(
+							"Failed to connect to the Minchst server: ${exception.userReadable()}")
+					} else if (exception == null) {
+						chatFragment.apply(chatDialog.cont)
+						chatFragment.onClose(chatDialog::hide)
+						chatDialog.show()
+					}
+					Vars.ui.loadfrag.hide()
+				}
+			}
+
+			Vars.ui.loadfrag.apply {
+				show("Couldn't connect to the MinChat server before. Retrying...")
+				setButton { job.cancel() }
+			}
+		}
 	}
 
 	/**
