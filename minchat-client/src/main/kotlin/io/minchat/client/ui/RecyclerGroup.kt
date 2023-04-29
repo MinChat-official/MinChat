@@ -194,7 +194,10 @@ class RecyclerGroup<Data, E: Element>(
 
 		// If possible, restore the first shown position.
 		val firstElementDataIndex =
-			firstShownLink?.let { dataset.indexOf(it.data) }?.takeIf { it != -1 }
+			firstShownLink?.let { fsl ->
+				dataset.indexOfFirst { it === fsl.data }
+			}
+				?.takeIf { it != -1 }
 				?: firstShownPosition.coerceIn(dataset.indices)
 
 		firstShownPosition = firstElementDataIndex
@@ -377,11 +380,11 @@ class RecyclerGroup<Data, E: Element>(
 
 		Draw.flush()
 		if (clipBegin(
-				padding.left,
-				padding.top,
-				width - padding.right - padding.left,
-				height - padding.bottom - padding.top
-			)) {
+			padding.left,
+			padding.top,
+			width - padding.right - padding.left,
+			height - padding.bottom - padding.top
+		)) {
 			for (link in links) {
 				val element = link.element
 
@@ -425,7 +428,12 @@ class RecyclerGroup<Data, E: Element>(
 	/** Returns true if the recycler is scrolled to the bottom. */
 	fun isAtBottom(): Boolean =
 		links.isEmpty()
-			|| (relativeScrollOffset <= links.last.height && firstShownPosition == links.lastIndex)
+			|| (relativeScrollOffset <= links.last.height && firstShownPosition >= adapter.dataset.size - links.size)
+
+	/** Scrolls the recycler down by the specified height. */
+	fun scrollBy(amount: Float) {
+		relativeScrollOffset -= amount
+	}
 
 	override fun hit(x: Float, y: Float, touchable: Boolean): Element? {
 		// First, try to hit one of the links
@@ -461,6 +469,9 @@ class RecyclerGroup<Data, E: Element>(
 		/**
 		 * The dataset of this adapter.
 		 * When the underlying list is changed, [datasetChanged] must be called.
+		 *
+		 * This list must contain distinct elements (no duplicates),
+		 * otherwise undefined behavior may occur.
 		 */
 		abstract val dataset: List<Data>
 
