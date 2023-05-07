@@ -11,6 +11,7 @@ import io.minchat.client.config.*
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.ui.chat.ChatFragment
+import io.minchat.client.ui.managers.GuiChatButtonManager
 import io.minchat.common.MINCHAT_VERSION
 import io.minchat.rest.MinchatRestClient
 import io.minchat.rest.gateway.MinchatGateway
@@ -90,6 +91,7 @@ class MinchatMod : Mod(), CoroutineScope {
 				MinchatPluginHandler.onLoad()
 			}
 
+			MinchatSettings.createSettings()
 			MinchatBackgroundHandler.start()
 		}
 
@@ -119,8 +121,8 @@ class MinchatMod : Mod(), CoroutineScope {
 			}.show()
 		}
 
-		MinchatSettings.createSettings()
 		MinchatKeybinds.registerDefaultKeybinds()
+		GuiChatButtonManager.init()
 
 		connectToDefault()
 	}
