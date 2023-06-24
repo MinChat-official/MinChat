@@ -124,7 +124,7 @@ class MinchatMod : Mod(), CoroutineScope {
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
 
-		connectToDefault()
+		launch { connectToDefault() }
 	}
 
 	/**
@@ -138,11 +138,13 @@ class MinchatMod : Mod(), CoroutineScope {
 			chatDialog.show()
 		} else {
 			// If not yet connected, show a loading fragment and connect
-			val job = connectToDefault().then { exception ->
+			val job = launch {
+				connectToDefault()
+			}.then { exception ->
 				runUi {
 					if (exception != null && exception !is CancellationException) {
 						Vars.ui.showErrorMessage(
-							"Failed to connect to the Minchst server: ${exception.userReadable()}")
+							"Failed to connect to the Minchat server: ${exception.userReadable()}")
 					} else if (exception == null) {
 						chatFragment.apply(chatDialog.cont)
 						chatFragment.onClose(chatDialog::hide)
@@ -165,7 +167,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	 *
 	 * @throws VersionMismatchException if the server's version is not compatible with the client's.
 	 */
-	fun connectToServer(url: String) = launch {
+	suspend fun connectToServer(url: String) {
 		val client = MinchatRestClient(url)
 
 		val serverVersion = client.getServerVersion()
@@ -190,11 +192,11 @@ class MinchatMod : Mod(), CoroutineScope {
 	 * Connects to the default server.
 	 * Overrides [client] upon success.
 	 */
-	fun connectToDefault() = launch {
+	suspend fun connectToDefault() {
 		// TODO: must be overridable by the user
 		val url = githubClient.getDefaultUrl()
 
-		connectToServer(url).join()
+		connectToServer(url)
 	}
 
 	/** Suspends until a connection to the MinChat server gets established. */
