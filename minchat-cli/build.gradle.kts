@@ -10,6 +10,8 @@ plugins {
 	kotlin("plugin.serialization") version "1.8.0"
 }
 
+apply(plugin = "com.jakewharton.mosaic")
+
 val ktorVersion: String by rootProject
 val picocliVersion: String by rootProject
 
