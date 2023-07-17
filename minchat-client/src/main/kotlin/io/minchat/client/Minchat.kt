@@ -63,7 +63,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	lateinit var gateway: MinchatGateway
 		private set
 	/** Returns true if [client] is initialised and a connection is established. */
-	val isConnected get() = ::client.isInitialized
+	val isConnected get() = ::client.isInitialized && ::gateway.isInitialized
 
 	val chatFragment by lazy { ChatFragment(this) }
 	private val chatDialog by lazy { createDialog(title = "") {
