@@ -2,7 +2,7 @@ package io.minchat.client.config
 
 import arc.*
 import arc.input.*
-import arc.util.Reflect
+import arc.util.*
 import io.minchat.client.Minchat
 
 object MinchatKeybinds {
@@ -30,6 +30,10 @@ object MinchatKeybinds {
 	 */
 	fun register(keybinding: KeyBind) {
 		val bindings = Core.keybinds.sections[0].binds.get(InputDevice.DeviceType.keyboard)
+		if (bindings == null) {
+			Log.warn("No keyboard device detected; Cannot register $keybinding")
+			return
+		}
 
 		bindings.put(keybinding, keybinding)
 		allBindings += keybinding
@@ -46,7 +50,7 @@ object MinchatKeybinds {
 		Reflect.set(Core.keybinds, "definitions", definitions)
 	}
 
-	class KeyBind internal constructor(
+	data class KeyBind internal constructor(
 		val name: String,
 		val key: KeyCode,
 		val category: String,
