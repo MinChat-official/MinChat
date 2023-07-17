@@ -85,8 +85,10 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 
 					val tmpFilePath = file.resolveSibling("minchat-download-tmp")
 					RandomAccessFile(tmpFilePath, "rw").use { tmpFile ->
-						Minchat.gateway.disconnect()
-						Minchat.client.account = null
+						if (Minchat.isConnected) {
+							Minchat.gateway.disconnect()
+							Minchat.client.account = null
+						}
 
 						// Download the asset and overwrite the mod file
 						httpClient.prepareGet(modAsset.downloadUrl).execute {

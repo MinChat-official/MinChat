@@ -38,7 +38,7 @@ object MinchatKeybinds {
 		bindings.put(keybinding, keybinding)
 		allBindings += keybinding
 
-		// Core.keybindings has a weird type
+		// Core.keybindings has a weird type - can't use Array.plus here
 		val original = Core.keybinds.keybinds
 		val definitions = Array<KeyBinds.KeyBind>(original.size + 1) {
 			if (it == original.size) {

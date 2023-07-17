@@ -199,7 +199,11 @@ class MinchatMod : Mod(), CoroutineScope {
 		connectToServer(url)
 	}
 
-	/** Suspends until a connection to the MinChat server gets established. */
+	/**
+	 * Suspends until a connection to the MinChat server gets established.
+	 *
+	 * All coroutines depending on [Minchat.client] or [Minchat.gateway] must invoke this method first.
+	 */
 	suspend fun awaitConnection() {
 		while (!isConnected) {
 			delay(50)
