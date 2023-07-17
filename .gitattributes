@@ -1,0 +1,4 @@
+# Force linefeed everywhere
+* eol=lf
+# Except for batch files
+*.bat eol=crlf
