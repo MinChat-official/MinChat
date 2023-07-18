@@ -10,7 +10,7 @@ jobs:
         uses: actions/checkout@v2
       
       - name: Add build tools to the $PATH
-        run: echo "${ANDROID_HOME}/build-tools/30.0.1" >> $GITHUB_PATH
+        run: echo "${ANDROID_HOME}/build-tools/33.0.2" >> $GITHUB_PATH
       
       - name: Compile the mod
         run: |
