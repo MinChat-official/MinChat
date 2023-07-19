@@ -275,7 +275,7 @@ class Minchat(
 		}
 
 		if (statusStr != null) {
-			Text(statusStr!!, Color.Red)
+			Text(statusStr!!, color = Color.Red)
 		}
 	}
 

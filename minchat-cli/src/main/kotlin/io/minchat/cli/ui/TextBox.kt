@@ -1,7 +1,8 @@
 package io.minchat.cli.ui
 
 import androidx.compose.runtime.*
-import com.jakewharton.mosaic.layout.Layout
+import com.jakewharton.mosaic.layout.layout
+import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.ui.*
 import kotlinx.coroutines.*
 import java.io.Reader
@@ -35,22 +36,17 @@ fun TextField(
 	val thisScope = currentRecomposeScope
 	var currentInput by remember { mutableStateOf("") }
 
-	Layout(
-		debugInfo = {
-			"""Text("$currentInput")"""
-		},
-		measurePolicy = {
-			layout(length, 1)
-		},
-		drawPolicy = { canvas ->
-			val text = if (currentInput.length <= length) {
-				currentInput.padEnd(length, '_')
-			} else {
-				"..." + currentInput.takeLast(length - 3)
-			}
-			canvas.write(0, 0, text, color, background, TextStyle.Underline)
-		}
-	)
+
+	val text = if (currentInput.length <= length) {
+		currentInput.padEnd(length, '_')
+	} else {
+		"..." + currentInput.takeLast(length - 3)
+	}
+
+	Text(text, background = background, style = TextStyle.Underline, modifier = Modifier.layout {
+		it.measure() // so dumb.
+		layout(length, 1) {}
+	})
 
 	LaunchedEffect(Unit) {
 		withContext(Dispatchers.IO) {

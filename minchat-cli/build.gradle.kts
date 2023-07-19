@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 buildscript {
 	dependencies {
 		classpath("com.jakewharton.mosaic", "mosaic-gradle-plugin", "0.7.1")
@@ -34,11 +32,8 @@ dependencies {
 	runtimeOnly("org.jline", "jline-terminal-jna", "3.23.0")
 }
 
-tasks.getByName<ShadowJar>("shadowJar").apply {
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+tasks.shadowJar {
 	archiveFileName.set("minchat-cli.jar")
-
-	manifest {
-                attributes["Main-Class"] = "io.minchat.cli.MinchatClientCliKt"
-        }
+	manifest.attributes["Main-Class"] = "io.minchat.cli.MinchatClientCliKt"
+	from(sourceSets.main.get().output)
 }
