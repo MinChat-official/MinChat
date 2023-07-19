@@ -9,13 +9,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       
-      - name: Add build tools to the $PATH
-        run: echo "${ANDROID_HOME}/build-tools/33.0.2" >> $GITHUB_PATH
-      
       - name: Compile the mod
         run: |
           chmod +x ./gradlew
-          ./gradlew jar release
+          ./gradlew shadowJar release
         
       - name: Upload the client artifact
         uses: actions/upload-artifact@v2

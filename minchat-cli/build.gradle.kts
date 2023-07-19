@@ -1,14 +1,19 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 buildscript {
 	dependencies {
-		classpath("com.github.minchat-official.mosaic-open", "mosaic-gradle-plugin", "master-SNAPSHOT")
+		classpath("com.jakewharton.mosaic", "mosaic-gradle-plugin", "0.7.1")
 	}
 }
 
 plugins {
-	kotlin("jvm") version "1.8.0"
-	kotlin("kapt") version "1.8.0"
-	kotlin("plugin.serialization") version "1.8.0"
+	kotlin("jvm") version "1.8.22"
+	kotlin("kapt") version "1.8.22"
+	kotlin("plugin.serialization") version "1.8.22"
+	id("com.github.johnrengelman.shadow") version "8.1.1"
 }
+
+apply(plugin = "com.jakewharton.mosaic")
 
 val ktorVersion: String by rootProject
 val picocliVersion: String by rootProject
@@ -27,16 +32,11 @@ dependencies {
 
 	implementation("org.jline", "jline-terminal", "3.23.0")
 	runtimeOnly("org.jline", "jline-terminal-jna", "3.23.0")
-
-	implementation("com.github.minchat-official.mosaic-open", "mosaic-runtime", "master-SNAPSHOT")
-	implementation("com.github.minchat-official.mosaic-open", "mosaic-runtime-jvm", "master-SNAPSHOT")
 }
 
-tasks.jar {
+tasks.getByName<ShadowJar>("shadowJar").apply {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	archiveFileName.set("minchat-cli.jar")
-
-	from(*configurations.runtimeClasspath.get().files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 
 	manifest {
                 attributes["Main-Class"] = "io.minchat.cli.MinchatClientCliKt"
