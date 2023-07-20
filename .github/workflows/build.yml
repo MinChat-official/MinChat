@@ -15,7 +15,7 @@ jobs:
       - name: Compile the mod
         run: |
           chmod +x ./gradlew
-          ./gradlew shadowJar release
+          ./gradlew minchat-backend:jar minchat-cli:shadowJar minchat-client:release
         
       - name: Upload the client artifact
         uses: actions/upload-artifact@v2
