@@ -3,6 +3,7 @@ package io.minchat.client
 import arc.Events
 import arc.scene.ui.Label
 import arc.util.Log
+import com.github.mnemotechnician.mkui.delegates.setting
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.groups.child
@@ -96,7 +97,9 @@ class MinchatMod : Mod(), CoroutineScope {
 		}
 
 		Events.on(EventType.ClientLoadEvent::class.java) {
-			createBaseDialog("MinChat", addCloseButton = true) {
+			var dontShowInfoAgain by setting(false, MinchatSettings.prefix)
+
+			if (!dontShowInfoAgain) createBaseDialog("MinChat", addCloseButton = true) {
 				val dialog = this
 
 				addLabel("").marginBottom(20f).row()
@@ -113,11 +116,15 @@ class MinchatMod : Mod(), CoroutineScope {
 						dialog.child<Label>(0).setText("""
 							[Kotlin] MinChat client by Mnemotechnician
 							
-							Discord: @Mnemotechnician#9967
+							Discord: @Mnemotechnician
 							Github: https://github.com/Mnemotechnician
 						""".trimIndent())
 					}
 				}.marginBottom(60f).row()
+
+				check("don't show again") {
+					dontShowInfoAgain = true
+				}.row()
 			}.show()
 		}
 
@@ -193,9 +200,13 @@ class MinchatMod : Mod(), CoroutineScope {
 	 * Overrides [client] upon success.
 	 */
 	suspend fun connectToDefault() {
-		// TODO: must be overridable by the user
-		val url = githubClient.getDefaultUrl()
-
+		val url = when {
+			MinchatSettings.useCustomUrl -> {
+				Log.warn("Connecting to a custom URL. Minchat developers are not responsible for any data sent to foreign servers.")
+				MinchatSettings.customUrl
+			}
+			else -> githubClient.getDefaultUrl()
+		}
 		connectToServer(url)
 	}
 
