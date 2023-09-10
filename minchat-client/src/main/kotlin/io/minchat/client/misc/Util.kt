@@ -21,7 +21,11 @@ fun Throwable.userReadable() = when (this) {
 		val midfix = when (this) {
 			is ServerResponseException, is ClientRequestException -> {
 				// extract the cached response text from the message
-				toString().replace("""^.*Text: "(.+)".*""".toRegex(), "\$1")
+				toString().replace("""^.*Text: "(.+)".*""".toRegex(), "\$1").let {
+					if (it.length > 200) {
+						it.substringBefore("Text: ") // the server has sent an HTML response or similar
+					} else it
+				}
 			}
 			else -> response.status.description
 		}
