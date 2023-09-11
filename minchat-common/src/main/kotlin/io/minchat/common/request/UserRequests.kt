@@ -47,3 +47,6 @@ data class UserModifyRequest(
  */
 @Serializable
 class UserDeleteRequest
+
+@Serializable
+class TokenValidateRequest(val username: String, val token: String)

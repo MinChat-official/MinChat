@@ -1,11 +1,12 @@
 package io.minchat.rest
 
 import io.minchat.common.entity.User
+import kotlinx.serialization.Serializable
 
 /**
  * A registered MinChar user whose api token is known.
  */
- class MinchatAccount(user: User, val token: String) {
+class MinchatAccount(user: User, val token: String) {
  	/** 
 	 * The user object associated with this account.
 	 * Can not be overwritten with a different user.
@@ -22,6 +23,10 @@ import io.minchat.common.entity.User
 	
 	override fun toString() =
 		"MinchatAccount(user=$user)"
+
+	/** For serialization purposes. */
+	@Serializable
+	data class Surrogate(val user: User, val token: String)
  }
 
  fun User.withToken(token: String) =

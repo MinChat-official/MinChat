@@ -247,4 +247,10 @@ class MinchatRestClient(
 		selfOrNull()?.let {
 			it.isAdmin || message.author.id == it.id
 		} ?: false
+
+	/** Makes sure the current account (token) is valid by sending a request to the server. */
+	suspend fun validateCurrentAccount(): Boolean {
+		account ?: return false
+		return rootService.validateToken(account!!.user.username, account!!.token)
+	}
 }

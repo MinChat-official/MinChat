@@ -16,6 +16,13 @@ object Route {
 		 * Response: [BuildVersion].
 		 */
 		val version = to("version")
+
+		/**
+		 * POST.
+		 * Body: [TokenValidateRequest]
+		 * Return code: 200 - valid token, 403 - invalid.
+		 */
+		val tokenValidate = to("token-validate")
 	}
 
 	object Auth : MinchatRoute("auth") {

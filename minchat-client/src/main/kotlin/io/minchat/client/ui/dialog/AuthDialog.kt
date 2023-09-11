@@ -5,7 +5,9 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
+import io.minchat.client.config.MinchatSettings
 import io.minchat.client.misc.then
+import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +42,8 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.pad(Style.layoutPad).margin(Style.buttonMargin)
 				.uniformX().growX()
 		}.growX()
+
+		Tutorials.authorization.trigger()
 	}
 
 	inner class LoginDialog : ModalDialog() {
@@ -66,6 +70,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				launchWithStatus("Logging in as $username...") {
 					runSafe {
 						Minchat.client.login(username, password)
+						MinchatSettings.saveUserAccount()
 					}
 					// Update AuthDialog
 					createActions()
@@ -110,6 +115,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				launchWithStatus("Registering as $username...") {
 					runSafe {
 						Minchat.client.register(username, nickname, password)
+						MinchatSettings.saveUserAccount()
 					}
 					createActions()
 				}

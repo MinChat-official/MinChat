@@ -14,8 +14,10 @@ import io.minchat.client.misc.MinchatStyle.layoutMargin
 import io.minchat.client.misc.MinchatStyle.layoutPad
 import io.minchat.client.misc.userReadable
 import io.minchat.client.ui.tutorial.*
-import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.*
+import kotlinx.serialization.json.Json
 import mindustry.Vars
 import mindustry.gen.Icon
 import mindustry.ui.dialogs.SettingsMenuDialog.SettingsTable
@@ -29,6 +31,20 @@ object MinchatSettings {
 	/** Whether custom server url should be used. */
 	var useCustomUrl by setting(false, prefix)
 	var customUrl by setting("", prefix)
+
+	private var minchatAccountJson by setting<String?>(null, prefix)
+
+	fun saveUserAccount() {
+		val account = Minchat.client.account ?: return
+		val surrogate = MinchatAccount.Surrogate(account.user, account.token)
+		minchatAccountJson = Json.encodeToString(surrogate)
+	}
+
+	fun loadUserAccount(): MinchatAccount? {
+		val json = minchatAccountJson ?: return null
+		val surrogate = Json.decodeFromString<MinchatAccount.Surrogate>(json)
+		return MinchatAccount(surrogate.user, surrogate.token)
+	}
 
 	/**
 	 * Creates all the necessary gui settings in the settings menu.
