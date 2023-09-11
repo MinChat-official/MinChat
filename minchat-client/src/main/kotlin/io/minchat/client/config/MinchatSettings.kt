@@ -1,12 +1,19 @@
 package io.minchat.client.config
 
 import arc.Core
+import arc.graphics.Color
 import arc.scene.ui.TextField
+import arc.scene.ui.layout.Table
+import arc.util.Align
 import com.github.mnemotechnician.mkui.delegates.setting
-import com.github.mnemotechnician.mkui.extensions.dsl.addSpace
-import com.github.mnemotechnician.mkui.extensions.elements.hint
+import com.github.mnemotechnician.mkui.extensions.dsl.*
+import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
+import io.minchat.client.misc.MinchatStyle.buttonMargin
+import io.minchat.client.misc.MinchatStyle.layoutMargin
+import io.minchat.client.misc.MinchatStyle.layoutPad
 import io.minchat.client.misc.userReadable
+import io.minchat.client.ui.tutorial.*
 import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.launch
 import mindustry.Vars
@@ -41,6 +48,14 @@ object MinchatSettings {
 			}
 
 			it.pref(ConditionalTextSetting("minchat.custom-url", "NONE", { !useCustomUrl }))
+
+			it.pref(SpacerSetting(50f))
+
+			it.pref(TableSetting {
+				textButton("Tutorials") {
+					showTutorialsDialog()
+				}.margin(20f)
+			})
 		}
 	}
 
@@ -86,9 +101,66 @@ object MinchatSettings {
 		}
 	}
 
+	fun showTutorialsDialog() = createBaseDialog("Tutorials", addCloseButton = true) {
+		val tutorials = try {
+			Tutorials::class.java
+				.declaredFields
+				.filter { Tutorial::class.java.isAssignableFrom(it.type) }
+				.map {
+					it.isAccessible = true
+					it.get(Tutorials) as Tutorial
+				}
+		} catch (e: Exception) {
+			addLabel("Failed to get the tutorial list\n\n$e")
+			return@createBaseDialog
+		}
+
+		scrollPane {
+			addLabel("Name")
+			addLabel("Seen")
+			addLabel("Actions")
+				.colspan(2).fill()
+				.align(Align.center).row()
+
+			for (tutorial in tutorials) {
+				addTable {
+					addLabel(tutorial.name)
+						.pad(layoutPad).row()
+
+					addLabel(tutorial.initialTitle)
+						.color(Color.gray)
+						.pad(layoutPad).row()
+				}.margin(layoutMargin)
+
+				addLabel({ if (tutorial.isSeen) "[green]+" else "[red]-" })
+					.scaleFont(2f)
+					.pad(layoutPad)
+
+				textButton("reset") {
+					tutorial.isSeen = false
+				}.pad(layoutPad).margin(buttonMargin)
+
+				textButton("show") {
+					tutorial.show()
+				}.pad(layoutPad).margin(buttonMargin).row()
+			}
+		}.grow()
+	}.show()
+
 	private class SpacerSetting(val height: Float) : SettingsTable.Setting("PLACEHOLDER") {
 		override fun add(table: SettingsTable) {
 			table.addSpace(height = height).row()
+		}
+	}
+
+	private class TableSetting(
+		val builder: Table.() -> Unit
+	) : SettingsTable.Setting("PLACEHOLDER") {
+		override fun add(table: SettingsTable) {
+			// copied from TextSetting.
+			val prefTable = table.table().left().padTop(3f).fillX().get()
+			prefTable.builder()
+			table.row()
 		}
 	}
 
@@ -118,5 +190,4 @@ object MinchatSettings {
 			table.row()
 		}
 	}
-
 }

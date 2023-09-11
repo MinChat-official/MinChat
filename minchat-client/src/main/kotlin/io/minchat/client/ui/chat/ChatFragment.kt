@@ -13,6 +13,7 @@ import io.minchat.client.Minchat
 import io.minchat.client.misc.*
 import io.minchat.client.ui.Fragment
 import io.minchat.client.ui.dialog.*
+import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.Message
 import io.minchat.rest.entity.MinchatChannel
 import io.minchat.rest.event.*
@@ -308,6 +309,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		cell.grow()
 		reloadChannels()
 		updateChatUi()
+
+		Tutorials.welcome.trigger()
 	}
 
 	fun reloadChannels(): Job {

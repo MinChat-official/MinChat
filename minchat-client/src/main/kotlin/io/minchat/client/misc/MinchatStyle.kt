@@ -1,7 +1,7 @@
 package io.minchat.client.misc
 
 import arc.graphics.Color
-import arc.scene.style.TextureRegionDrawable
+import arc.scene.style.*
 import arc.scene.ui.*
 import mindustry.gen.Tex
 import mindustry.ui.Styles
@@ -32,6 +32,13 @@ object MinchatStyle {
 	val surfaceDown = surfaceBackground.tintMul(0.7f)
 	/** Surface that's hovered over. */
 	val surfaceOver = surfaceBackground.tintMul(0.9f)
+
+	private val blackTints = (0..10).map { surfaceWhite.tint(0f, 0f, 0f, it / 10f) }
+
+	fun black(opacity: Int): Drawable {
+		require(opacity in 0..10) { "opacity must be a value in the range 0..10" }
+		return blackTints[opacity]
+	}
 	
 	object Label : MindustryLabel.LabelStyle(Styles.defaultLabel) {
 		init {
