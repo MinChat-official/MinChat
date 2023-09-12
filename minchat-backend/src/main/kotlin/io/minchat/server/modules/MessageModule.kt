@@ -34,7 +34,7 @@ class MessageModule : MinchatServerModule() {
 					"Content length must be in range of ${Message.contentLength}"
 				}
 
-				transaction {
+				newSuspendedTransaction {
 					val userRow = Users.getRawByToken(call.token())
 
 					Messages.update(opWithAdminAccess(userRow[Users.isAdmin],
@@ -46,7 +46,9 @@ class MessageModule : MinchatServerModule() {
 					
 					Log.info { "Message $id was edited." }
 
-					server.sendEvent(MessageModifyEvent(Messages.getById(id)))
+					val message = Messages.getById(id)
+					server.sendEvent(MessageModifyEvent(message))
+					call.respond(message)
 				}
 			}
 
@@ -76,6 +78,8 @@ class MessageModule : MinchatServerModule() {
 						byAuthor = deletedMessage[Messages.author].value == userRow[Users.id].value
 					))
 				}
+
+				call.response.statusOk()
 			}
 		}
 	}
