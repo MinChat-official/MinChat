@@ -11,7 +11,6 @@ import io.minchat.client.misc.MinchatStyle
 import io.minchat.client.ui.chat.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
-import mindustry.Vars
 import mindustry.gen.Icon
 
 /**
@@ -52,8 +51,8 @@ class MessageContextMenu(
 
 		if (Minchat.client.canEditMessage(messageElement.message)) {
 			action(Icon.pencil, "Edit message") {
-				// TODO
-				Vars.ui.showInfo("TODO: Edit message")
+				chat.setEditMessage(message)
+				hide()
 			}
 
 			action(Icon.trash.tint(MinchatStyle.red), "Delete message") {

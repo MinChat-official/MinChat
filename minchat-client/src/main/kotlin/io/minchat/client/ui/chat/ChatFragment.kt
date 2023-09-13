@@ -1,7 +1,9 @@
 package io.minchat.client.ui.chat
 
 import arc.Core
+import arc.graphics.Color
 import arc.input.KeyCode
+import arc.math.Interp
 import arc.scene.Element
 import arc.scene.event.Touchable
 import arc.scene.ui.*
@@ -15,7 +17,7 @@ import io.minchat.client.ui.Fragment
 import io.minchat.client.ui.dialog.*
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.Message
-import io.minchat.rest.entity.MinchatChannel
+import io.minchat.rest.entity.*
 import io.minchat.rest.event.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -44,9 +46,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var chatField: TextField
 	lateinit var sendButton: TextButton
 
-	// TODO: message editing
 	/** If present, a message being edited. This listener overrides the default "send" action, but only once. */
-	private var editListener: ((String) -> Unit)? = null
+	private var editListener: (suspend (String) -> Unit)? = null
 	private var closeListener: (() -> Unit)? = null
 
 	private var lastChatUpdateJob: Job? = null
@@ -158,6 +159,37 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				chatContainer = this
 			}.grow().pad(Style.layoutPad).row()
 
+			// Status bar above the chat
+			hider(hideVertical = { editListener == null && chatField.content.isEmpty() }) {
+				background = Style.black(2)
+				left()
+
+				hider(hideHorizontal = { editListener == null }) {
+					textButton("[lightgray]Cancel", Styles.nonet) {
+						editListener = null
+						chatField.content = ""
+					}.pad(Style.layoutPad).fillY()
+
+					addLabel("Editing message...")
+						.pad(Style.layoutPad)
+
+					addSpace(width = 50f)
+				}
+
+				val exp10 = Interp.ExpIn(20f, 10f)
+				val charCounter = addLabel({ "${chatField.content.length}/${Message.contentLength.endInclusive}" })
+					.pad(Style.layoutPad)
+					.get()
+				update {
+					val colorRatio = chatField.content.length.toFloat() / Message.contentLength.endInclusive
+					val interpolated = exp10.apply(colorRatio)
+
+					if (interpolated >= 0.001f) {
+						charCounter.setColor(Color.lightGray.lerp(Color.crimson, colorRatio))
+					}
+				}
+			}.growX().row()
+
 			// chatbox
 			addTable {
 				margin(Style.layoutMargin)
@@ -170,12 +202,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					it.keyDown(KeyCode.enter) {
 						if (it.content.isEmpty()) return@keyDown
 						if (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight)) {
-							sendCurrentMessage()
+							confirmCurrentMessage()
 						}
 					}
 				}.growX()
 
-				textButton(">", Style.ActionButton) { sendCurrentMessage() }
+				textButton(">", Style.ActionButton) { confirmCurrentMessage() }
 					.with { sendButton = it }
 					.disabled {
 						!Minchat.client.isLoggedIn || currentChannel == null ||
@@ -416,12 +448,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		}
 	}
 
-	fun sendCurrentMessage(): Job? {
+	/** Either sends the current message or, if in edit mode, edits the current message. */
+	fun confirmCurrentMessage(): Job? {
 		if (!Minchat.client.isLoggedIn) return null
 
 		val content = chatField.content.trim()
 		val channel = currentChannel ?: return null
-		chatField.content = ""
+		Core.app.post { chatField.content = "" }
 
 		if (!Minchat.client.isLoggedIn) {
 			Vars.ui.showInfo("You must login or register to send messages.")
@@ -432,12 +465,39 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			return null
 		}
 
-		val notif = notification("Sending...", 1)
-		return launch {
-			runSafe {
-				channel.createMessage(content)
-			}
-		}.then { notif.cancel() }
+		if (editListener == null) {
+			val notif = notification("Sending...", 1)
+			return launch {
+				runSafe {
+					channel.createMessage(content)
+				}
+			}.then { notif.cancel() }
+		} else {
+			val notif = notification("Editing...", 1)
+			val listener = editListener!!
+			editListener = null
+
+			return launch {
+				runSafe {
+					listener(content)
+				}
+			}.then { notif.cancel() }
+		}
+	}
+
+	/**
+	 * Clears the current message and replaces it with the contents of the provided message.
+	 *
+	 * Sets up an edit listener so that when the user presses "send", the message gets edited.
+	 */
+	fun setEditMessage(message: MinchatMessage?) {
+		if (message != null) {
+			editListener = { message.edit(newContent = it) }
+			chatField.content = message.content
+		} else if (editListener != null) {
+			editListener = null
+			chatField.content = ""
+		}
 	}
 
 	/** Executes an action when the close button is pressed. Overrides the previous listener. */

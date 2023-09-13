@@ -21,6 +21,7 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 	lateinit var titleLabel: Label
 	lateinit var descriptionLabel: Label
 
+	/** Cooldown of the "next" button. Does not apply to the esc/enter/back keys. */
 	private var nextButtonCooldown = 60f
 
 	init {
@@ -59,6 +60,7 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 				}, ActionButton) {
 					advanceStep()
 				}.disabled { nextButtonCooldown >= 0 }
+					.fillY()
 					.pad(layoutPad)
 					.margin(buttonMargin).row()
 			}.fillX().margin(layoutMargin).pad(layoutPad).row()
