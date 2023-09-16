@@ -88,15 +88,12 @@ object MinchatStyle {
 	}
 
 
-	object TextInput : TextField.TextFieldStyle(Styles.defaultField) {
+	object TextInput : TextField.TextFieldStyle(Styles.areaField) {
 		init {
 			fontColor = foreground
-			background = surfaceBackground
-			focusedBackground = surfaceOver
-			invalidBackground = surfaceBackground.tintMul(0.9f, 0.88f, 0.88f)
-
-			cursor = (Tex.whiteui as TextureRegionDrawable).tint(0.9f, 0.9f, 1f, 0.6f)
-			selection = (Tex.whiteui as TextureRegionDrawable).tint(0.9f, 0.9f, 1f, 0.4f)
+			background = surfaceBackground.margin(layoutMargin)
+			focusedBackground = surfaceOver.margin(layoutMargin)
+			invalidBackground = surfaceBackground.tintMul(0.9f, 0.88f, 0.88f).margin(layoutMargin)
 		}
 	}
 }
@@ -122,3 +119,15 @@ fun TextureRegionDrawable.tintMul(r: Float, g: Float = r, b: Float = r, a: Float
  */
 fun TextureRegionDrawable.tintMul(color: Color) =
 	tintMul(color.r, color.g, color.b, color.a)
+
+/** Creates a new drawable and adds property-based margin to it. */
+fun TextureRegionDrawable.margin(padding: Float) = margin(padding, padding, padding, padding)
+
+/** Creates a new drawable and adds property-based margin to it. */
+fun TextureRegionDrawable.margin(padLeft: Float, padRight: Float, padTop: Float, padBottom: Float)
+	= tintMul(1f, 1f, 1f, 1f).apply {
+		leftWidth = padLeft
+		rightWidth = padRight
+		topHeight = padTop
+		bottomHeight = padBottom
+	}

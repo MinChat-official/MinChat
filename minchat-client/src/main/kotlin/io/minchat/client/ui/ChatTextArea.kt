@@ -1,6 +1,8 @@
 package io.minchat.client.ui
 
+import arc.graphics.g2d.*
 import arc.math.Mathf
+import arc.scene.style.Drawable
 import arc.scene.ui.TextArea
 import io.minchat.client.misc.MinchatStyle
 import kotlin.math.max
@@ -28,7 +30,13 @@ class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 		return rowsHeight + requiredHeight
 	}
 
-	override fun draw() {
-		super.draw()
+	override fun drawSelection(selection: Drawable?, font: Font?, x: Float, y: Float) {
+		Draw.alpha(1f)
+		super.drawSelection(selection, font, x, y)
+	}
+
+	override fun drawCursor(cursorPatch: Drawable?, font: Font?, x: Float, y: Float) {
+		Draw.alpha(1f)
+		super.drawCursor(cursorPatch, font, x, y)
 	}
 }

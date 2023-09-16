@@ -187,7 +187,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}.growX().row()
 
 			// chatbox
-			addTable(Style.surfaceBackground) {
+			addTable {
 				margin(Style.layoutMargin)
 
 				add(ChatTextArea()).with {
