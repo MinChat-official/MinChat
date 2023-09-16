@@ -13,7 +13,7 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
-import io.minchat.client.ui.Fragment
+import io.minchat.client.ui.*
 import io.minchat.client.ui.dialog.*
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.Message
@@ -187,12 +187,11 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}.growX().row()
 
 			// chatbox
-			addTable {
+			addTable(Style.surfaceBackground) {
 				margin(Style.layoutMargin)
 
-				textArea().with {
+				add(ChatTextArea()).with {
 					chatField = it
-					it.setStyle(Style.TextInput)
 
 					// Send the current message when the user presses shift+enter
 					it.keyDown(KeyCode.enter) {
@@ -318,7 +317,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		animationLength: Float,
 		autoscroll: Boolean = true
 	) = synchronized(chatContainer) {
-		val isAtBottom = chatPane.isBottomEdge
+		val isAtBottom = !chatPane.isScrollY || chatPane.scrollY >= chatPane.maxY - 20f;
 
 		chatContainer.add(element)
 			.padBottom(10f).pad(4f).growX().row()

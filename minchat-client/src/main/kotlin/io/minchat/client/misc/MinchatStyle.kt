@@ -94,6 +94,9 @@ object MinchatStyle {
 			background = surfaceBackground
 			focusedBackground = surfaceOver
 			invalidBackground = surfaceBackground.tintMul(0.9f, 0.88f, 0.88f)
+
+			cursor = (Tex.whiteui as TextureRegionDrawable).tint(0.9f, 0.9f, 1f, 0.6f)
+			selection = (Tex.whiteui as TextureRegionDrawable).tint(0.9f, 0.9f, 1f, 0.4f)
 		}
 	}
 }
