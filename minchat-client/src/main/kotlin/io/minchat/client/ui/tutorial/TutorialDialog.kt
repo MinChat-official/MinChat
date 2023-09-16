@@ -60,7 +60,7 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 				}, ActionButton) {
 					advanceStep()
 				}.disabled { nextButtonCooldown >= 0 }
-					.fillY()
+					.grow()
 					.pad(layoutPad)
 					.margin(buttonMargin).row()
 			}.fillX().margin(layoutMargin).pad(layoutPad).row()
