@@ -1,6 +1,7 @@
 package io.minchat.client
 
 import arc.Events
+import arc.scene.Element
 import arc.scene.ui.Label
 import arc.util.Log
 import com.github.mnemotechnician.mkui.delegates.setting
@@ -78,6 +79,10 @@ class MinchatMod : Mod(), CoroutineScope {
 	val githubClient = MinchatGithubClient()
 
 	init {
+		val field = Element::class.java.getDeclaredField("update")
+		field.isAccessible = true
+		Log.info(field.get(Element()))
+
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
 
@@ -186,7 +191,9 @@ class MinchatMod : Mod(), CoroutineScope {
 			val warning = "The version of '$url' may not be fully compatible with the client ($serverVersion vs $MINCHAT_VERSION)"
 
 			Log.warn(warning)
-			Vars.ui.showInfoToast("[!] Minchat warning: $warning", 5f)
+			if (Vars.clientLoaded) {
+				Vars.ui.showInfoToast("[!] Minchat warning: $warning", 5f)
+			}
 		}
 
 		this@MinchatMod.client = client

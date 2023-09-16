@@ -176,18 +176,14 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					addSpace(width = 50f)
 				}
 
-				val exp10 = Interp.ExpIn(20f, 10f)
-				val charCounter = addLabel({ "${chatField.content.length}/${Message.contentLength.endInclusive}" })
+				val exp40 = Interp.ExpIn(2f, 40f)
+				addLabel({ "${chatField.content.length}/${Message.contentLength.endInclusive}" })
 					.pad(Style.layoutPad)
-					.get()
-				update {
-					val colorRatio = chatField.content.length.toFloat() / Message.contentLength.endInclusive
-					val interpolated = exp10.apply(colorRatio)
-
-					if (interpolated >= 0.001f) {
-						charCounter.setColor(Color.lightGray.lerp(Color.crimson, colorRatio))
+					.updateLast {
+						val colorRatio = chatField.content.length.toFloat() / Message.contentLength.endInclusive
+						val interpolated = exp40.apply(colorRatio)
+						it.setColor(Color.lightGray.cpy().lerp(Color.crimson, colorRatio))
 					}
-				}
 			}.growX().row()
 
 			// chatbox
