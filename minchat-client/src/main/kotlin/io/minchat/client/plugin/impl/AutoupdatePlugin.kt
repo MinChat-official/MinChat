@@ -2,7 +2,8 @@ package io.minchat.client.plugin.impl
 
 import arc.Core
 import arc.graphics.Color
-import arc.util.Log
+import arc.scene.ui.layout.Table
+import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -11,6 +12,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import io.minchat.client.Minchat
+import io.minchat.client.config.MinchatGithubClient.ChangelogEntry
 import io.minchat.client.misc.userReadable
 import io.minchat.client.plugin.MinchatPlugin
 import io.minchat.client.ui.dialog.ModalDialog
@@ -46,7 +48,11 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 
 		if (latestVersion <= MINCHAT_VERSION) return
 
-		UpdatePromptDialog(latestVersion).show()
+		val changelog = runCatching { Minchat.githubClient.getChangelog() }
+			.getOrNull()
+			?.filter { it.version > MINCHAT_VERSION }
+
+		UpdatePromptDialog(latestVersion, changelog).show()
 	}
 
 	/** Performs an automatic update of the MinChat client. */
@@ -129,7 +135,7 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 		}
 	}
 
-	inner class UpdatePromptDialog(val latestVersion: BuildVersion) : ModalDialog() {
+	inner class UpdatePromptDialog(val latestVersion: BuildVersion, val changelog: List<ChangelogEntry>?) : ModalDialog() {
 		init {
 			fields.apply {
 				addTable(Style.surfaceBackground) {
@@ -156,6 +162,26 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 					}
 				}.fillX().pad(Style.layoutPad).row()
 
+				// changelog
+				addTable(Style.surfaceBackground) {
+					margin(Style.layoutMargin)
+
+					var showChangelog = false
+					textToggle({ if (showChangelog) "Hide changelog" else "Show changelog" }, Style.ActionToggleButton) {
+						showChangelog = !showChangelog
+					}.grow().pad(Style.layoutPad)
+						.margin(Style.buttonMargin)
+						.row()
+
+					hider(hideVertical = { !showChangelog }, hideHorizontal = { !showChangelog }) {
+						margin(Style.layoutMargin)
+
+						scrollPane {
+							addChangelog()
+						}
+					}
+				}.fillX().pad(Style.layoutPad).row()
+
 				addTable(Style.surfaceBackground) {
 					margin(Style.layoutMargin)
 
@@ -166,6 +192,28 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 					hide()
 					performUpdate()
 				}
+			}
+		}
+
+		private fun Table.addChangelog() {
+			changelog ?: return
+
+			for (entry in changelog.sortedByDescending { it.version }) {
+				val desc = entry.description.lines().map { "[grey]|[] $it" }.joinToString("\n")
+
+				addTable(Style.surfaceInner) {
+					left()
+					addLabel("version ${entry.version}", align = Align.center)
+						.growX().pad(Style.layoutPad)
+						.row()
+
+					addLabel(desc, align = Align.left)
+						.fillX().pad(Style.layoutPad)
+						.padLeft(Style.layoutPad + 10f)
+						.row()
+				}.fillX().pad(Style.layoutPad)
+					.margin(Style.layoutMargin)
+					.row()
 			}
 		}
 	}

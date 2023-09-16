@@ -67,6 +67,12 @@ object MinchatStyle {
 		}
 	}
 
+	object ActionToggleButton : TextButton.TextButtonStyle(ActionButton) {
+		init {
+			checked = down
+		}
+	}
+
 	object ChannelButton : TextButton.TextButtonStyle(Styles.defaultt) {
 		init {
 			fontColor = foreground

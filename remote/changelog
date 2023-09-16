@@ -1,3 +1,7 @@
+#VERSION 0.4.1
+The autoupdater dialog now can show the changelog
+Minor improvements and fixes
+
 #VERSION 0.4.0
 Added new settings
 Made it possible to stop showing the startup dialog

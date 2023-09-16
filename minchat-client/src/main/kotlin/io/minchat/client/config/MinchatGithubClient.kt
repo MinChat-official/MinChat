@@ -64,7 +64,7 @@ class MinchatGithubClient {
 							iterator.previous()
 							break
 						}
-						append(descriptionLine)
+						appendLine(descriptionLine.trim())
 					}
 				}
 
