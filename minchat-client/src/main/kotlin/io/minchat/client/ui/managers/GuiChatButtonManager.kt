@@ -6,6 +6,7 @@ import arc.scene.ui.layout.Table
 import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.addTable
 import com.github.mnemotechnician.mkui.extensions.elements.cell
+import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatSettings
 import mindustry.Vars
@@ -25,7 +26,7 @@ object GuiChatButtonManager {
 
 	fun init() {
 		Events.on(EventType.WorldLoadEndEvent::class.java) {
-			Core.app.post {
+			runUi {
 				lastPlacedContainer?.remove()
 
 				if (Vars.mobile || MinchatSettings.guiButtonDesktop) {
@@ -33,7 +34,7 @@ object GuiChatButtonManager {
 
 					if (target == null) {
 						Log.err("Failed to find an appropriate table to place the MinChat chat button.")
-						return@post
+						return@runUi
 					}
 					// Now things get a little tricky: we need the button to be on the top,
 					// so we need to rearrange the table cells.

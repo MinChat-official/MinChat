@@ -1,7 +1,7 @@
 package io.minchat.client.ui.tutorial
 
-import arc.Core
 import com.github.mnemotechnician.mkui.delegates.*
+import com.github.mnemotechnician.mkui.extensions.runUi
 
 /**
  * A tutorial that can be shown to the user.
@@ -34,7 +34,7 @@ open class Tutorial(
 	 * This method calls Core.app.post to allow calling itself while building the ui.
 	 */
 	fun show() {
-		Core.app.post {
+		runUi {
 			if (!isLoaded) load()
 
 			val dialog = TutorialDialog(this)

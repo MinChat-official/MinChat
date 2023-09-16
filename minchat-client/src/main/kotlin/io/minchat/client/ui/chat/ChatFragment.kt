@@ -331,7 +331,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		// Scroll down to show the new message, but only if the bottom was already visible.
 		if (isAtBottom && autoscroll) {
 			chatPane.validate()
-			Core.app.post {
+			runUi {
 				chatPane.scrollY = chatPane.maxY
 			}
 		}
@@ -454,7 +454,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 		val content = chatField.content.trim()
 		val channel = currentChannel ?: return null
-		Core.app.post { chatField.content = "" }
+		runUi { chatField.content = "" }
 
 		if (!Minchat.client.isLoggedIn) {
 			Vars.ui.showInfo("You must login or register to send messages.")

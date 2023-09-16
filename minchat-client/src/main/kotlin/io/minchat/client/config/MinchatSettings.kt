@@ -8,6 +8,7 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.delegates.setting
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
+import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.MinchatStyle.buttonMargin
 import io.minchat.client.misc.MinchatStyle.layoutMargin
@@ -91,7 +92,7 @@ object MinchatSettings {
 				val client = MinchatRestClient(customUrl)
 				val version = client.getServerVersion()
 
-				Core.app.post {
+				runUi {
 					Vars.ui.showInfo("""
 						Success. Server version is $version. You must restart mindustry in order to apply the change.
 						
@@ -106,7 +107,7 @@ object MinchatSettings {
 					Reason: ${e.userReadable()}
 				""".trimIndent()
 
-				Core.app.post {
+				runUi {
 					Vars.ui.showErrorMessage(message)
 					useCustomUrl = false
 					rebuild()
