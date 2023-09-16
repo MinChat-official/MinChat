@@ -9,6 +9,8 @@ object MinchatBackgroundHandler {
 
 	init {
 		dummyElement.update {
+			if (Core.scene.keyboardFocus != null) return@update
+
 			MinchatKeybinds.allBindings.forEach {
 				if (Core.input.keyTap(it)) {
 					it.action()

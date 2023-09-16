@@ -329,7 +329,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		element.animateMoveIn(animationLength)
 
 		// Scroll down to show the new message, but only if the bottom was already visible.
-		if (isAtBottom) {
+		if (isAtBottom && autoscroll) {
 			chatPane.validate()
 			Core.app.post {
 				chatPane.scrollY = chatPane.maxY
