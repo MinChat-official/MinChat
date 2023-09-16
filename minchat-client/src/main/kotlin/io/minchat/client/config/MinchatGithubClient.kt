@@ -64,11 +64,12 @@ class MinchatGithubClient {
 							iterator.previous()
 							break
 						}
+
 						appendLine(descriptionLine.trim())
 					}
 				}
 
-				changelog.add(ChangelogEntry(version, description))
+				changelog.add(ChangelogEntry(version, description.trim()))
 			}
 		}
 
