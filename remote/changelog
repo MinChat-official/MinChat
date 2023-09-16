@@ -1,6 +1,8 @@
 #VERSION 0.4.1
+Messages now can be edited using the GUI
+The chat input field now supports multi-line input
 The autoupdater dialog now can show the changelog
-Minor improvements and fixes
+Fixed some style and ui element size issues
 
 #VERSION 0.4.0
 Added new settings
