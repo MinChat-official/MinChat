@@ -1,6 +1,7 @@
 package io.minchat.client.plugin
 
 import arc.util.Log
+import io.minchat.client.*
 import io.minchat.client.plugin.impl.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -20,7 +21,7 @@ object MinchatPluginHandler {
 	 * All plugins loaded in this MinChat instance.
 	 *
 	 * This list is immutable and is empty at startup;
-	 * the value of this property gets replaced after the game loads.
+	 * the value of this property gets replaced twice as the game loads.
 	 */
 	var loadedPlugins: List<LoadedPlugin<out MinchatPlugin>> = listOf()
 		private set
@@ -28,6 +29,14 @@ object MinchatPluginHandler {
 	init {
 		register(::AutoupdaterPlugin)
 		register(::AccountSaverPlugin)
+
+		ClientEvents.subscribe<LoadEvent> {
+			onLoad()
+		}
+
+		ClientEvents.subscribe<ConnectEvent> {
+			onConnect()
+		}
 	}
 
 	/**
@@ -36,50 +45,59 @@ object MinchatPluginHandler {
 	 *
 	 * This function must be called BEFORE the game loads.
 	 */
-	fun register(plugin: () -> MinchatPlugin) {
-		val entry = PluginLoadEntry(plugin)
+	fun register(factory: () -> MinchatPlugin) {
+		val entry = PluginLoadEntry(factory)
 
 		if (!hasLoaded && hasInitialised) {
-			entry.get()
-		} else if (hasLoaded) {
+			loadedPlugins += initPlugin(factory())
+		} else if (!hasLoaded) {
+			loadingQueue.add(entry)
+		} else {
 			error("Cannot register new plugins after MinChat has finished loading.")
 		}
-		loadingQueue.add(entry)
 	}
 
+	/** Initializes all plugins in [loadingQueue]. Must only be called once. */
 	internal fun onInit() {
-		val iterator = loadingQueue.iterator()
-		iterator.forEach {
-			try {
-				it.get()
-			} catch (e: Throwable) {
-				Log.err("Could not initialise plugin ${it.factory}", e)
-				iterator.remove()
-			}
+		if (hasInitialised) error("Already initialized.")
+
+		hasInitialised = true
+		loadedPlugins = loadingQueue.map {
+			initPlugin(it.factory())
 		}
 
-		Log.info("Initialized MinChat plugins: ${loadingQueue.joinToString { it.get().name }}")
+		Log.info("Initialized MinChat plugins: ${loadedPlugins.joinToString { it.plugin.name }}")
 	}
 
-	internal suspend fun onLoad() {
-		Log.info("Loading MinChat plugins: ${loadingQueue.joinToString { it.get().name }}")
+	fun initPlugin(plugin: MinchatPlugin): LoadedPlugin<*> {
+		return try {
+			plugin.onInit()
+			LoadedPlugin(plugin, null, false)
+		} catch (e: Throwable) {
+			Log.err("Could not initialise plugin ${plugin.name}", e)
+			LoadedPlugin(plugin, e, false)
+		}
+	}
 
-		val loaded = mutableListOf<LoadedPlugin<*>>()
-		val iterator = loadingQueue.iterator()
-		iterator.forEach {
-			val plugin = it.get()
+	internal fun onLoad() {
+		if (hasLoaded) error("Already loaded.")
+		hasLoaded = true
+
+		// Retain already-loaded (?) and failed plugins, load the rest
+		val (toRetain, toLoad) = loadedPlugins.partition { it.isLoaded || it.error != null }
+		Log.info("Loading MinChat plugins: ${toLoad.joinToString { it.plugin.name }}")
+
+		val loaded = toLoad.map {
 			try {
-				plugin.onLoad()
-				loaded += LoadedPlugin(plugin, null, true)
+				it.plugin.onLoad()
+				it.copy(isLoaded = true)
 			} catch (e: Throwable) {
-				Log.err("Could not load plugin $plugin.name}", e)
-				loaded += LoadedPlugin(plugin, e, false)
+				Log.err("Could not load plugin ${it.plugin.name}")
+				it.copy(error = e)
 			}
-			iterator.remove()
 		}
 
-		loadedPlugins = loaded
-		hasLoaded = true
+		loadedPlugins = toRetain + loaded
 	}
 
 	internal suspend fun onConnect() {
@@ -92,7 +110,7 @@ object MinchatPluginHandler {
 		}
 	}
 
-	/** Gets the entry of a loaded plugin. Returns null if it has failed to init or was not registered. */
+	/** Gets the entry of a loaded plugin. Returns null if it was not registered. */
 	@Suppress("UNCHECKED_CAST")
 	inline fun <reified T : MinchatPlugin> getEntry() =
 		loadedPlugins.find { it.plugin is T } as LoadedPlugin<T>?
@@ -102,14 +120,8 @@ object MinchatPluginHandler {
 		getEntry<T>()?.takeIf { it.isLoaded }?.plugin
 
 	data class PluginLoadEntry(
-		val factory: () -> MinchatPlugin,
-		var instance: MinchatPlugin? = null
-	) {
-		fun get() = instance ?: factory().also {
-			instance = it
-			it.onInit()
-		}
-	}
+		val factory: () -> MinchatPlugin
+	)
 
 	data class LoadedPlugin<T : MinchatPlugin>(
 		val plugin: T,

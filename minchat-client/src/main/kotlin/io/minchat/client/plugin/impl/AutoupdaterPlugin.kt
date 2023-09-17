@@ -31,8 +31,10 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		}
 	}
 
-	override suspend fun onLoad() {
-		performCheck()
+	override fun onLoad() {
+		Minchat.launch {
+			performCheck()
+		}
 	}
 
 	suspend fun performCheck() {

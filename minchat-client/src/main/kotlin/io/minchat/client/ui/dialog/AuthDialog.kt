@@ -4,10 +4,8 @@ import arc.scene.ui.TextField
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
-import io.minchat.client.Minchat
+import io.minchat.client.*
 import io.minchat.client.misc.then
-import io.minchat.client.plugin.MinchatPluginHandler
-import io.minchat.client.plugin.impl.AccountSaverPlugin
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
@@ -71,7 +69,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				launchWithStatus("Logging in as $username...") {
 					runSafe {
 						Minchat.client.login(username, password)
-						MinchatPluginHandler.get<AccountSaverPlugin>()?.saveUserAccount()
+						ClientEvents.fire(AuthorizationEvent(Minchat.client, true))
 					}
 					// Update AuthDialog
 					createActions()
@@ -116,7 +114,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				launchWithStatus("Registering as $username...") {
 					runSafe {
 						Minchat.client.register(username, nickname, password)
-						MinchatPluginHandler.get<AccountSaverPlugin>()?.saveUserAccount()
+						ClientEvents.fire(AuthorizationEvent(Minchat.client, true))
 					}
 					createActions()
 				}

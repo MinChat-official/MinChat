@@ -1,7 +1,6 @@
 package io.minchat.client
 
 import arc.Events
-import arc.scene.Element
 import arc.scene.ui.Label
 import arc.util.Log
 import com.github.mnemotechnician.mkui.delegates.setting
@@ -73,16 +72,19 @@ class MinchatMod : Mod(), CoroutineScope {
 		it.setBackground(Styles.none)
 		it.titleTable.remove()
 		cell()?.grow()?.pad(10f)
+
+		it.shown {
+			ClientEvents.fireAsync(ChatDialogEvent(false))
+		}
+		it.hidden {
+			ClientEvents.fireAsync(ChatDialogEvent(true))
+		}
 	} }
 
 	/** The main MinChat GitHub client used across the mod. */
 	val githubClient = MinchatGithubClient()
 
 	init {
-		val field = Element::class.java.getDeclaredField("update")
-		field.isAccessible = true
-		Log.info(field.get(Element()))
-
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
 
@@ -95,9 +97,7 @@ class MinchatMod : Mod(), CoroutineScope {
 				showChatDialog()
 			}
 
-			launch {
-				MinchatPluginHandler.onLoad()
-			}
+			ClientEvents.fireAsync(LoadEvent)
 
 			MinchatSettings.createSettings()
 			MinchatBackgroundHandler.start()
@@ -146,6 +146,8 @@ class MinchatMod : Mod(), CoroutineScope {
 	 * May show a loading screen if the server hasn't been reached yet.
 	 */
 	fun showChatDialog() {
+		if (chatDialog.isShown) return
+
 		if (isConnected) {
 			chatFragment.apply(chatDialog.cont)
 			chatFragment.onClose(chatDialog::hide)
@@ -201,7 +203,7 @@ class MinchatMod : Mod(), CoroutineScope {
 		this@MinchatMod.client = client
 		gateway = MinchatGateway(client).also { it.connectIfNecessary() }
 
-		MinchatPluginHandler.onConnect()
+		ClientEvents.fire(ConnectEvent(url))
 	}
 
 	/**
