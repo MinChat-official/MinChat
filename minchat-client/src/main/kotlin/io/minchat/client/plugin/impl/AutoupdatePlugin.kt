@@ -32,6 +32,10 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 	}
 
 	override suspend fun onLoad() {
+		performCheck()
+	}
+
+	suspend fun performCheck() {
 		lateinit var latestVersion: BuildVersion
 		var attempt = 1
 		while (true) {
@@ -46,8 +50,12 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 			}
 		}
 
-		if (latestVersion <= MINCHAT_VERSION) return
+		if (latestVersion <= MINCHAT_VERSION) {
+			Log.info("Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION")
+			return
+		}
 
+		Log.info("Autoupdater: downloading the changelog...")
 		val changelog = runCatching { Minchat.githubClient.getChangelog() }
 			.getOrNull()
 			?.filter { it.version > MINCHAT_VERSION }
@@ -60,7 +68,7 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 		lateinit var job: Job
 
 		Vars.ui.loadfrag.apply {
-			show("Updating. Please wait...")
+			show("Preparing to download...")
 			setButton {
 				job.cancel()
 				SimpleInfoDialog("The update has been aborted.").show()
@@ -96,12 +104,15 @@ class AutoupdatePlugin : MinchatPlugin("autoupdater") {
 							Minchat.client.account = null
 						}
 
+						setText("Connecting to server...")
 						// Download the asset and overwrite the mod file
 						httpClient.prepareGet(modAsset.downloadUrl).execute {
 							val length = it.contentLength() ?: error("what???")
 							tmpFile.setLength(length)
 							val channel = it.bodyAsChannel()
 							var read = 0L
+
+							setText("Updating. Please wait...")
 
 							while (!channel.isClosedForRead) {
 								val packet = channel.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
