@@ -22,7 +22,7 @@ import mindustry.Vars
 import java.io.RandomAccessFile
 import io.minchat.client.misc.MinchatStyle as Style
 
-class AutoupdatePlugin : MinchatPlugin("autoupdater") {
+class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 	val maxAttempts = 3
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true

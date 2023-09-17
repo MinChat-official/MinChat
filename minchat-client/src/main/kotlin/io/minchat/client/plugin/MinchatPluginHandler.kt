@@ -15,20 +15,19 @@ object MinchatPluginHandler {
 	 * The list of plugins that are to be loaded on startup.
 	 * After the mod has loaded, this queue will be empty.
 	 */
-	val loadingQueue = ConcurrentLinkedQueue<MinchatPlugin>()
+	val loadingQueue = ConcurrentLinkedQueue<PluginLoadEntry>()
 	/**
 	 * All plugins loaded in this MinChat instance.
 	 *
 	 * This list is immutable and is empty at startup;
 	 * the value of this property gets replaced after the game loads.
 	 */
-	var loadedPlugins: List<MinchatPlugin> = listOf()
+	var loadedPlugins: List<LoadedPlugin<out MinchatPlugin>> = listOf()
 		private set
 
 	init {
-		// default
-		// TODO: broken: register(NewConsoleIntegrationPlugin())
-		register(AutoupdatePlugin())
+		register(::AutoupdaterPlugin)
+		register(::AccountSaverPlugin)
 	}
 
 	/**
@@ -37,39 +36,44 @@ object MinchatPluginHandler {
 	 *
 	 * This function must be called BEFORE the game loads.
 	 */
-	fun register(plugin: MinchatPlugin) {
-		loadingQueue.add(plugin)
+	fun register(plugin: () -> MinchatPlugin) {
+		val entry = PluginLoadEntry(plugin)
 
 		if (!hasLoaded && hasInitialised) {
-			plugin.onInit()
+			entry.get()
+		} else if (hasLoaded) {
+			error("Cannot register new plugins after MinChat has finished loading.")
 		}
+		loadingQueue.add(entry)
 	}
 
 	internal fun onInit() {
-		Log.info("Initialising MinChat plugins: ${loadingQueue.joinToString { it.name }}")
-
 		val iterator = loadingQueue.iterator()
 		iterator.forEach {
 			try {
-				it.onInit()
+				it.get()
 			} catch (e: Throwable) {
-				Log.err("Could not initialise plugin ${it.name}", e)
+				Log.err("Could not initialise plugin ${it.factory}", e)
 				iterator.remove()
 			}
 		}
+
+		Log.info("Initialized MinChat plugins: ${loadingQueue.joinToString { it.get().name }}")
 	}
 
 	internal suspend fun onLoad() {
-		Log.info("Loading MinChat plugins: ${loadingQueue.joinToString { it.name }}")
+		Log.info("Loading MinChat plugins: ${loadingQueue.joinToString { it.get().name }}")
 
-		val loaded = mutableListOf<MinchatPlugin>()
+		val loaded = mutableListOf<LoadedPlugin<*>>()
 		val iterator = loadingQueue.iterator()
 		iterator.forEach {
+			val plugin = it.get()
 			try {
-				it.onLoad()
-				loaded += it
+				plugin.onLoad()
+				loaded += LoadedPlugin(plugin, null, true)
 			} catch (e: Throwable) {
-				Log.err("Could not load plugin ${it.name}", e)
+				Log.err("Could not load plugin $plugin.name}", e)
+				loaded += LoadedPlugin(plugin, e, false)
 			}
 			iterator.remove()
 		}
@@ -81,10 +85,35 @@ object MinchatPluginHandler {
 	internal suspend fun onConnect() {
 		loadedPlugins.forEach {
 			try {
-				it.onConnect()
+				it.plugin.onConnect()
 			} catch (e: Throwable) {
-				Log.err("Plugin ${it.name} failed to connect", e)
+				Log.err("Plugin ${it.plugin.name} failed onConnect", e)
 			}
 		}
 	}
+
+	/** Gets the entry of a loaded plugin. Returns null if it has failed to init or was not registered. */
+	@Suppress("UNCHECKED_CAST")
+	inline fun <reified T : MinchatPlugin> getEntry() =
+		loadedPlugins.find { it.plugin is T } as LoadedPlugin<T>?
+
+	/** Gets a loaded plugin. Returns null if it was not registered, failed to init, or failed to load. */
+	inline fun <reified T : MinchatPlugin> get(): T? =
+		getEntry<T>()?.takeIf { it.isLoaded }?.plugin
+
+	data class PluginLoadEntry(
+		val factory: () -> MinchatPlugin,
+		var instance: MinchatPlugin? = null
+	) {
+		fun get() = instance ?: factory().also {
+			instance = it
+			it.onInit()
+		}
+	}
+
+	data class LoadedPlugin<T : MinchatPlugin>(
+		val plugin: T,
+		val error: Throwable?,
+		val isLoaded: Boolean
+	)
 }

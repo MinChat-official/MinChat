@@ -33,20 +33,6 @@ object MinchatSettings {
 	var useCustomUrl by setting(false, prefix)
 	var customUrl by setting("", prefix)
 
-	private var minchatAccountJson by setting<String?>(null, prefix)
-
-	fun saveUserAccount() {
-		val account = Minchat.client.account ?: return
-		val surrogate = MinchatAccount.Surrogate(account.user, account.token)
-		minchatAccountJson = Json.encodeToString(surrogate)
-	}
-
-	fun loadUserAccount(): MinchatAccount? {
-		val json = minchatAccountJson ?: return null
-		val surrogate = Json.decodeFromString<MinchatAccount.Surrogate>(json)
-		return MinchatAccount(surrogate.user, surrogate.token)
-	}
-
 	/**
 	 * Creates all the necessary gui settings in the settings menu.
 	 * Must be called only once.
@@ -69,9 +55,12 @@ object MinchatSettings {
 			it.pref(SpacerSetting(50f))
 
 			it.pref(TableSetting {
+				textButton("Check for updates") {
+
+				}.uniformX()
 				textButton("Tutorials") {
 					showTutorialsDialog()
-				}.margin(20f)
+				}.uniformX()
 			})
 		}
 	}

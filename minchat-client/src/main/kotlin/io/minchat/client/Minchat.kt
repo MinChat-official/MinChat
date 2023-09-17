@@ -86,7 +86,9 @@ class MinchatMod : Mod(), CoroutineScope {
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
 
-		MinchatPluginHandler.onInit()
+		runUi {
+			MinchatPluginHandler.onInit()
+		}
 
 		Events.on(EventType.ClientLoadEvent::class.java) {
 			Vars.ui.menufrag.addButton("MinChat", Icon.terminal) {
@@ -198,26 +200,6 @@ class MinchatMod : Mod(), CoroutineScope {
 
 		this@MinchatMod.client = client
 		gateway = MinchatGateway(client).also { it.connectIfNecessary() }
-
-		Minchat.launch {
-			try {
-				val account = MinchatSettings.loadUserAccount() ?: return@launch
-				Log.info("Attempting to restore the logged-in MinChat account...")
-
-				client.account = account
-				if (client.validateCurrentAccount()) {
-					client.updateAccount()
-					Log.info("Successfully logged-in as ${client.account?.user?.username}!")
-				} else {
-					Log.err("The restored user account is not valid. Defaulting to anonymous.")
-					client.account = null
-				}
-			} catch (e: Exception) {
-				Log.err("Failed to restore user account: $e")
-				Log.err("Defaulting to anonymous")
-				client.account = null
-			}
-		}
 
 		MinchatPluginHandler.onConnect()
 	}
