@@ -37,7 +37,22 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		}
 	}
 
-	suspend fun performCheck() {
+	/** Runs an update check; Shows an update dialog if an update is found or an info dialog if not. */
+	suspend fun performCheckVerbose(): CheckResult {
+		return performCheck().also {
+			when {
+				it == CheckResult.NO_UPDATE -> {
+					SimpleInfoDialog("No update found.").show()
+				}
+				it == CheckResult.ERROR -> {
+					SimpleInfoDialog("An error has occurred. Check your internet connection or try again later.").show()
+				}
+			}
+		}
+	}
+
+	/** Runs an update check; Shows an update dialog if an update is found. */
+	suspend fun performCheck(): CheckResult {
 		lateinit var latestVersion: BuildVersion
 		var attempt = 1
 		while (true) {
@@ -47,14 +62,14 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 			} catch (e: Exception) {
 				if (attempt++ == maxAttempts) {
 					Log.err("Failed to get latest version from GitHub after $maxAttempts attempts.", e)
-					return
+					return CheckResult.ERROR
 				}
 			}
 		}
 
 		if (latestVersion <= MINCHAT_VERSION) {
 			Log.info("Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION")
-			return
+			return CheckResult.NO_UPDATE
 		}
 
 		Log.info("Autoupdater: downloading the changelog...")
@@ -63,6 +78,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 			?.filter { it.version > MINCHAT_VERSION }
 
 		UpdatePromptDialog(latestVersion, changelog).show()
+		return CheckResult.UPDATE_FOUND
 	}
 
 	/** Performs an automatic update of the MinChat client. */
@@ -230,6 +246,8 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 			}
 		}
 	}
+
+	enum class CheckResult { NO_UPDATE, UPDATE_FOUND, ERROR }
 
 	inner class SimpleInfoDialog(val text: String) : ModalDialog() {
 		init {

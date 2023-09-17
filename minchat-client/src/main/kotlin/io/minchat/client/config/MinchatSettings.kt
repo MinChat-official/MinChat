@@ -14,11 +14,11 @@ import io.minchat.client.misc.MinchatStyle.buttonMargin
 import io.minchat.client.misc.MinchatStyle.layoutMargin
 import io.minchat.client.misc.MinchatStyle.layoutPad
 import io.minchat.client.misc.userReadable
+import io.minchat.client.plugin.MinchatPluginHandler
+import io.minchat.client.plugin.impl.AutoupdaterPlugin
 import io.minchat.client.ui.tutorial.*
-import io.minchat.rest.*
+import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.launch
-import kotlinx.serialization.*
-import kotlinx.serialization.json.Json
 import mindustry.Vars
 import mindustry.gen.Icon
 import mindustry.ui.dialogs.SettingsMenuDialog.SettingsTable
@@ -55,12 +55,16 @@ object MinchatSettings {
 			it.pref(SpacerSetting(50f))
 
 			it.pref(TableSetting {
-				textButton("Check for updates") {
+				defaults().fillX().uniformX()
 
-				}.uniformX()
+				textButton("Check for updates") {
+					Minchat.launch {
+						MinchatPluginHandler.get<AutoupdaterPlugin>()?.performCheckVerbose()
+					}
+				}
 				textButton("Tutorials") {
 					showTutorialsDialog()
-				}.uniformX()
+				}
 			})
 		}
 	}
