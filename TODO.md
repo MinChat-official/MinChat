@@ -5,6 +5,7 @@ Before MinChat can undergo the first public release, the following features must
 | 1        | Done                  | Custom chat input field that can properly display multi-line text and increase it's own size without scrolling the chat     |
 | 1        | Partially implemented | Support for bans, mutes; The corresponding UI for admins                                                                    |
 | 1        | Not done              | Client-side checks for user account ban/mute                                                                                |
+| 1        | Not done              | Announcement system                                                                                                         |
 | 2        | Not done              | Proper GUI chat button, a hint for desktop players telling them that there's a shortcut they can use                        |
 | 2        | Not done              | Chat mentions and notifications                                                                                             |
 | 2        | Not done              | Discord-style replies, possibly ones that mention the recipent                                                              |
