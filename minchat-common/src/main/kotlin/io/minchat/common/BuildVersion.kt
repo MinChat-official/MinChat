@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 val MINCHAT_VERSION = BuildVersion(
 	major = 0,
 	minor = 4,
-	patch = 1
+	patch = 2
 )
 
 /**

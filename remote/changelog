@@ -1,3 +1,7 @@
+#VERSION 0.4.2
+Added a button to the settings to manually check for updates.
+Improved stability & added automatic reconnects
+
 #VERSION 0.4.1
 Messages now can be edited using the GUI
 The chat input field now supports multi-line input
