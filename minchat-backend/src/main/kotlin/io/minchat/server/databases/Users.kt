@@ -18,8 +18,16 @@ object Users : MinchatEntityTable<User>() {
 
 	val discriminator = integer("discriminator")
 
-	val isBanned = bool("banned").default(false)
+	/** If not negative, the user is banned and [banReason] signifies the reason for the ban. */
+	val bannedUntil = long("banned-until").default(-1)
+	val banReason = varchar("ban-reason", User.Punishment.reasonLength.last).nullable().default(null)
+
+	/** If not negative, the user is muted and [muteReason] signifies the reason for the mute. */
+	val mutedUntil = long("muted-until").default(-1)
+	val muteReason = varchar("mute-reason", User.Punishment.reasonLength.last).nullable().default(null)
+
 	val isDeleted = bool("deleted").default(false)
+
 	/**
 	 * Unused: unreliable and hard to manage.
 	 * Will (or will not) be used in the future to prevent users from creating too many accounts.
@@ -46,28 +54,36 @@ object Users : MinchatEntityTable<User>() {
 			discriminator = row[discriminator],
 			isAdmin = row[isAdmin],
 
-			isBanned = row[isBanned],
+			ban = if (row[bannedUntil] >= 0) User.Punishment(
+				expiresAt = row[bannedUntil],
+				reason = row[banReason]
+			) else null,
+
+			mute = if (row[mutedUntil] >= 0) User.Punishment(
+				expiresAt = row[mutedUntil],
+				reason = row[muteReason]
+			) else null,
 
 			messageCount = row[messageCount],
 			lastMessageTimestamp = row[lastMessageTimestamp],
 
 			creationTimestamp = row[creationTimestamp]
 		)
-	
-	
+
+
 	fun getRawByTokenOrNull(token: String) =
 		select { Users.token eq token }.firstOrNull()
 
 	fun getRawByToken(token: String) =
-		getRawByTokenOrNull(token) ?: notFound("the providen token is not associated with any user.")
-	
+		getRawByTokenOrNull(token) ?: notFound("the provided token is not associated with any user.")
+
 	fun getByTokenOrNull(token: String) =
 		getRawByTokenOrNull(token)?.let(::createEntity)
-	
+
 	fun getByToken(token: String) =
-		getByTokenOrNull(token) ?: notFound("the providen token is not associated with any user.")
-	
-	/** Returns true if the user with the providen token is an admin; false otherwise. */
+		getByTokenOrNull(token) ?: notFound("the provided token is not associated with any user.")
+
+	/** Returns true if the user with the provided token is an admin; false otherwise. */
 	fun isAdminToken(token: String) =
 		select { Users.token eq token }.firstOrNull()?.get(isAdmin) ?: false
 

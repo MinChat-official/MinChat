@@ -69,12 +69,8 @@ class ChannelModule : MinchatServerModule() {
 				}
 				
 				newSuspendedTransaction {
-					val user = Users.getByToken(call.token())
+					val user = Users.getByToken(call.token()).checkAndUpdateUserPunishments()
 					val channel = Channels.getById(channelId)
-
-					if (user.isBanned) {
-						accessDenied("You are banned and can not send messages.")
-					}
 
 					val cooldown = user.lastMessageTimestamp + User.messageRateLimit - System.currentTimeMillis()
 					if (cooldown > 0 && !user.isAdmin) {

@@ -35,11 +35,12 @@ class MessageModule : MinchatServerModule() {
 				}
 
 				newSuspendedTransaction {
-					val userRow = Users.getRawByToken(call.token())
+					val user = Users.getByToken(call.token())
+					user.checkAndUpdateUserPunishments()
 
-					Messages.update(opWithAdminAccess(userRow[Users.isAdmin],
+					Messages.update(opWithAdminAccess(user.isAdmin,
 						common = { Messages.id eq id },
-						userOnly = { Messages.author eq userRow[Users.id] }
+						userOnly = { Messages.author eq user.id }
 					)) {
 						it[Messages.content] = data.newContent
 					}.throwIfNotFound { "A message matching the providen id-author pair does not exist (missing admin rights?)" }
@@ -57,11 +58,12 @@ class MessageModule : MinchatServerModule() {
 				call.receive<MessageDeleteRequest>() // unused
 
 				transaction {
-					val userRow = Users.getRawByToken(call.token())
+					val user = Users.getByToken(call.token())
+					user.checkAndUpdateUserPunishments()
 
-					Messages.update(opWithAdminAccess(userRow[Users.isAdmin],
+					Messages.update(opWithAdminAccess(user.isAdmin,
 						common = { Messages.id eq id },
-						userOnly = { Messages.author eq userRow[Users.id] }
+						userOnly = { Messages.author eq user.id }
 					)) {
 						// actually deleting a message may lead to certain sync issues, so we avoid that
 						it[Messages.content] = ""
@@ -75,7 +77,7 @@ class MessageModule : MinchatServerModule() {
 						messageId = deletedMessage[Messages.id].value,
 						authorId = deletedMessage[Messages.author].value,
 						channelId = deletedMessage[Messages.channel].value,
-						byAuthor = deletedMessage[Messages.author].value == userRow[Users.id].value
+						byAuthor = deletedMessage[Messages.author].value == user.id
 					))
 				}
 

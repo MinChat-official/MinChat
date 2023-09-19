@@ -5,9 +5,11 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
+import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
-import java.time.Instant
+import java.time.*
+import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 import io.minchat.client.misc.MinchatStyle as Style
 
@@ -21,6 +23,18 @@ abstract class UserDialog(
 	lateinit var userLabel: Label
 
 	init {
+		// utility functions
+		fun Long.toTimestamp() =
+			DateTimeFormatter.RFC_1123_DATE_TIME.format(
+				Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()))
+
+		fun User.Punishment?.toExplanation() =
+			this?.let {
+				val time = if (expiresAt == null) "Forever" else "Until ${expiresAt!!.toTimestamp()}"
+				val reason = " (${reason ?: "no reason specified"})"
+				"$time$reason"
+			} ?: "No"
+
 		headerTable.addTable(Style.surfaceBackground) {
 			margin(Style.buttonMargin)
 			addLabel({ user?.tag ?: "Invalid User" })
@@ -31,7 +45,8 @@ abstract class UserDialog(
 		addStat("Username") { user?.username }
 		addStat("ID") { user?.id?.toString() }
 		addStat("Is admin") { user?.isAdmin }
-		addStat("Is banned") { user?.isBanned }
+		addStat("Banned") { user?.let { it.ban.toExplanation() } }
+		addStat("Muted") { user?.let { it.mute.toExplanation() } }
 		addStat("Messages sent") { user?.messageCount?.toString() }
 		addStat("Last active") { user?.lastMessageTimestamp?.let(::formatTimestamp) }
 		addStat("Registered") { user?.creationTimestamp?.let(::formatTimestamp) }

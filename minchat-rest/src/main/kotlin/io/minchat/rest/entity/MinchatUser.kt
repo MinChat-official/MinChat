@@ -22,7 +22,10 @@ data class MinchatUser(
 	val tag by data::tag
 
 	val isAdmin by data::isAdmin
-	val isBanned by data::isBanned
+	/** If this user is muted, this property indicates the duration and reason. */
+	val mute by data::mute
+	/** If this user is banned, this property indicates the duration and reason. */
+	val ban by data::ban
 
 	/** The total number of messages ever sent by this user. */
 	val messageCount by data::messageCount
@@ -48,7 +51,7 @@ data class MinchatUser(
 		rest.deleteUser(id)
 
 	override fun toString() =
-		"MinchatUser(id=$id, tag=$tag, isAdmin=$isAdmin, isBanned=$isBanned, messageCount=$messageCount)"
+		"MinchatUser(id=$id, tag=$tag, isAdmin=$isAdmin, ban=$ban, mute=$mute, messageCount=$messageCount)"
 
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
@@ -66,7 +69,8 @@ data class MinchatUser(
 		nickname: String? = data.nickname,
 		discriminator: Int = data.discriminator,
 		isAdmin: Boolean = data.isAdmin,
-		isBanned: Boolean = data.isBanned,
+		mute: User.Punishment? = data.mute,
+		ban: User.Punishment? = data.ban,
 		messageCount: Int = data.messageCount,
 		lastMessageTimestamp: Long = data.lastMessageTimestamp,
 		creationTimestamp: Long = data.creationTimestamp
@@ -75,7 +79,8 @@ data class MinchatUser(
 		nickname = nickname,
 		discriminator = discriminator,
 		isAdmin = isAdmin,
-		isBanned = isBanned,
+		mute = mute,
+		ban = ban,
 		messageCount = messageCount,
 		lastMessageTimestamp = lastMessageTimestamp,
 		creationTimestamp = creationTimestamp

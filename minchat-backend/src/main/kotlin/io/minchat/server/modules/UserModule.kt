@@ -39,7 +39,10 @@ class UserModule : MinchatServerModule() {
 				}
 
 				newSuspendedTransaction {
-					Users.update(opWithAdminAccess(Users.isAdminToken(token),
+					val requestedBy = Users.getByToken(token)
+					requestedBy.checkAndUpdateUserPunishments()
+
+					Users.update(opWithAdminAccess(requestedBy.isAdmin,
 						common = { Users.id eq id },
 						userOnly = { Users.token eq token }
 					)) { row ->
