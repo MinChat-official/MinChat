@@ -2,8 +2,9 @@ package io.minchat.rest.gateway
 
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.*
 import io.ktor.http.*
-import io.minchat.common.Route
+import io.minchat.common.*
 import io.minchat.common.event.Event
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -99,6 +100,8 @@ class RawGateway(
 				location.port,
 				location.path.removeSuffix("/") + Route.Gateway.websocket
 			)
+
+			parameter("version", MINCHAT_VERSION.toString())
 		}
 	}
 

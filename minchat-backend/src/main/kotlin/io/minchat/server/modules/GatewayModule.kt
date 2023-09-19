@@ -35,7 +35,9 @@ class GatewayModule : MinchatServerModule() {
 
 		routing {
 			webSocket(Route.Gateway.websocket) {
-				val connection = Connection(this).also(connections::add)
+				val version = call.request.queryParameters["version"]
+					?.let(BuildVersion::fromStringOrNull)
+				val connection = Connection(this, version).also(connections::add)
 
 				Log.lifecycle { "Incoming: $connection" }
 
@@ -86,11 +88,14 @@ class GatewayModule : MinchatServerModule() {
 		pendingEvents += event
 	}
 
-	class Connection(val session: WebSocketServerSession) {
+	class Connection(
+		val session: WebSocketServerSession,
+		val clientVersion: BuildVersion?
+	) {
 		val id = lastId.getAndIncrement()
 
 		override fun toString() =
-			"Connection #$id"
+			"Connection #$id (v${clientVersion ?: "unknown"})"
 
 		companion object {
 			val lastId = AtomicLong(0L)

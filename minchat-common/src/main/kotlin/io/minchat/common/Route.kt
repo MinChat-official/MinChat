@@ -135,6 +135,7 @@ object Route {
 	object Gateway : MinchatRoute("gateway") {
 		/**
 		 * WebSocket.
+		 * Query params: version - optional BuildVersion object.
 		 * Client-to-server: none.
 		 * Server-to-client: [Event] objects.
 		 */
