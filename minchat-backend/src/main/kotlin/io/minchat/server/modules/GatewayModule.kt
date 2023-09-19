@@ -55,15 +55,21 @@ class GatewayModule : MinchatServerModule() {
 		// A coroutine that sends events
 		launch {
 			while (true) {
-				if (pendingEvents.isNotEmpty()) {
+				if (pendingEvents.isNotEmpty()) try {
 					val event = pendingEvents.remove()
 					val frame = jsonConverter.serialize(event)
 
 					Log.lifecycle { "Sending $event to ${connections.size} connections" }
 
 					connections.forEach {
-						it.session.outgoing.send(frame)
+						try {
+							it.session.outgoing.send(frame)
+						} catch (e: Exception) {
+							Log.error { "Failed to send $event to $it!" }
+						}
 					}
+				} catch (e: Exception) {
+					Log.error { "Failed to send an event! $e" }
 				}
 				delay(20L)
 			}
