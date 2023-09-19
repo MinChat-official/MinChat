@@ -1,6 +1,7 @@
 #VERSION 0.4.2
 Added a button to the settings to manually check for updates.
 Improved stability & added automatic reconnects
+Chatbox was slightly improved
 
 #VERSION 0.4.1
 Messages now can be edited using the GUI
