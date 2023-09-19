@@ -1,9 +1,8 @@
 package io.minchat.client.ui
 
-import arc.graphics.g2d.*
 import arc.math.Mathf
-import arc.scene.style.Drawable
 import arc.scene.ui.TextArea
+import arc.util.Time
 import io.minchat.client.misc.MinchatStyle
 import kotlin.math.max
 
@@ -30,13 +29,20 @@ class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 		return rowsHeight + requiredHeight
 	}
 
-	override fun drawSelection(selection: Drawable?, font: Font?, x: Float, y: Float) {
-		Draw.alpha(1f)
-		super.drawSelection(selection, font, x, y)
+	override fun change() {
+		// to recalculate pref height and prevent the input from being scrolled if multiple lines were added at the end
+		calculateOffsets()
+		act(Time.delta)
+		sizeChanged()
+
+		super.change()
 	}
 
-	override fun drawCursor(cursorPatch: Drawable?, font: Font?, x: Float, y: Float) {
-		Draw.alpha(1f)
-		super.drawCursor(cursorPatch, font, x, y)
+	override fun sizeChanged() {
+		super.sizeChanged()
+
+		if (lines <= linesShowing) {
+			firstLineShowing = 0
+		}
 	}
 }

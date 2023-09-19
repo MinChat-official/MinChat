@@ -8,10 +8,11 @@ import arc.scene.Element
 import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
+import arc.util.Log
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
-import io.minchat.client.Minchat
+import io.minchat.client.*
 import io.minchat.client.misc.*
 import io.minchat.client.ui.*
 import io.minchat.client.ui.dialog.*
@@ -214,70 +215,73 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
 
-		// Listen for minchat message events in this channel and update the message list accordingly
-		messageListenerJob = launch {
-			Minchat.awaitConnection()
+		listenForMessages()
+		ClientEvents.subscribe<ConnectEvent> {
 			listenForMessages()
 		}
 	}
 
-	private suspend fun listenForMessages() = Minchat.gateway.events
-		.filter { instance?.scene != null } // only react to events if the chat is visible
-		.onEach { event ->
-			when (event) {
-				is MinchatMessageCreate -> {
-					val message = event.message
-					if (message.channelId == currentChannel?.id) {
-						val element = NormalMinchatMessageElement(this@ChatFragment, message)
-						addMessage(element, 0.5f)
-					}
-				}
-
-				is MinchatMessageModify -> {
-					val newMessage = event.message
-					if (newMessage.channelId == currentChannel?.id) {
-						// Find and replace the old message element in its cell
-						val messageCell = chatContainer.cells.find {
-							// getAsOrNull won't work for some reason
-							(it.get() as? NormalMinchatMessageElement)?.message?.id == newMessage.id
-						}
-						messageCell.setElement<Element>(NormalMinchatMessageElement(this@ChatFragment, newMessage))
-						chatContainer.invalidateHierarchy()
-					}
-				}
-
-				is MinchatMessageDelete -> {
-					if (event.channelId == currentChannel?.id) {
-						// Play a shrinking animation and finally rremove the element.
-						chatContainer.children.find {
-							(it as? NormalMinchatMessageElement)?.message?.id == event.messageId
-						}?.let {
-							(it as NormalMinchatMessageElement).animateDisappear(1f)
+	/** Starts listening for incoming message events and cancels the previous listener, if any. */
+	private fun listenForMessages() {
+		messageListenerJob?.cancel()
+		messageListenerJob = Minchat.gateway.events
+			.filter { instance?.scene != null } // only react to events if the chat is visible\
+			.onEach { event ->
+				when (event) {
+					is MinchatMessageCreate -> {
+						val message = event.message
+						if (message.channelId == currentChannel?.id) {
+							val element = NormalMinchatMessageElement(this@ChatFragment, message)
+							addMessage(element, 0.5f)
 						}
 					}
-				}
 
-				is MinchatChannelCreate,
-				is MinchatChannelModify,
-				is MinchatChannelDelete -> {
-					// TODO properly handle this
-					reloadChannels()
-				}
-
-				is MinchatUserModify -> {
-					val newUser = event.user
-					chatContainer.cells.forEach {
-						val element = (it.get() as? NormalMinchatMessageElement)?.let { old ->
-							old.takeIf { it.message.authorId == newUser.id }?.let {
-								NormalMinchatMessageElement(old.chat, old.message.copy(author = newUser.data))
+					is MinchatMessageModify -> {
+						val newMessage = event.message
+						if (newMessage.channelId == currentChannel?.id) {
+							// Find and replace the old message element in its cell
+							val messageCell = chatContainer.cells.find {
+								// getAsOrNull won't work for some reason
+								(it.get() as? NormalMinchatMessageElement)?.message?.id == newMessage.id
 							}
-						} ?: return@forEach
+							messageCell.setElement<Element>(NormalMinchatMessageElement(this@ChatFragment, newMessage))
+							chatContainer.invalidateHierarchy()
+						}
+					}
 
-						it.setElement<NormalMinchatMessageElement>(element)
+					is MinchatMessageDelete -> {
+						if (event.channelId == currentChannel?.id) {
+							// Play a shrinking animation and finally rremove the element.
+							chatContainer.children.find {
+								(it as? NormalMinchatMessageElement)?.message?.id == event.messageId
+							}?.let {
+								(it as NormalMinchatMessageElement).animateDisappear(1f)
+							}
+						}
+					}
+
+					is MinchatChannelCreate,
+					is MinchatChannelModify,
+					is MinchatChannelDelete -> {
+						// TODO properly handle this
+						reloadChannels()
+					}
+
+					is MinchatUserModify -> {
+						val newUser = event.user
+						chatContainer.cells.forEach {
+							val element = (it.get() as? NormalMinchatMessageElement)?.let { old ->
+								old.takeIf { it.message.authorId == newUser.id }?.let {
+									NormalMinchatMessageElement(old.chat, old.message.copy(author = newUser.data))
+								}
+							} ?: return@forEach
+
+							it.setElement<NormalMinchatMessageElement>(element)
+						}
 					}
 				}
-			}
-		}.collect()
+			}.launchIn(Minchat)
+	}
 
 	private fun tick() {
 		if (notificationStack.isNotEmpty()) run {

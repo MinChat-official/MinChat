@@ -64,7 +64,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	lateinit var gateway: MinchatGateway
 		private set
 	/** Returns true if [client] is initialised and a connection is established. */
-	val isConnected get() = ::client.isInitialized && ::gateway.isInitialized
+	val isConnected get() = ::client.isInitialized && ::gateway.isInitialized && gateway.isConnected
 
 	val chatFragment by lazy { ChatFragment(this) }
 	private val chatDialog by lazy { createDialog(title = "") {
@@ -138,7 +138,10 @@ class MinchatMod : Mod(), CoroutineScope {
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
 
-		launch { connectToDefault() }
+		launch {
+			delay(100L) // TODO: possible race condition
+			connectToDefault()
+		}
 	}
 
 	/**
