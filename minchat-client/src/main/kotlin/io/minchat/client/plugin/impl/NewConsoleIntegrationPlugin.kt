@@ -1,17 +1,18 @@
 package io.minchat.client.plugin.impl
 
-import arc.util.*
+import arc.util.Time
+import arc.util.Timer.Task
+import io.minchat.client.misc.Log
 import io.minchat.client.plugin.MinchatPlugin
 import newconsole.ConsoleVars
 import newconsole.ui.dialogs.Console
-import java.io.*
 
 /**
  * A plugin that redirects the standard output to the NewConsole ui.
  */
 class NewConsoleIntegrationPlugin : MinchatPlugin("new-console-integration") {
-	lateinit var console: Console
-	val isLoaded get() = ::console.isInitialized
+	var console: Console? = null
+	var deferredConsoleScrollTask: Task? = null
 
 	// The actual initialisation is delayed by 1 frame to let other mods load; This can cause a race condition.
 	override fun onInit() = Time.run(1f) {
@@ -19,33 +20,25 @@ class NewConsoleIntegrationPlugin : MinchatPlugin("new-console-integration") {
 			// This is just to check whether the class is loaded or not.
 			ConsoleVars.console
 		} catch (e: NoClassDefFoundError) {
-			Log.info("NewConsole is either not loaded or cannot be detected; skipping the NewConsole integration plugin.")
+			Log.warn { "NewConsole is either not loaded or cannot be detected; skipping the NewConsole integration plugin." }
 			return@run
 		}
+	}
 
-		val oldOut = System.`out`
-		// Append everything that's being printed to a string builder; print it when a newline is printed.
-		val builder = StringBuilder()
-		object : OutputStream() {
-			override fun write(b: Int) {
-				if (b != '\n'.code && b != '\r'.code) {
-					// 32 is the first printable ascii character: space;
-					// however, dontResend and \u001b, the escape char, are also included to filter away
-					// strings meant for a terminal emulator: they begin with one of them
-					if (b >= 32 || b == 0x001b || b == Console.dontResend.code) {
-						builder.append(b.toChar())
-					}
-				} else if (builder.isNotEmpty()) {
-					val string = builder.toString()
+	/** Adds a log that's only visible in NC. */
+	fun addLog(log: String) {
+		console?.apply {
+			try {
+				Console.logBuffer.append(log.replace("\t", "    ") + "\n")
 
-					if (!string.startsWith(Console.dontResendStr) && !string.startsWith("\u001b[")) {
-						Console.logBuffer.appendLine("[lightgrey][STDOUT]: $string[]")
+				if (deferredConsoleScrollTask?.isScheduled?.not() ?: true) {
+					deferredConsoleScrollTask = Time.runTask(4f) {
+						scrollDown()
 					}
-					builder.clear()
 				}
-
-				oldOut.write(b)
+			} catch (e: ConcurrentModificationException) {
+				// nothing I can do here, other than cry.
 			}
-		}.let { System.setOut(PrintStream(it)) }
+		}
 	}
 }

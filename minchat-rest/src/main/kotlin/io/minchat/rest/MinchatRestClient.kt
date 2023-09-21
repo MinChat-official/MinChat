@@ -6,11 +6,15 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
+import io.minchat.common.AbstractLogger
 import io.minchat.rest.entity.*
 import io.minchat.rest.ratelimit.*
 import io.minchat.rest.service.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
+
+/** An [AbstractLogger] used by the rest module. Must be initialized on startup. */
+lateinit var MinchatRestLogger: AbstractLogger
 
 class MinchatRestClient(
 	val baseUrl: String,

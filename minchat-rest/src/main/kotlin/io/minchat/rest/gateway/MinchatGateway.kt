@@ -1,7 +1,7 @@
 package io.minchat.rest.gateway
 
 import io.minchat.common.event.*
-import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.*
 import io.minchat.rest.event.MinchatEvent
 import io.minchat.rest.gateway.MinchatGateway.EventTransformer
 import kotlinx.coroutines.flow.*
@@ -34,7 +34,7 @@ class MinchatGateway(
 
 			transformation?.run { transform(it, client) }
 				?: run {
-					println("No transformation found for event class ${it::class.qualifiedName}")
+					MinchatRestLogger.log("warn", "No transformation found for event class ${it::class.qualifiedName}")
 					null
 				}
 		}

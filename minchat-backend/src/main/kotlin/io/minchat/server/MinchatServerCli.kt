@@ -10,7 +10,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
-import io.minchat.common.Constants
+import io.minchat.common.*
 import io.minchat.server.databases.*
 import io.minchat.server.modules.*
 import io.minchat.server.util.*
@@ -73,7 +73,7 @@ open class MinchatLauncher : Runnable {
 
 	suspend fun launchServer(): ServerContext {
 		Log.baseLogDir = dataDir
-		Log.level = Log.LogLevel.valueOf(logLevel.uppercase())
+		Log.level = AbstractLogger.LogLevel.valueOf(logLevel.uppercase())
 
 		Log.lifecycle { "Data directory: ${dataDir.absolutePath}" }
 		Log.info { "Log level: ${Log.level}" }

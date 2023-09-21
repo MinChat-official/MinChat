@@ -3,12 +3,13 @@ package io.minchat.client.ui.managers
 import arc.*
 import arc.scene.ui.*
 import arc.scene.ui.layout.Table
-import arc.util.*
+import arc.util.Reflect
 import com.github.mnemotechnician.mkui.extensions.dsl.addTable
 import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatSettings
+import io.minchat.client.misc.Log
 import mindustry.Vars
 import mindustry.game.EventType
 import mindustry.ui.*
@@ -33,7 +34,7 @@ object GuiChatButtonManager {
 					val target = Vars.ui.hudGroup.find<Table>("minimap/position")
 
 					if (target == null) {
-						Log.err("Failed to find an appropriate table to place the MinChat chat button.")
+						Log.error {"Failed to find an appropriate table to place the MinChat chat button." }
 						return@runUi
 					}
 					// Now things get a little tricky: we need the button to be on the top,

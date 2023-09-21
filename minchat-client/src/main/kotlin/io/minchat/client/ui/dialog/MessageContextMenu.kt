@@ -4,10 +4,10 @@ import arc.Core
 import arc.scene.style.Drawable
 import arc.scene.ui.Dialog
 import arc.scene.ui.layout.Table
-import arc.util.*
+import arc.util.Scaling
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.Minchat
-import io.minchat.client.misc.MinchatStyle
+import io.minchat.client.misc.*
 import io.minchat.client.ui.chat.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
@@ -61,7 +61,7 @@ class MessageContextMenu(
 					runCatching {
 						messageElement.message.delete()
 					}.onFailure {
-						Log.err("Failed to delete message", it)
+						Log.error(it) { "Failed to delete message" }
 					}
 				}
 				hide()

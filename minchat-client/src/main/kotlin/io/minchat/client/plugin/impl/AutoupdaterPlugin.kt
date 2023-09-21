@@ -3,7 +3,7 @@ package io.minchat.client.plugin.impl
 import arc.Core
 import arc.graphics.Color
 import arc.scene.ui.layout.Table
-import arc.util.*
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -13,7 +13,7 @@ import io.ktor.http.*
 import io.ktor.utils.io.core.*
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatGithubClient.ChangelogEntry
-import io.minchat.client.misc.userReadable
+import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPlugin
 import io.minchat.client.ui.dialog.ModalDialog
 import io.minchat.common.*
@@ -61,18 +61,18 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 				break
 			} catch (e: Exception) {
 				if (attempt++ == maxAttempts) {
-					Log.err("Failed to get latest version from GitHub after $maxAttempts attempts.", e)
+					Log.error(e) { "Failed to get latest version from GitHub after $maxAttempts attempts" }
 					return CheckResult.ERROR
 				}
 			}
 		}
 
 		if (latestVersion <= MINCHAT_VERSION) {
-			Log.info("Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION")
+			io.minchat.client.misc.Log.info { "Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION" }
 			return CheckResult.NO_UPDATE
 		}
 
-		Log.info("Autoupdater: downloading the changelog...")
+		Log.info { "Autoupdater: downloading the changelog..." }
 		val changelog = runCatching { Minchat.githubClient.getChangelog() }
 			.getOrNull()
 			?.filter { it.version > MINCHAT_VERSION }

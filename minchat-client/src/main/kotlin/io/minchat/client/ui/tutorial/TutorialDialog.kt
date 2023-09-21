@@ -3,10 +3,10 @@ package io.minchat.client.ui.tutorial
 import arc.graphics.Color
 import arc.input.KeyCode
 import arc.scene.ui.*
-import arc.util.*
+import arc.util.Time
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.scaleFont
-import io.minchat.client.misc.MinchatStyle
+import io.minchat.client.misc.*
 import io.minchat.client.misc.MinchatStyle.ActionButton
 import io.minchat.client.misc.MinchatStyle.buttonMargin
 import io.minchat.client.misc.MinchatStyle.layoutMargin
@@ -93,7 +93,7 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 					previous.remove(this, previousStepData)
 				}
 			} catch (e: Exception) {
-				Log.warn("Step $step of tutorial ${tutorial.name} could no be un-applied: $e")
+				Log.error(e) { "Step $step of tutorial ${tutorial.name} could no be un-applied" }
 			}
 		}
 

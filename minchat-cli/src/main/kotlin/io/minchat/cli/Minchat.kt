@@ -5,9 +5,9 @@ import androidx.compose.runtime.snapshots.*
 import com.jakewharton.mosaic.runMosaic
 import com.jakewharton.mosaic.ui.*
 import io.minchat.cli.ui.*
-import io.minchat.common.MINCHAT_VERSION
+import io.minchat.common.*
 import io.minchat.common.event.Event
-import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.*
 import io.minchat.rest.entity.*
 import io.minchat.rest.event.*
 import io.minchat.rest.gateway.MinchatGateway
@@ -30,6 +30,14 @@ class Minchat(
 	var currentChannel by mutableStateOf<MinchatChannel?>(null)
 	val currentMessages = SnapshotStateList<MinchatMessage>()
 	var currentMode by mutableStateOf(MinchatMode.COMMAND)
+
+	init {xxxx
+		MinchatRestLogger = object : AbstractLogger() {
+			override fun log(levelString: String, message: String) {
+				println("[$levelString][$message]")
+			}
+		}
+	}
 
 	suspend fun launch(): Unit = runMosaic {
 		launch {
@@ -75,7 +83,7 @@ class Minchat(
 							if (index != -1) {
 								currentMessages[index] = event.message
 							} else {
-								System.err.println("Unknown message modified: ${event.message.id}")
+								MinchatRestLogger.log("error", "Unknown message modified: ${event.message.id}")
 							}
 						}
 

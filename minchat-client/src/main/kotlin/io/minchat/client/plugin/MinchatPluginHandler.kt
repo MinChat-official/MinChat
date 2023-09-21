@@ -1,7 +1,7 @@
 package io.minchat.client.plugin
 
-import arc.util.Log
 import io.minchat.client.*
+import io.minchat.client.misc.Log
 import io.minchat.client.plugin.impl.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -29,6 +29,7 @@ object MinchatPluginHandler {
 	init {
 		register(::AutoupdaterPlugin)
 		register(::AccountSaverPlugin)
+		register(::NewConsoleIntegrationPlugin)
 
 		ClientEvents.subscribe<LoadEvent> {
 			onLoad()
@@ -66,7 +67,7 @@ object MinchatPluginHandler {
 			initPlugin(it.factory())
 		}
 
-		Log.info("Initialized MinChat plugins: ${loadedPlugins.joinToString { it.plugin.name }}")
+		Log.info { "Initialized MinChat plugins: ${loadedPlugins.joinToString { it.plugin.name }}" }
 	}
 
 	fun initPlugin(plugin: MinchatPlugin): LoadedPlugin<*> {
@@ -74,7 +75,7 @@ object MinchatPluginHandler {
 			plugin.onInit()
 			LoadedPlugin(plugin, null, false)
 		} catch (e: Throwable) {
-			Log.err("Could not initialise plugin ${plugin.name}", e)
+			Log.error(e) { "Could not initialise plugin ${plugin.name}" }
 			LoadedPlugin(plugin, e, false)
 		}
 	}
@@ -85,14 +86,14 @@ object MinchatPluginHandler {
 
 		// Retain already-loaded (?) and failed plugins, load the rest
 		val (toRetain, toLoad) = loadedPlugins.partition { it.isLoaded || it.error != null }
-		Log.info("Loading MinChat plugins: ${toLoad.joinToString { it.plugin.name }}")
+		Log.info { "Loading MinChat plugins: ${toLoad.joinToString { it.plugin.name }}" }
 
 		val loaded = toLoad.map {
 			try {
 				it.plugin.onLoad()
 				it.copy(isLoaded = true)
 			} catch (e: Throwable) {
-				Log.err("Could not load plugin ${it.plugin.name}")
+				Log.error { "Could not load plugin ${it.plugin.name}" }
 				it.copy(error = e)
 			}
 		}
@@ -105,7 +106,7 @@ object MinchatPluginHandler {
 			try {
 				it.plugin.onConnect()
 			} catch (e: Throwable) {
-				Log.err("Plugin ${it.plugin.name} failed onConnect", e)
+				Log.error(e) { "Plugin ${it.plugin.name} failed onConnect" }
 			}
 		}
 	}

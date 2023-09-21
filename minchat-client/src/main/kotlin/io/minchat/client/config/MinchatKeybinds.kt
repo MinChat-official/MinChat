@@ -2,8 +2,9 @@ package io.minchat.client.config
 
 import arc.*
 import arc.input.*
-import arc.util.*
+import arc.util.Reflect
 import io.minchat.client.Minchat
+import io.minchat.client.misc.Log
 
 object MinchatKeybinds {
 	val allBindings = mutableListOf<KeyBind>()
@@ -31,7 +32,7 @@ object MinchatKeybinds {
 	fun register(keybinding: KeyBind) {
 		val bindings = Core.keybinds.sections[0].binds.get(InputDevice.DeviceType.keyboard)
 		if (bindings == null) {
-			Log.warn("No keyboard device detected; Cannot register $keybinding")
+			Log.warn { "No keyboard device detected; Cannot register $keybinding" }
 			return
 		}
 

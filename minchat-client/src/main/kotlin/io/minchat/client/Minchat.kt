@@ -2,7 +2,6 @@ package io.minchat.client
 
 import arc.Events
 import arc.scene.ui.Label
-import arc.util.Log
 import com.github.mnemotechnician.mkui.delegates.setting
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.cell
@@ -39,7 +38,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	val rootJob = SupervisorJob()
 	val exceptionHandler = CoroutineExceptionHandler { _, e ->
 		if (e !is CancellationException) {
-			Log.err("An exception has occurred in MinChat", e)
+			Log.error(e) { "An exception has occured in MinChat" }
 		}
 	}
  	override val coroutineContext = rootJob + exceptionHandler + MinchatDispatcher
@@ -191,13 +190,13 @@ class MinchatMod : Mod(), CoroutineScope {
 
 		val serverVersion = client.getServerVersion()
 		if (!serverVersion.isCompatibleWith(MINCHAT_VERSION)) {
-			Log.err("'$url' uses an incompatible version of MinChat: $serverVersion. The client uses $MINCHAT_VERSION.")
+			Log.error { "'$url' uses an incompatible version of MinChat: $serverVersion. The client uses $MINCHAT_VERSION." }
 			throw VersionMismatchException(serverVersion, MINCHAT_VERSION)
 		}
 		if (!serverVersion.isInterchangeableWith(MINCHAT_VERSION)) {
 			val warning = "The version of '$url' may not be fully compatible with the client ($serverVersion vs $MINCHAT_VERSION)"
 
-			Log.warn(warning)
+			Log.warn { warning }
 			if (Vars.clientLoaded) {
 				Vars.ui.showInfoToast("[!] Minchat warning: $warning", 5f)
 			}
@@ -216,7 +215,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	suspend fun connectToDefault() {
 		val url = when {
 			MinchatSettings.useCustomUrl -> {
-				Log.warn("Connecting to a custom URL. Minchat developers are not responsible for any data sent to foreign servers.")
+				Log.warn { "Connecting to a custom URL. Minchat developers are not responsible for any data sent to foreign servers." }
 				MinchatSettings.customUrl
 			}
 			else -> githubClient.getDefaultUrl()

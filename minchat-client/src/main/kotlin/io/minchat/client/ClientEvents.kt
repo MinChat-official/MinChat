@@ -2,7 +2,7 @@ package io.minchat.client
 
 import arc.Core
 import arc.struct.SnapshotSeq
-import arc.util.Log
+import io.minchat.client.misc.Log
 import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.launch
 
@@ -25,7 +25,7 @@ object ClientEvents {
 		}
 
 		if (eventDebug) {
-			Log.warn("Client events: registered subscriber for class $eventType at ${getStackElement("subscribe")}")
+			Log.debug { "Client events: registered subscriber for $eventType at ${getStackElement("subscribe")}" }
 		}
 	}
 
@@ -40,7 +40,7 @@ object ClientEvents {
 	@Suppress("UNCHECKED_CAST")
 	suspend fun fire(event: Any) {
 		if (eventDebug) {
-			Log.warn("Client events: fired $event at ${getStackElement("fire")}")
+			Log.debug { "Client events: fired $event at ${getStackElement("fire")}" }
 		}
 
 		val subscriberList = synchronized(subscribers) {
@@ -52,7 +52,7 @@ object ClientEvents {
 				try {
 					(items[i] as Subscriber<Any>).receiveEvent(event)
 				} catch (e: Exception) {
-					Log.warn("Subscriber of event ${event::class.java} failed with exception: $e")
+					Log.debug { "Subscriber of event ${event::class.java} failed with exception: $e" }
 				}
 			}
 		}
@@ -62,7 +62,7 @@ object ClientEvents {
 	@Suppress("UNCHECKED_CAST")
 	fun fireAsync(event: Any) {
 		if (eventDebug) {
-			Log.warn("Client events: fired async $event at ${getStackElement("fireAsync")}")
+			Log.debug { "Client events: fired async $event at ${getStackElement("fireAsync")}" }
 		}
 
 		Minchat.launch {
@@ -75,7 +75,7 @@ object ClientEvents {
 					try {
 						(items[i] as Subscriber<Any>).receiveEvent(event)
 					} catch (e: Exception) {
-						Log.warn("Subscriber of event ${event::class.java} failed with exception: $e")
+						Log.warn { "Subscriber of event ${event::class.java} failed with exception: $e" }
 					}
 				}
 			}
