@@ -59,8 +59,8 @@ abstract class MinchatMessageElement(
 			override fun touchUp(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?) {
 				if (!addContextActions) return
 
-				if (Vars.mobile && longClickBegin > 0L) {
-					if (System.currentTimeMillis() - longClickBegin > 400L) {
+				if (Vars.mobile) {
+					if (longClickBegin > 0L && System.currentTimeMillis() - longClickBegin > 400L) {
 						onRightClick()
 						event?.stop() // prevent other intractable elements from getting clicked
 					}

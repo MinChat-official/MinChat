@@ -13,7 +13,7 @@ import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.client.ui.managers.GuiChatButtonManager
 import io.minchat.common.MINCHAT_VERSION
-import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.*
 import io.minchat.rest.gateway.MinchatGateway
 import kotlinx.coroutines.*
 import mindustry.Vars
@@ -86,6 +86,8 @@ class MinchatMod : Mod(), CoroutineScope {
 	init {
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
+
+		MinchatRestLogger = Log
 
 		runUi {
 			MinchatPluginHandler.onInit()

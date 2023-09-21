@@ -107,7 +107,7 @@ abstract class UserDialog(
 		val user = this@UserDialog.user!!
 
 		init {
-			fields.addLabel("Editing user ${user.tag} (${user.username}).", align = Align.left, wrap = true)
+			fields.addLabel("Editing user ${user.tag} (${user.displayName}).", align = Align.left, wrap = true)
 				.fillX().row()
 
 			val usernameField = addField("New nickname", false) {
@@ -136,9 +136,9 @@ abstract class UserDialog(
 		init {
 			val confirmNumber = Random.nextInt(10_000, 100_000).toString()
 			fields.addLabel("""
-				Are you sure you want to delete this user account?
+				Are you sure you want to delete user "${user.nickname}?
 				Type "$confirmNumber" to confirm your intention.
-			""".trimIndent(), wrap = true).fillX().row()
+			""".trimIndent(), wrap = false).fillX().row()
 
 			val confirmField = addField("Type $confirmNumber", false) {
 				it == confirmNumber

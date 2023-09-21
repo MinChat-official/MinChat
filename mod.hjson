@@ -14,7 +14,7 @@ There are various tutorials that will guide you through the user interface of th
 displayName: "MinChat Official"
 author: "Mnemotechnician"
 minGameVersion: "137"
-version: "v0.4.2-beta"
+version: "v0.5.0-beta"
 
 main: "io.minchat.client.MinchatMod"
 hidden: true

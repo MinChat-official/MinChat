@@ -8,7 +8,6 @@ import arc.scene.Element
 import arc.scene.event.Touchable
 import arc.scene.ui.*
 import arc.scene.ui.layout.*
-import arc.util.Log
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
@@ -468,7 +467,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			val notif = notification("Sending...", 1)
 			return launch {
 				runSafe {
-					channel.createMessage(content)
+					val msg = channel.createMessage(content)
+					ClientEvents.fire(ClientMessageSendEvent(msg))
 				}
 			}.then { notif.cancel() }
 		} else {
@@ -491,7 +491,10 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 */
 	fun setEditMessage(message: MinchatMessage?) {
 		if (message != null) {
-			editListener = { message.edit(newContent = it) }
+			editListener = {
+				val newMessage = message.edit(newContent = it)
+				ClientEvents.fire(ClientMessageEditEvent(message, newMessage))
+			}
 			chatField.content = message.content
 		} else if (editListener != null) {
 			editListener = null

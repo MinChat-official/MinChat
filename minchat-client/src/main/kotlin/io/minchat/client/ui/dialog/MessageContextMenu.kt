@@ -6,7 +6,7 @@ import arc.scene.ui.Dialog
 import arc.scene.ui.layout.Table
 import arc.util.Scaling
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import io.minchat.client.Minchat
+import io.minchat.client.*
 import io.minchat.client.misc.*
 import io.minchat.client.ui.chat.*
 import io.minchat.rest.entity.MinchatMessage
@@ -50,16 +50,17 @@ class MessageContextMenu(
 		}
 
 		if (Minchat.client.canEditMessage(messageElement.message)) {
+			// TODO admins can abuse this!!! They should not be able to edit other's messages, only delete them!!!
 			action(Icon.pencil, "Edit message") {
 				chat.setEditMessage(message)
 				hide()
 			}
 
 			action(Icon.trash.tint(MinchatStyle.red), "Delete message") {
-				// TODO: should there be a confirmation dialog?
 				launch {
 					runCatching {
 						messageElement.message.delete()
+						ClientEvents.fire(ClientMessageDeleteEvent(messageElement.message))
 					}.onFailure {
 						Log.error(it) { "Failed to delete message" }
 					}

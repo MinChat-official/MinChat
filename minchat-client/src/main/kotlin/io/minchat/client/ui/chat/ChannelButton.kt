@@ -5,6 +5,7 @@ import arc.input.KeyCode
 import arc.scene.event.*
 import arc.scene.ui.TextButton
 import arc.util.Align
+import io.minchat.client.*
 import io.minchat.client.ui.dialog.ChannelDialog
 import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,7 @@ class ChannelButton(
 		clicked {
 			chat.apply {
 				currentChannel = channel
+				ClientEvents.fireAsync(ChannelChangeEvent(channel))
 				updateChatUi()
 			}
 		}

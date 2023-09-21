@@ -23,6 +23,8 @@ abstract class StatDialog(
 	/** A table containing buttons related to the dialog. */
 	lateinit var actionsTable: Table
 
+	var minValueLabelWidth = 250f
+
 	init {
 		setFillParent(true)
 		closeOnBack()
@@ -53,13 +55,14 @@ abstract class StatDialog(
 			margin(MinchatStyle.buttonMargin)
 			addLabel(name, MinchatStyle.Label, align = Align.left)
 				.grow().color(MinchatStyle.comment)
-		}.pad(MinchatStyle.layoutPad).fill().uniformX()
+		}.pad(MinchatStyle.layoutPad).fill()
 
 		statTable.addTable(MinchatStyle.surfaceBackground) {
 			margin(MinchatStyle.buttonMargin)
 			addLabel({ value() ?: "N/A" }, MinchatStyle.Label, align = Align.right, wrap = true)
 				.grow().color(MinchatStyle.foreground)
-		}.pad(MinchatStyle.layoutPad).growX().uniformX().fillY()
+				.minWidth(minValueLabelWidth)
+		}.pad(MinchatStyle.layoutPad).growX().fillY()
 	}
 
 	/** Adds a stat entry to the stat table, using yes/no as the value. */

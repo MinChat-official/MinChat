@@ -29,7 +29,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 
 		// login + register
 		headerTable.row().addTable {
-			textButton("LOG IN", Style.ActionButton) {
+			textButton({ if (user == null) "LOG IN" else "CHANGE ACCOUNT" }, Style.ActionButton) {
 				LoginDialog().show()
 			} //.disabled { user != null }
 				.pad(Style.layoutPad).margin(Style.buttonMargin)

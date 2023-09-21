@@ -4,6 +4,7 @@ import arc.Core
 import arc.struct.SnapshotSeq
 import io.minchat.client.misc.Log
 import io.minchat.rest.MinchatRestClient
+import io.minchat.rest.entity.*
 import kotlinx.coroutines.launch
 
 object ClientEvents {
@@ -126,9 +127,14 @@ data class ChatDialogEvent(val isClosed: Boolean)
 /** Fired when the user authorizes in MinChat. */
 data class AuthorizationEvent(val client: MinchatRestClient, val manually: Boolean)
 
-// TODO
-///** Fired when the user switches to a minchat channel. */
-//data class ChannelChangeEvent(val channel: MinchatChannel)
-//
-///** Fired when the user sends a message in a channel. */
-//data class MessageSendEvent(val message: MinchatMessage)
+/** Fired when the user switches to a minchat channel. */
+data class ChannelChangeEvent(val channel: MinchatChannel)
+
+/** Fired when the client user sends a message in a channel. */
+data class ClientMessageSendEvent(val message: MinchatMessage)
+
+/** Fired when the client user edits a sent message (not necessarily their own). */
+data class ClientMessageEditEvent(val old: MinchatMessage, val new: MinchatMessage)
+
+/** Fired when the client user deletes a sent message (not necessarily their own). */
+data class ClientMessageDeleteEvent(val old: MinchatMessage)
