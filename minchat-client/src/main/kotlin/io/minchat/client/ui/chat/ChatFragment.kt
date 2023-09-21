@@ -214,9 +214,18 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
 
-		listenForMessages()
-		ClientEvents.subscribe<ConnectEvent> {
+		val connectionListener = {
 			listenForMessages()
+
+			Minchat.gateway.onFailure {
+				updateChatUi(notificationText = "An error has occurred. Reloading messages...")
+				Log.warn { "Chat ui reloading due to a gateway failure." }
+			}
+		}
+
+		ClientEvents.subscribe<ConnectEvent> { connectionListener() }
+		if (Minchat.isConnected) {
+			connectionListener()
 		}
 	}
 
@@ -367,9 +376,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 *
 	 * @param forcibly if true, even unchanged messages will be updated.
 	 */
-	fun updateChatUi(forcibly: Boolean = false): Job? {
+	fun updateChatUi(forcibly: Boolean = false, notificationText: String = "Loading messages..."): Job? {
 		val channel = currentChannel ?: return null
-		val notif = notification("Loading messages...", 10)
+		val notif = notification(notificationText, 10)
 
 		lastChatUpdateJob?.cancel()
 

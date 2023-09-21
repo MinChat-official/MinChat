@@ -50,6 +50,11 @@ class MinchatGateway(
 	/** See [RawGateway.disconnect]. */
 	fun disconnect() =
 		rawGateway.disconnect()
+
+	/** Adds a failure listener, which gets called when the underlying gateway experiences a failure decoding an event. */
+	fun onFailure(listener: (Exception) -> Unit) {
+		rawGateway.onFailure(listener)
+	}
 	
 	companion object {
 		/** A map of all transformations a MinchatGateway can apply to the received events. */

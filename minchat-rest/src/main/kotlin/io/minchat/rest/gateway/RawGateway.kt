@@ -4,6 +4,9 @@ import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.serialization.*
+import io.ktor.util.reflect.*
+import io.ktor.websocket.*
 import io.minchat.common.*
 import io.minchat.common.event.Event
 import io.minchat.rest.MinchatRestLogger
@@ -46,6 +49,8 @@ class RawGateway(
 	 */
 	val events = eventsMutable.asSharedFlow()
 
+	private var failureListener: ((Exception) -> Unit)? = null
+
 	/**
 	 * Invokes [connect] if [isConnected] is false. Does nothing otherwise.
 	 */
@@ -81,11 +86,41 @@ class RawGateway(
 					}
 					thisSession = session!!
 
-					val event = thisSession.receiveDeserialized<Event>()
+					val frame = thisSession.incoming.receive()
+					val converter = thisSession.converter!!
+
+					if (!converter.isApplicable(frame)) {
+						MinchatRestLogger.log("warn",
+							"Raw gateway received a frame of unapplicable type: ${frame.frameType.name}")
+						continue
+					}
+
+					val event = try {
+						val result = converter.deserialize(
+							charset = thisSession.call.request.headers.suitableCharset(),
+							typeInfo = typeInfo<Event>(),
+							content = frame
+						)
+
+						if (result !is Event) throw Exception("The frame could not be deserialized as an event.")
+						result
+					} catch (e: Exception) {
+						val suffix = frame.takeIf { it.fin }?.let { it as? Frame.Text }?.readText()
+							?.let { "\nFrame text: $it" }
+							.orEmpty()
+
+						MinchatRestLogger.log("warn",
+							"Minchat gateway failed to decode an even: $e.$suffix")
+						failureListener?.invoke(e)
+						continue
+					}
+
 					eventsMutable.emit(event)
 				} catch (e: Exception) {
 					MinchatRestLogger.log("warn", "Closing current raw gateway session due to exception: $e")
 					delay(100L)
+
+					failureListener?.invoke(e)
 
 					// terminate this session
 					thisSession?.cancel()
@@ -119,5 +154,18 @@ class RawGateway(
 		session = null
 		sessionReader?.cancel()
 		sessionReader = null
+	}
+
+	/** Adds a failure listener, which gets called when this gateway experiences a failure decoding an event. */
+	fun onFailure(listener: (Exception) -> Unit) {
+		failureListener = if (failureListener == null) {
+			listener
+		} else {
+			val old = failureListener!!
+			{
+				old(it)
+				listener(it)
+			}
+		}
 	}
 }
