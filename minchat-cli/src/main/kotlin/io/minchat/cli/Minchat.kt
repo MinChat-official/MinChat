@@ -31,7 +31,7 @@ class Minchat(
 	val currentMessages = SnapshotStateList<MinchatMessage>()
 	var currentMode by mutableStateOf(MinchatMode.COMMAND)
 
-	init {xxxx
+	init {
 		MinchatRestLogger = object : AbstractLogger() {
 			override fun log(levelString: String, message: String) {
 				println("[$levelString][$message]")

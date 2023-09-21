@@ -1,3 +1,6 @@
+#VERSION 0.5.1
+Autoupdater will abort if it couldn't download the mod file fully
+
 #VERSION 0.5.0
 New ban/mute system (update required; the client might give you issues otherwise)
 Connection fixes (the chat will reload if MinChat fails to receive an event from the sever)

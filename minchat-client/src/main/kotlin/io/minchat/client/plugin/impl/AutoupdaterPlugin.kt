@@ -19,7 +19,7 @@ import io.minchat.client.ui.dialog.ModalDialog
 import io.minchat.common.*
 import kotlinx.coroutines.*
 import mindustry.Vars
-import java.io.*
+import java.io.RandomAccessFile
 import io.minchat.client.misc.MinchatStyle as Style
 
 class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
@@ -145,7 +145,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 							if (read != length) {
 								tmpFile.close()
-								File(tmpFilePath).delete()
+								tmpFilePath.delete()
 								throw Exception("Download failed. Please try again.")
 							}
 						}
