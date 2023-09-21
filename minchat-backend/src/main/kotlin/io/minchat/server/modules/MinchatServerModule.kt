@@ -82,9 +82,10 @@ abstract class MinchatServerModule {
 	/**
 	 * Checks if the user has punishments (mute/ban) that may prevent them from performing actions.
 	 *
-	 * If the user has expired punishments, and no active ones, removes them (requires a transaction context).
+	 * If the user has expired punishments, removes them (requires a transaction context).
 	 *
-	 * Otherwise throws [AccessDeniedException] with the corresponding reason.
+	 * Otherwise throws [AccessDeniedException] with the corresponding reason
+	 * unless the corresponding check parameter is set to false.
 	 *
 	 * @return either the same [User] instance or a copy with removed punishments.
 	 */
@@ -96,21 +97,21 @@ abstract class MinchatServerModule {
 		var removeBan = false
 		var removeMute = false
 		var scheduledException: String? = null
-		if (checkMute) mute?.let { mute ->
+		mute?.let { mute ->
 			if (mute.isExpired) {
 				removeMute = true
-			} else {
+			} else if (checkMute) {
 				val expires = when {
 					mute.expiresAt == null -> "is permanent"
 					else -> "expires at ${mute.expiresAt!!.asTimestamp()}"
 				}
-				accessDenied("User ${username} is muted. The mute $expires.")
+				scheduledException = "User ${username} is muted. The mute $expires."
 			}
 		}
-		if (checkBan) ban?.let { ban ->
+		ban?.let { ban ->
 			if (ban.isExpired) {
 				removeBan = true
-			} else {
+			} else if (checkBan) {
 				val expires = when {
 					ban.expiresAt == null -> "is permanent"
 					else -> "expires at ${ban.expiresAt!!.asTimestamp()}"

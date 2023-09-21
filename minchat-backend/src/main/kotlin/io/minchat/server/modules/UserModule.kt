@@ -40,7 +40,7 @@ class UserModule : MinchatServerModule() {
 
 				newSuspendedTransaction {
 					val requestedBy = Users.getByToken(token)
-					requestedBy.checkAndUpdateUserPunishments()
+					requestedBy.checkAndUpdateUserPunishments(checkMute = false)
 
 					Users.update(opWithAdminAccess(requestedBy.isAdmin,
 						common = { Users.id eq id },
