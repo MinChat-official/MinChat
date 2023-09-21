@@ -6,6 +6,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.minchat.common.*
 import io.minchat.common.event.Event
+import io.minchat.rest.MinchatRestLogger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.net.URL
@@ -68,21 +69,26 @@ class RawGateway(
 		// launched in the gateway coroutine
 		sessionReader = this@RawGateway.launch {
 			while (true) {
-				if (!isConnected) {
-					openSession()
-					if (!isConnected) {
-						delay(10L)
-						continue
-					}
-				}
-				val thisSession = session!!
+				var thisSession: DefaultClientWebSocketSession? = null
 
 				try {
+					if (!isConnected) {
+						openSession()
+						if (!isConnected) {
+							delay(10L)
+							continue
+						}
+					}
+					thisSession = session!!
+
 					val event = thisSession.receiveDeserialized<Event>()
 					eventsMutable.emit(event)
 				} catch (e: Exception) {
+					MinchatRestLogger.log("warn", "Closing current raw gateway session due to exception: $e")
+					delay(100L)
+
 					// terminate this session
-					thisSession.cancel()
+					thisSession?.cancel()
 					if (session == thisSession) session = null
 				}
 			}
