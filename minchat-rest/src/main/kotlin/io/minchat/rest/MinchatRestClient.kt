@@ -7,6 +7,7 @@ import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.AbstractLogger
+import io.minchat.common.entity.User
 import io.minchat.rest.entity.*
 import io.minchat.rest.ratelimit.*
 import io.minchat.rest.service.*
@@ -75,7 +76,7 @@ class MinchatRestClient(
 
 	/** Returns [account] or throws an exception if this client is not logged in. */
 	fun account(): MinchatAccount =
-		account ?: error("You must log in before doing tnis.")
+		account ?: error("You must log in to do this.")
 	
 	/** Returns the currently logged-in account without updating it. */
 	fun self() = account().user.withClient(this)
@@ -256,5 +257,13 @@ class MinchatRestClient(
 	suspend fun validateCurrentAccount(): Boolean {
 		account ?: return false
 		return rootService.validateToken(account!!.user.username, account!!.token)
+	}
+
+	// Admin-only
+	/** Modifies the punishments of the user with the specified id. Returns the updated user. Requires admin rights. */
+	suspend fun modifyUserPunishments(user: MinchatUser, newMute: User.Punishment?, newBan: User.Punishment?): MinchatUser {
+		require(self().isAdmin) { "Only admins can modify user punishments." }
+
+		return userService.modifyUserPunishments(account().token, user.id, newMute, newBan).withClient(this)
 	}
 }

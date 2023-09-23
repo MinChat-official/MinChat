@@ -89,6 +89,33 @@ class UserModule : MinchatServerModule() {
 					Users.select { Users.id eq id }.single().let(Users::createEntity)
 				))
 			}
+
+			post(Route.User.modifyPunishments) {
+				val id = call.parameters.getOrFail<Long>("id")
+				val request = call.receive<UserPunishmentsModifyRequest>()
+				val token = call.token()
+
+				newSuspendedTransaction {
+					val caller = Users.getByToken(token)
+					val user = Users.getById(id)
+
+					if (!caller.isAdmin) accessDenied("The provided token is not an admin token.")
+					if (user.isAdmin) accessDenied("The target user is an admin. Admins cannot be punished.")
+
+					Users.update({ Users.id eq id }) {
+						it[bannedUntil] = request.newBan?.expiresAt ?: -1
+						it[banReason] = request.newBan?.reason
+						it[mutedUntil] = request.newMute?.expiresAt ?: -1
+						it[muteReason] = request.newMute?.reason
+					} // hopefully no need to validate
+
+					Log.info { "${user.username} had their punishments modified." }
+
+					val newUser = Users.getById(id)
+					call.respond(newUser)
+					server.sendEvent(UserModifyEvent(newUser))
+				}
+			}
 		}
 	}
 }

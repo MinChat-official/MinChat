@@ -1,17 +1,20 @@
 package io.minchat.client.ui.dialog
 
+import arc.graphics.Color
 import arc.scene.ui.Label
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
+import io.minchat.client.misc.*
+import io.minchat.client.misc.MinchatStyle.layoutMargin
+import io.minchat.client.misc.MinchatStyle.layoutPad
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
-import mindustry.Vars
-import java.time.*
-import java.time.format.DateTimeFormatter
+import java.time.Instant
 import kotlin.random.Random
+import kotlin.reflect.KMutableProperty0
 import io.minchat.client.misc.MinchatStyle as Style
 
 /**
@@ -24,11 +27,7 @@ abstract class UserDialog(
 	lateinit var userLabel: Label
 
 	init {
-		// utility functions
-		fun Long.toTimestamp() =
-			DateTimeFormatter.RFC_1123_DATE_TIME.format(
-				Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()))
-
+		// utility function
 		fun User.Punishment?.toExplanation() =
 			this?.let {
 				val time = if (expiresAt == null) "Forever" else "Until ${expiresAt!!.toTimestamp()}"
@@ -41,7 +40,7 @@ abstract class UserDialog(
 			addLabel({ user?.tag ?: "Invalid User" })
 				.with { userLabel = it }
 				.scaleFont(1.1f)
-		}.growX().pad(Style.layoutPad)
+		}.growX().pad(layoutPad)
 
 		addStat("Username") { user?.username }
 		addStat("ID") { user?.id?.toString() }
@@ -76,7 +75,7 @@ abstract class UserDialog(
 		} ?: false) {
 			nextActionRow()
 			action("Punishments") {
-				Vars.ui.showInfo("TODO")
+				AdminPunishmentsDialog().show()
 			}.disabled { user == null }
 		}
 	}
@@ -166,6 +165,109 @@ abstract class UserDialog(
 					}
 				}
 			}.disabled { !confirmField.isValid }
+		}
+	}
+
+	inner class AdminPunishmentsDialog : ModalDialog() {
+		val user = this@UserDialog.user!!
+		var newMute = user.mute
+		var newBan = user.ban
+
+		init {
+			update()
+
+			action("Save") {
+				launchWithStatus("Updating...") {
+					runSafe {
+						val newUser = Minchat.client.modifyUserPunishments(user, newMute, newBan)
+						this@UserDialog.user = newUser
+						hide()
+					}
+				}
+			}.disabled { user.mute == newMute && user.ban == newBan}
+		}
+
+		fun update() {
+			fields.clearChildren()
+			addPunishmentView(
+				"Ban",
+				"banned",
+				{ newBan },
+				{ AddPunishmentDialog(::newBan).show() }
+			)
+			addPunishmentView(
+				"Mute",
+				"muted",
+				{ newMute },
+				{ AddPunishmentDialog(::newMute).show() }
+			)
+		}
+
+		private inline fun addPunishmentView(
+			name: String,
+			nameWithSuffix: String,
+			getter: () -> User.Punishment?,
+			crossinline action: () -> Unit
+		) {
+			fields.addTable(Style.surfaceBackground) {
+				defaults().left()
+
+				addLabel("$name status").row()
+
+				val punishment = getter()
+				if (punishment == null) {
+					addLabel("This user is not $nameWithSuffix.")
+						.color(Color.green)
+						.pad(layoutPad)
+						.row()
+				} else {
+					addLabel("This user is $nameWithSuffix")
+						.color(Color.green)
+						.pad(layoutPad).padBottom(0f)
+					row()
+					addLabel("    Expires: ${punishment.expiresAt?.toTimestamp() ?: "never"}")
+					row()
+					addLabel("    Reason: ${punishment.reason ?: "none"}")
+					row()
+				}
+
+				textButton("MODIFY", Style.InnerButton) { action() }
+					.fillX()
+					.pad(layoutPad).margin(layoutMargin)
+			}.pad(layoutPad).fillX().row()
+		}
+
+		inner class AddPunishmentDialog(val property: KMutableProperty0<User.Punishment?>) : ModalDialog() {
+			val punishment = property.get()
+
+			init {
+				fields.addLabel("You are modifying a punishment value of the user ${user.displayName}!", wrap = true)
+					.pad(layoutPad)
+					.fillX()
+					.row()
+
+				val duration = addField("Duration (forever, 10m, 20h, 10d)", false) {
+					it.equals("forever", true) || it.parseUnitedDuration() != null
+				}
+				punishment?.expiresAt?.let {
+					duration.content = (it - System.currentTimeMillis()).toUnitedDuration()
+				}
+
+				val reason = addField("Reason", false) { true }
+				punishment?.reason?.let { reason.content = it }
+
+				action("Change") {
+					try {
+						val expires = System.currentTimeMillis() + duration.content.parseUnitedDuration()!!
+						property.set(User.Punishment(expires, reason.content.takeIf { it.isNotBlank() }))
+
+						this@AddPunishmentDialog.hide()
+						this@AdminPunishmentsDialog.update()
+					} catch (e: Exception) {
+						status("Error: $e")
+					}
+				}.disabled { !duration.isValid }
+			}
 		}
 	}
 }

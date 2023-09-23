@@ -57,6 +57,12 @@ object Route {
 		 * Body: [UserModifyRequest].
 		 */
 		val delete = to("delete")
+		/**
+		 * POST. Requires authorization.
+		 * Body: [UserModifyRequest].
+		 * Response: an updated [User] object.
+		 */
+		val modifyPunishments = to("modify-punishments")
 	}
 	/** Accepts an {id} request parameter. */
 	object Message : MinchatRoute("message/{id}") {

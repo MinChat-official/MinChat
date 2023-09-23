@@ -10,6 +10,9 @@ import io.ktor.client.plugins.*
 import kotlinx.coroutines.*
 import java.nio.channels.UnresolvedAddressException
 import java.security.cert.*
+import java.time.*
+import java.time.format.DateTimeFormatter
+import kotlin.math.ceil
 
 fun Throwable.userReadable() = when (this) {
 	is ResponseException -> {
@@ -85,4 +88,51 @@ fun TextField.then(element: Element) = apply {
 			Core.scene.setKeyboardFocus(element)
 		}
 	}
+}
+
+/** Converts the given epoch timestamp to a human-readable ISO-8601 string. */
+fun Long.toTimestamp() =
+	DateTimeFormatter.RFC_1123_DATE_TIME.format(
+		Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()))
+
+private val durationUnitMap = mapOf(
+	"ms" to 1L,
+	"s" to 1000L,
+	"m" to 60_000L,
+	"h" to 3600_000L,
+	"d" to 3600_000L * 24
+)
+private val durationRegex = "(-?\\d+)\\s*(${durationUnitMap.keys.joinToString("|")})".toRegex()
+/**
+ * Converts a string of format {factor}{unit} to a duration in milliseconds:
+ *
+ * * 10m = 10 minutes (1000 * 10 * 60) ms
+ * * 24h = 24 hours (1000 * 60 * 60 * 24) ms
+ *
+ * Supports milliseconds, seconds, minutes, hours, days.
+ *
+ * Returns null if the duration is invalid or is negative and [allowNegative] is false.
+ */
+fun String.parseUnitedDuration(allowNegative: Boolean = false): Long? {
+	val (_, factor, unit) = durationRegex.find(trim())?.groupValues ?: return null
+
+	val result = (factor.toLongOrNull() ?: return null) * durationUnitMap.getOrDefault(unit, 1)
+	return if (result < 0 && !allowNegative) {
+		null
+	} else {
+		result
+	}
+}
+
+/**
+ * Converts a duration in milliseconds to a united duration compatible with [parseUnitedDuration].
+ *
+ * This process may be lossy, e.g. converting 886_380_000 (10d 6h 13m) to a united duration will result in 10d.
+ */
+fun Long.toUnitedDuration(): String {
+	val unit = durationUnitMap.entries.findLast { (_, value) ->
+		value * 10 <= this // find the unit smaller than duration/10
+	} ?: durationUnitMap.entries.first()
+
+	return "${ceil(toDouble() / unit.value).toInt()} ${unit.key}"
 }

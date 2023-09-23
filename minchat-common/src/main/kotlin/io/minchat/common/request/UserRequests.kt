@@ -31,7 +31,7 @@ class UserRegisterRequest(
 }
 
 /**
- * Request to modify the account the providen token belongs to.
+ * Request to modify a user account (the id is provided in the url).
  * Null values mean that the old value is to be preserved.
  */
 @Serializable
@@ -40,7 +40,7 @@ data class UserModifyRequest(
 )
 
 /** 
- * Request to delete the account the providen token belongs to.
+ * Request to delete a user account (the id is provided in the url).
  *
  * Once this request is processed, the account becomes permamently and irreversibly
  * inaccessible. The token also becomes invalid.
@@ -48,5 +48,13 @@ data class UserModifyRequest(
 @Serializable
 class UserDeleteRequest
 
+/** Request to validate whether the given token-username pair is valid. */
 @Serializable
 class TokenValidateRequest(val username: String, val token: String)
+
+/** Request to modify the punishments of a user (the id is provided in the url). */
+@Serializable
+class UserPunishmentsModifyRequest(
+	val newMute: User.Punishment?,
+	val newBan: User.Punishment?
+)

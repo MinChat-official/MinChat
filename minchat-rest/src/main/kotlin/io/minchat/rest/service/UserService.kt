@@ -42,6 +42,20 @@ class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, cl
 		}
 	}
 
+	/** Modifies the punishments of the user with the specified id. Returns the updated user. Admin-only. */
+	suspend fun modifyUserPunishments(
+		token: String,
+		id: Long,
+		mute: User.Punishment?,
+		ban: User.Punishment?
+	): User {
+		return client.post(makeRouteUrl(Route.User.modifyPunishments, id)) {
+			contentType(ContentType.Application.Json)
+			authorizeBearer(token)
+			setBody(UserPunishmentsModifyRequest(mute, ban))
+		}.body<User>()
+	}
+
 	/** Hashes and validates the password and performs authorization. Returns a logged-in MinchatAccount. */
 	suspend fun login(username: String, password: String): MinchatAccount {
 		val hash = hashPasswordLocal(password)

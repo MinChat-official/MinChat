@@ -67,6 +67,13 @@ object MinchatStyle {
 		}
 	}
 
+	/** A button inside a surface. */
+	object InnerButton : TextButton.TextButtonStyle(ActionButton) {
+		init {
+			up = surfaceInner
+		}
+	}
+
 	object ActionToggleButton : TextButton.TextButtonStyle(ActionButton) {
 		init {
 			checked = down
