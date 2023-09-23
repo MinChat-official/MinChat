@@ -8,6 +8,7 @@ import io.minchat.client.Minchat
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
+import mindustry.Vars
 import java.time.*
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
@@ -56,9 +57,8 @@ abstract class UserDialog(
 
 	/** Clears [actionsTable] and fills it using [action]. */
 	open fun createActions() {
-		actionsTable.clearChildren()
+		clearActionRows()
 
-		action("Close", ::hide)
 		// only add the "edit" and "delete" options if the user can be modified
 		if (user?.let(Minchat.client::canEditUser) ?: false) {
 			action("Edit") {
@@ -67,6 +67,16 @@ abstract class UserDialog(
 
 			action("Delete") {
 				UserDeleteConfirmDialog().show()
+			}.disabled { user == null }
+		}
+
+		// only add the punishments button if the logged-in user is an admin and the viewed user is not.
+		if (Minchat.client.account?.user?.let { self ->
+			(user?.isAdmin?.not() ?: false) && self.isAdmin && self != user?.data
+		} ?: false) {
+			nextActionRow()
+			action("Punishments") {
+				Vars.ui.showInfo("TODO")
 			}.disabled { user == null }
 		}
 	}
@@ -83,6 +93,7 @@ abstract class UserDialog(
 		launchWithStatus("Updating. Please wait...") {
 			runSafe {
 				user = Minchat.client.getUserOrNull(id)
+				createActions()
 			}
 		}
 	}
@@ -149,7 +160,9 @@ abstract class UserDialog(
 				launchWithStatus("Deleting user ${user.tag}...") {
 					runSafe {
 						user.delete()
-						Minchat.client.logout()
+						if (user.id == Minchat.client.account?.user?.id) {
+							Minchat.client.logout()
+						}
 					}
 				}
 			}.disabled { !confirmField.isValid }

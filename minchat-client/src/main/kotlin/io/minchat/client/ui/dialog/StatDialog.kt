@@ -9,6 +9,8 @@ import io.minchat.client.misc.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.EmptyCoroutineContext
 
+// TODO: should this extend ModalDialog?
+// They share a lot of logic and technically stat dialogs ARE modal.
 abstract class StatDialog(
 	parentScope: CoroutineScope
 ) : Dialog(), CoroutineScope {
@@ -20,8 +22,10 @@ abstract class StatDialog(
 	lateinit var headerTable: Table
 	/** A table with 2 columns holding the stats of the user. */
 	lateinit var statTable: Table
-	/** A table containing buttons related to the dialog. */
+	/** A table containing rows of action buttons related to the dialog. Must only contain Tables. */
 	lateinit var actionsTable: Table
+	/** Rows of action buttons. The first one is the last added one. */
+	val actionRows = mutableListOf<Table>()
 
 	var minValueLabelWidth = 250f
 
@@ -45,6 +49,7 @@ abstract class StatDialog(
 
 		cont.addTable {
 			actionsTable = this
+			nextActionRow()
 		}.fillX().row()
 	}
 
@@ -68,16 +73,39 @@ abstract class StatDialog(
 	/** Adds a stat entry to the stat table, using yes/no as the value. */
 	@JvmName("addStatYesNo")
 	@OverloadResolutionByLambdaReturnType
-	inline fun addStat(name: String, crossinline value: () -> Boolean?): Unit =
+	inline protected fun addStat(name: String, crossinline value: () -> Boolean?): Unit =
 		addStat(name) {
 			value()?.let { if (it) "Yes" else "No" }
 		}
 
-	/** Adds an action button to the button table. */
-	inline fun action(text: String, crossinline action: () -> Unit) =
-		actionsTable.textButton(text, MinchatStyle.ActionButton) {
+	/** Removes all action rows and adds a default one. */
+	protected fun clearActionRows() {
+		actionsTable.clearChildren()
+		actionRows.clear()
+		nextActionRow()
+		action("Close", action = ::hide)
+	}
+
+	/** Adds an action button to the specified row. */
+	inline protected fun action(text: String, row: Int = 0, crossinline action: () -> Unit) =
+		actionRows[row].textButton(text, MinchatStyle.ActionButton) {
 			action()
 		}.growX().uniformX().margin(MinchatStyle.buttonMargin).pad(MinchatStyle.layoutPad)
+
+	/**
+	 * Adds a new action row to [actionRows], affecting where [action] adds buttons to by default.
+	 * The new row is added above the last one.
+	 */
+	protected fun nextActionRow() {
+		actionsTable.cells.reverse()
+
+		val cell = actionsTable.addTable()
+			.growX().pad(MinchatStyle.layoutPad)
+		actionsTable.row()
+		actionRows.add(0, cell.get())
+
+		actionsTable.cells.reverse()
+	}
 
 	/**
 	 * Sets the current status. If [override] is not null,

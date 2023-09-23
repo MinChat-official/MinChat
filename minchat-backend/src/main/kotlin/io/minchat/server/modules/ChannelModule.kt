@@ -35,8 +35,6 @@ class ChannelModule : MinchatServerModule() {
 					val channel = Channels.getById(id)
 
 					lateinit var messages: List<Message>
-					// TODO: this may be unoptimal.
-					// consider getting rid of innerJoin.
 					(Messages innerJoin Users).select {
 						not(Messages.isDeleted) and
 							(Messages.channel eq id) and
@@ -50,7 +48,7 @@ class ChannelModule : MinchatServerModule() {
 						.map {
 							Messages.createEntity(
 								row = it,
-								author = Users.createEntity(it),
+								author = if (!it[Users.isDeleted]) Users.createEntity(it) else User.deletedUser,
 								channel = channel
 							)
 						}

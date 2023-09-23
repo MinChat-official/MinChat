@@ -33,7 +33,7 @@ class ChannelDialog(
 		addStat("ID") { channel.id.toString() }
 		addStat("Description") { channel.description }
 
-		action("Close", ::hide)
+		action("Close", action = ::hide)
 		// It is assumed that the admin status of a user cannot change while they see this dialog.
 		if (Minchat.client.canEditChannel(channel)) {
 			action("Edit") {
@@ -43,6 +43,8 @@ class ChannelDialog(
 				ChannelDeleteConfirmDialog().show()
 			}
 		}
+
+
 	}
 
 	inner class ChannelEditDialog : ModalDialog() {

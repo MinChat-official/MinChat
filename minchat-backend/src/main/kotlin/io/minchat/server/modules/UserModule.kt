@@ -23,7 +23,7 @@ class UserModule : MinchatServerModule() {
 				val id = call.parameters.getOrFail<Long>("id")
 
 				newSuspendedTransaction {
-					call.respond(Users.getById(id))
+					call.respond(Users.getByIdOrPlaceholder(id))
 				}
 			}
 
