@@ -32,9 +32,10 @@ abstract class AbstractLogger {
 	abstract fun log(levelString: String, message: String)
 
 	enum class LogLevel(val level: Int, val color: Int) {
+		/** Log level for stuff that is only useful for debugging and is not useful otherwise. */
+		DEBUG(0, 0x00897B),
 		/** The lowest log level for stuff that occurs on a normal basis. */
-		LIFECYCLE(0, 0xAFB42B),
-		DEBUG(1, 0x00897B),
+		LIFECYCLE(1, 0xAFB42B),
 		/** Log level for stuff that may be useful but doesn't require immediate attention. */
 		INFO(2, 0x3F51B5),
 		/** Log level for things that could lead to errors or unwanted behavior. */
