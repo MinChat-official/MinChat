@@ -46,6 +46,10 @@ object Users : MinchatEntityTable<User>() {
 	override fun getRawByIdOrNull(id: Long) =
 		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
 
+	/** Gets a user by id or returns a placeholder value. */
+	fun getByIdOrPlaceholder(id: Long) =
+		getByIdOrNull(id) ?: User.deletedUser
+
 	override fun createEntity(row: ResultRow) =
 		User(
 			id = row[id].value,

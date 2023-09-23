@@ -23,7 +23,7 @@ object Messages : MinchatEntityTable<Message>() {
 	override fun createEntity(row: ResultRow) =
 		createEntity(
 			row,
-			Users.getById(row[author].value),
+			Users.getByIdOrPlaceholder(row[author].value),
 			Channels.getById(row[channel].value)
 		)
 

@@ -39,6 +39,21 @@ data class User(
 		val messageRateLimit = 2500L
 		val nameLength = 3..64
 		val passwordLength = 8..40
+
+		/** A placeholder object returned instead of a deleted user. */
+		val deletedUser = User(
+			-1,
+			"<this user was deleted>",
+			"<deleted_user>",
+			0,
+			false,
+			messageCount = 0,
+			lastMessageTimestamp = 0L,
+			creationTimestamp = 0L
+		)
+
+		/** Checks if the provided user is a placeholder. */
+		fun isDeletedUser(user: User) = user.id == deletedUser.id
 	}
 
 	/**
