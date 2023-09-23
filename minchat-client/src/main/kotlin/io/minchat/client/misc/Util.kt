@@ -9,6 +9,7 @@ import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
 import kotlinx.coroutines.*
 import java.nio.channels.UnresolvedAddressException
+import java.security.cert.*
 
 fun Throwable.userReadable() = when (this) {
 	is ResponseException -> {
@@ -44,6 +45,13 @@ fun Throwable.userReadable() = when (this) {
 	is UnresolvedAddressException -> {
 		"Could not resolve the server. Check your internet connection or make sure you're connecting to a valid MinChat server."
 	}
+	is CertPathValidatorException -> {
+		val causeString = when (cause) {
+			is CertificateExpiredException -> "The server's encryption certificate has expired: ${cause!!.message}."
+			else -> "The server's encryption certificate is invalid."
+		}
+		"$causeString\nPlease, report to the developer (or the server owner if you're using a custom server) as soon as possible."
+	}
 	is IllegalStateException -> {
 		// Caused by calls to error()
 		"Error: ${message}"
@@ -51,7 +59,7 @@ fun Throwable.userReadable() = when (this) {
 	is RuntimeException -> {
 		"Mod error: $this"
 	}
-	else -> "Unknown error: $this. Please, report to the developer."
+	else -> "Unknown error: $this.\nPlease, report to the developer."
 }
 
 fun Throwable.isImportant() = when (this) {
