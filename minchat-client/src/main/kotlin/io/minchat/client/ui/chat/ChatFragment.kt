@@ -151,13 +151,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 
 			chatBar = this
-			limitedScrollPane {
+			add(ChatScrollPane {
 				it.isScrollingDisabledX = true
 				setBackground(Style.surfaceBackground)
 
 				chatPane = it
 				chatContainer = this
-			}.grow().pad(Style.layoutPad).row()
+			}).grow().pad(Style.layoutPad).row()
 
 			// Status bar above the chat
 			hider(hideVertical = { editListener == null && chatField.content.isEmpty() }) {

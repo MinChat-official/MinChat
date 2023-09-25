@@ -6,7 +6,6 @@ import arc.util.Time
 import io.minchat.client.misc.MinchatStyle
 import kotlin.math.max
 
-/** Similar to TextArea but optimized for MinChat's needs. */
 class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 	private var lastPrefHeight = -1f
 
