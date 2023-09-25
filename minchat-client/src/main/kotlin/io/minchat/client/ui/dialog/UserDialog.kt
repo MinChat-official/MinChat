@@ -7,6 +7,7 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
+import io.minchat.client.misc.MinchatStyle.buttonMargin
 import io.minchat.client.misc.MinchatStyle.layoutMargin
 import io.minchat.client.misc.MinchatStyle.layoutPad
 import io.minchat.common.entity.User
@@ -179,9 +180,9 @@ abstract class UserDialog(
 			action("Save") {
 				launchWithStatus("Updating...") {
 					runSafe {
+						hide()
 						val newUser = Minchat.client.modifyUserPunishments(user, newMute, newBan)
 						this@UserDialog.user = newUser
-						hide()
 					}
 				}
 			}.disabled { user.mute == newMute && user.ban == newBan}
@@ -212,7 +213,7 @@ abstract class UserDialog(
 			fields.addTable(Style.surfaceBackground) {
 				defaults().left()
 
-				addLabel("$name status").row()
+				addLabel("$name status").pad(layoutPad).row()
 
 				val punishment = getter()
 				if (punishment == null) {
@@ -222,7 +223,7 @@ abstract class UserDialog(
 						.row()
 				} else {
 					addLabel("This user is $nameWithSuffix")
-						.color(Color.green)
+						.color(Color.yellow)
 						.pad(layoutPad).padBottom(0f)
 					row()
 					addLabel("    Expires: ${punishment.expiresAt?.toTimestamp() ?: "never"}")
@@ -233,8 +234,8 @@ abstract class UserDialog(
 
 				textButton("MODIFY", Style.InnerButton) { action() }
 					.fillX()
-					.pad(layoutPad).margin(layoutMargin)
-			}.pad(layoutPad).fillX().row()
+					.pad(layoutPad).margin(buttonMargin)
+			}.margin(layoutMargin).pad(layoutPad).fillX().row()
 		}
 
 		inner class AddPunishmentDialog(val property: KMutableProperty0<User.Punishment?>) : ModalDialog() {

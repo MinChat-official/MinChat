@@ -12,7 +12,7 @@ import java.nio.channels.UnresolvedAddressException
 import java.security.cert.*
 import java.time.*
 import java.time.format.DateTimeFormatter
-import kotlin.math.ceil
+import kotlin.math.*
 
 fun Throwable.userReadable() = when (this) {
 	is ResponseException -> {
@@ -131,7 +131,7 @@ fun String.parseUnitedDuration(allowNegative: Boolean = false): Long? {
  */
 fun Long.toUnitedDuration(): String {
 	val unit = durationUnitMap.entries.findLast { (_, value) ->
-		value * 10 <= this // find the unit smaller than duration/10
+		value * 10 <= abs(this) // find the unit smaller than duration/10
 	} ?: durationUnitMap.entries.first()
 
 	return "${ceil(toDouble() / unit.value).toInt()} ${unit.key}"

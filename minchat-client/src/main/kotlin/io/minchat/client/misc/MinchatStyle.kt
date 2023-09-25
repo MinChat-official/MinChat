@@ -3,6 +3,7 @@ package io.minchat.client.misc
 import arc.graphics.Color
 import arc.scene.style.*
 import arc.scene.ui.*
+import com.github.mnemotechnician.mkui.extensions.times
 import mindustry.gen.Tex
 import mindustry.ui.Styles
 import arc.scene.ui.Label as MindustryLabel
@@ -62,7 +63,7 @@ object MinchatStyle {
 			over = surfaceOver
 
 			disabled = surfaceDown
-			disabledFontColor = foreground.cpy().mul(0.7f)
+			disabledFontColor = foreground * 0.7f
 			pressedOffsetY = -2f
 		}
 	}
@@ -89,7 +90,7 @@ object MinchatStyle {
 			over = surfaceOver
 
 			disabled = surfaceDown
-			disabledFontColor = foreground.cpy().mul(0.7f)
+			disabledFontColor = foreground * 0.7f
 			pressedOffsetY = -2f
 		}
 	}

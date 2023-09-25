@@ -6,6 +6,7 @@ import arc.scene.ui.*
 import arc.util.Time
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.scaleFont
+import com.github.mnemotechnician.mkui.extensions.times
 import io.minchat.client.misc.*
 import io.minchat.client.misc.MinchatStyle.ActionButton
 import io.minchat.client.misc.MinchatStyle.buttonMargin
@@ -46,7 +47,7 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 					hideHorizontal = { descriptionLabel.text.isBlank() }
 				) {
 					addLabel("", MinchatStyle.Label, wrap = true)
-						.color(Color.lightGray.mul(1.1f))
+						.color(Color.lightGray * 1.1f)
 						.width(300f)
 						.fillY()
 						.pad(layoutPad)
