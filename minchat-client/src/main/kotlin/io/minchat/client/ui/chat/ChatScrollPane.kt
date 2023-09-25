@@ -1,4 +1,4 @@
-package io.minchat.client.ui
+package io.minchat.client.ui.chat
 
 import arc.scene.ui.ScrollPane
 import arc.scene.ui.layout.Table

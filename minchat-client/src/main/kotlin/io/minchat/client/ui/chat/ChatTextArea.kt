@@ -1,4 +1,4 @@
-package io.minchat.client.ui
+package io.minchat.client.ui.chat
 
 import arc.math.Mathf
 import arc.scene.ui.TextArea
