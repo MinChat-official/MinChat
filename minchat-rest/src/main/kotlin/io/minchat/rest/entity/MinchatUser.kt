@@ -59,6 +59,18 @@ data class MinchatUser(
 		return data == (other as MinchatUser).data
 	}
 
+	/** Returns true if the two users are indistinguishable in terms of visual info. */
+	fun similar(other: MinchatUser): Boolean {
+		if (id != other.id) return false
+		if (username != other.username) return false
+		if (discriminator != other.discriminator) return false
+		if (nickname != other.nickname) return false
+		if (isAdmin != other.isAdmin) return false
+		if (mute != other.mute) return false
+		if (ban != other.ban) return false
+		return true
+	}
+
 	override fun hashCode(): Int = data.hashCode()
 
 	/**

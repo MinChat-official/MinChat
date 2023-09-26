@@ -1,15 +1,61 @@
 package io.minchat.client.ui.chat
 
+import arc.input.KeyCode
+import arc.scene.event.*
 import arc.scene.ui.ScrollPane
 import arc.scene.ui.layout.Table
+import arc.util.Time
 import mindustry.ui.Styles
 
 /** Similar to ScrollPane but optimized for MinChat's needs. */
-class ChatScrollPane() : ScrollPane(Table(), Styles.defaultPane) {
+class ChatScrollPane(val chat: ChatFragment) : ScrollPane(Table(), Styles.defaultPane) {
 	private var oldHeight = 0f
+	var messageReloadDelay = 0f
 
-	constructor(block: Table.(ChatScrollPane) -> Unit) : this() {
+	/** Whether it's guaranteed that there are no more messages after the last one in this pane. */
+	var isAtEnd = true
+
+	init {
+		fun reloadCheck(scroll: Float): Boolean {
+			if (messageReloadDelay >= 0f) return false
+
+			if (scroll < 0 && scrollPercentY == 0f) {
+				chat.loadMoreMessages(true)
+				messageReloadDelay = 120f
+				return true
+			} else if (scroll > 0 && scrollPercentY == 1f && !isAtEnd) {
+				chat.loadMoreMessages(false)
+				messageReloadDelay = 120f
+				return true
+			}
+			return false
+		}
+
+		addListener(object : InputListener() {
+			var yBegin = 0f
+
+			override fun scrolled(event: InputEvent?, x: Float, y: Float, amountX: Float, amountY: Float): Boolean {
+				return reloadCheck(amountY)
+			}
+
+			override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?): Boolean {
+				yBegin = y
+				return true
+			}
+
+			override fun touchDragged(event: InputEvent?, x: Float, y: Float, pointer: Int) {
+				reloadCheck(y - yBegin)
+			}
+		})
+	}
+
+	constructor(chat: ChatFragment, block: Table.(ChatScrollPane) -> Unit) : this(chat) {
 		block(widget as Table, this)
+	}
+
+	override fun act(delta: Float) {
+		super.act(delta)
+		messageReloadDelay -= Time.delta
 	}
 
 	override fun sizeChanged() {

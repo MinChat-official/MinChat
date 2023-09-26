@@ -13,7 +13,7 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.*
 import io.minchat.client.misc.*
-import io.minchat.client.ui.*
+import io.minchat.client.ui.Fragment
 import io.minchat.client.ui.dialog.*
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.Message
@@ -39,7 +39,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 	lateinit var chatBar: Table
 	/** Wraps [chatContainer]. */
-	lateinit var chatPane: ScrollPane
+	lateinit var chatPane: ChatScrollPane
 	/** Contains a list of message elements. Each element must be placed on a separate row. */
 	lateinit var chatContainer: Table
 	/** A field that allows either to enter a new message or edit an existing one. */
@@ -151,7 +151,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 
 			chatBar = this
-			add(ChatScrollPane {
+			add(ChatScrollPane(this@ChatFragment) {
 				it.isScrollingDisabledX = true
 				setBackground(Style.surfaceBackground)
 
@@ -182,7 +182,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					.updateLast {
 						val colorRatio = chatField.content.length.toFloat() / Message.contentLength.endInclusive
 						val interpolated = exp40.apply(colorRatio)
-						it.setColor(Color.lightGray.cpy().lerp(Color.crimson, colorRatio))
+						it.setColor(Color.lightGray.cpy().lerp(Color.crimson, interpolated))
 					}
 			}.growX().row()
 
@@ -238,7 +238,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				when (event) {
 					is MinchatMessageCreate -> {
 						val message = event.message
-						if (message.channelId == currentChannel?.id) {
+						if (message.channelId == currentChannel?.id && chatPane.isAtEnd) {
 							val element = NormalMinchatMessageElement(this@ChatFragment, message)
 							addMessage(element, 0.5f)
 						}
@@ -326,7 +326,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 */
 	fun addMessage(
 		element: MinchatMessageElement,
-		animationLength: Float,
+		animationLength: Float = 1f,
 		autoscroll: Boolean = true
 	) = synchronized(chatContainer) {
 		val isAtBottom = !chatPane.isScrollY || chatPane.scrollY >= chatPane.maxY - 20f;
@@ -375,6 +375,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 * Reloads messages from the server and updates the chat pane.
 	 *
 	 * @param forcibly if true, even unchanged messages will be updated.
+	 * @param fromTimestamp the timestamp of the oldest message to be loaded, or null.
+	 * @param toTimestamp the timestamp of the newest message to be loaded, or null.
 	 */
 	fun updateChatUi(forcibly: Boolean = false, notificationText: String = "Loading messages..."): Job? {
 		val channel = currentChannel ?: return null
@@ -414,25 +416,11 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 					// Then add all the missing message elements
 					messages.forEach { message ->
-						if (chatContainer.children.none { it is NormalMinchatMessageElement && it.message == message }) {
+						if (chatContainer.children.none { it is NormalMinchatMessageElement && it.message.similar(message) }) {
 							addMessage(NormalMinchatMessageElement(this@ChatFragment, message), 1f)
 						}
 					}
-					// ...And then sort the cells in the most brutal way, leaving the table confused
-					// (pro-tip: never let silly idiots like me write front-end code)
-					chatContainer.cells.sort { cellA, cellB ->
-						val a = cellA.get()
-						val b = cellB.get()
-
-						when {
-							a is MinchatMessageElement && b is MinchatMessageElement -> {
-								a.timestamp.compareTo(b.timestamp)
-							}
-							a is MinchatMessageElement -> 1
-							b is MinchatMessageElement -> -1
-							else -> 0
-						}
-					}
+					sortMessageElements()
 					// finally, help the table recover from the moral trauma we just gave it
 					chatContainer.invalidate()
 					chatContainer.validate()
@@ -441,10 +429,117 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				// force the scroll pane to recalculate its dimensions and scroll to the bottom
 				chatPane.validate()
 				chatPane.setScrollYForce(chatPane.maxY)
+
+				chatPane.isAtEnd = true
 			}
 		}.also {
 			lastChatUpdateJob = it
 		}.then { notif.cancel() }
+	}
+
+	/** Loads more messages either before the oldest or after the newest message. */
+	fun loadMoreMessages(before: Boolean, notificationText: String = "Loading more messages..."): Job? {
+		val batchSize = 60
+		val channel = currentChannel ?: return null
+
+		val messageElements = chatContainer.children.filterIsInstance<MinchatMessageElement>()
+		if (messageElements.isEmpty()) return null
+
+		val oldest = messageElements.minOf { it.timestamp }
+		val newest = messageElements.maxOf { it.timestamp }
+		// A visible element
+		val anchorElement = if (before) {
+			chatContainer.children.find { it.y < chatContainer.height - chatPane.scrollY + chatPane.height }
+		} else {
+			chatContainer.children.findLast { it.y > chatContainer.height - chatPane.scrollY }
+		} ?: return null
+
+		val notif = notification(notificationText, 10)
+		lastChatUpdateJob?.cancel()
+
+		return launch {
+			val rawMessages = runSafe {
+				channel.getAllMessages(
+					if (before) null else newest,
+					if (before) oldest else null,
+					limit = batchSize
+				).take(batchSize).toList()
+			}.getOrThrow()
+
+			val messages = rawMessages.filter { msg ->
+				messageElements.none { (it as? NormalMinchatMessageElement)?.message?.id == msg.id }
+			}
+
+			if (channel != currentChannel || messages.isEmpty()) return@launch
+
+			runUi {
+				// Remove any old non-message elements from chat container
+				val oldChildren = chatContainer.children.filterIsInstance<MinchatMessageElement>()
+				val newChildren = messages.map {
+					NormalMinchatMessageElement(this@ChatFragment, it, true)
+				}
+
+				chatContainer.clearChildren() // to remove empty cells
+
+				oldChildren.forEach {
+					addMessage(it, 0f, false)
+				}
+				newChildren.forEachIndexed { index, it ->
+					addMessage(it, 0.5f + 0.01f * (newChildren.size - index), false)
+				}
+
+				sortMessageElements()
+
+				val anchor = anchorElement.takeIf { it.parent == chatContainer } ?: run {
+					Log.warn { "Chat fragment: anchor not found, falling back to last message" }
+					if (before) oldChildren.first() else oldChildren.last()
+				}
+
+				// Leave only up to 100 messages in the chat, either latest or newest
+				val children = chatContainer.cells.mapNotNull { it.get() }.toMutableList()
+				if (!before) children.reverse()
+
+				// TODO really broken
+//				children.take(100).forEach { it.remove() }
+
+				chatPane.invalidateHierarchy()
+				chatPane.validate()
+
+				chatPane.setScrollYForce(chatContainer.height - anchor.y)
+				if (before) {
+					chatPane.setScrollYForce(chatPane.scrollY - anchor.height)
+				}
+//				chatPane.isAtEnd = !before && rawMessages.size < batchSize
+			}
+		}.also {
+			lastChatUpdateJob = it
+		}.then {
+			notif.cancel()
+		}
+	}
+
+	/** Sorts the cells of [chatContainer] so that messages remain at the end and are sorted by their timestamps. */
+	fun sortMessageElements() {
+		// (pro-tip: never let silly idiots like me write front-end code)
+		chatContainer.cells.sort { cellA, cellB ->
+			val a = cellA.get()
+			val b = cellB.get()
+
+			when {
+				a is MinchatMessageElement && b is MinchatMessageElement -> {
+					a.timestamp.compareTo(b.timestamp)
+				}
+				a is MinchatMessageElement -> 1
+				b is MinchatMessageElement -> -1
+				else -> 0
+			}
+		}
+
+		// Recreate chatContainer.children
+		chatContainer.children.clear()
+		chatContainer.cells.forEach { 
+			it.get()?.let { chatContainer.children.add(it) }
+		}
 	}
 
 	fun updateChatbox() {

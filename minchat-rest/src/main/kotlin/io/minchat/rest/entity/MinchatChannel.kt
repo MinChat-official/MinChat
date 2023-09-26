@@ -43,9 +43,9 @@ data class MinchatChannel(
 	 * of REST api calls, and must therefore be used with caution.
 	 *
 	 * The [limit] parameter can be used to limit the number of messages.
-	 * However, the returned flow can contain a little more messages tham
+	 * However, the returned flow can contain a little more messages than
 	 * specified.
-	\*/
+	 */
 	suspend fun getAllMessages(
 		fromTimestamp: Long? = null,
 		toTimestamp: Long? = null,

@@ -1,3 +1,7 @@
+#VERSION 0.5.2
+You can now scroll the chat more to see older messages
+Minor ui fixes
+
 #VERSION 0.5.1
 Autoupdater will abort if it couldn't download the mod file fully
 

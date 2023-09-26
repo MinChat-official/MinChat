@@ -47,6 +47,17 @@ data class MinchatMessage(
 
 	override fun hashCode(): Int = data.hashCode()
 
+	/** Returns true if the two messages are indistinguishable in terms of visual info. */
+	fun similar(other: MinchatMessage): Boolean {
+		if (id != other.id) return false
+		if (channelId != other.channelId) return false
+		if (authorId != other.authorId) return false
+		if (content != other.content) return false
+		if (timestamp != other.timestamp) return false
+		if (!author.similar(other.author)) return false
+		return true
+	}
+
 	/**
 	 * Copies this [MinchatMessage] object, allowing to override some of its data values.
 	 */
