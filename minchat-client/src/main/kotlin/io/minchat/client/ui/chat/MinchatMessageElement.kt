@@ -8,7 +8,7 @@ import arc.scene.actions.Actions
 import arc.scene.event.*
 import arc.scene.ui.layout.Table
 import io.minchat.client.Minchat
-import mindustry.Vars
+import mindustry.Vars.mobile
 import java.time.Instant
 import io.minchat.client.misc.MinchatStyle as Style
 
@@ -33,21 +33,25 @@ abstract class MinchatMessageElement(
 		touchable = Touchable.enabled
 
 		addCaptureListener(object : InputListener() {
-			override fun enter(event: InputEvent?, x: Float, y: Float, pointer: Int, fromActor: Element?): Unit =
-				updateBackground()
+			override fun enter(event: InputEvent?, x: Float, y: Float, pointer: Int, fromActor: Element?): Unit {
+				if (!mobile) updateBackground()
+			}
 
-			override fun exit(event: InputEvent?, x: Float, y: Float, pointer: Int, toActor: Element?) =
-				updateBackground()
+			override fun exit(event: InputEvent?, x: Float, y: Float, pointer: Int, toActor: Element?) {
+				if (!mobile) updateBackground()
+			}
 
 			override fun mouseMoved(event: InputEvent?, x: Float, y: Float) =
-				false.also { updateBackground() }
+				false.also {
+					if (!mobile) updateBackground()
+				}
 
 			override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?): Boolean {
 				if (!addContextActions) return false
 
-				if (Vars.mobile) {
-					updateBackground()
+				if (mobile) {
 					longClickBegin = System.currentTimeMillis()
+					updateBackground()
 					return true
 				} else if (button == KeyCode.mouseRight) {
 					onRightClick()
@@ -59,13 +63,13 @@ abstract class MinchatMessageElement(
 			override fun touchUp(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?) {
 				if (!addContextActions) return
 
-				if (Vars.mobile) {
+				if (mobile) {
 					if (longClickBegin > 0L && System.currentTimeMillis() - longClickBegin > 400L) {
 						onRightClick()
 						event?.stop() // prevent other intractable elements from getting clicked
 					}
-					updateBackground()
 					longClickBegin = -1L
+					updateBackground()
 				}
 			}
 		})
@@ -132,7 +136,7 @@ abstract class MinchatMessageElement(
 	}
 
 	fun updateBackground() {
-		if (hasMouse()) {
+		if (hasMouse() && (!mobile || longClickBegin > 0L)) {
 			val isPressed = Core.input.keyDown(KeyCode.mouseRight) || longClickBegin > 0L
 
 			if (isPressed && background != Style.surfaceDown) {
