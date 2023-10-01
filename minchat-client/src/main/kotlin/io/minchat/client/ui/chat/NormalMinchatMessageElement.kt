@@ -1,12 +1,14 @@
 package io.minchat.client.ui.chat
 
 import arc.graphics.Color
+import arc.scene.event.Touchable
 import arc.scene.ui.Label
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
 import io.minchat.client.misc.MinchatStyle.layoutMargin
+import io.minchat.client.misc.MinchatStyle.layoutPad
 import io.minchat.client.ui.dialog.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
@@ -26,7 +28,7 @@ class NormalMinchatMessageElement(
 	var referencedMessage: MinchatMessage? = null
 
 	init {
-		margin(4f)
+		left().margin(4f)
 
 		if (message.referencedMessageId != null) {
 			lateinit var authorLabel: Label
@@ -34,9 +36,9 @@ class NormalMinchatMessageElement(
 
 			// Top row: referenced message
 			addTable {
-				margin(layoutMargin)
+				left().margin(layoutMargin)
 
-				addLabel("    Reply to ")
+				addLabel("Reply to ")
 					.color(Color.darkGray)
 				addLabel("Loading reply message...")
 					.color(Color.gray)
@@ -44,12 +46,20 @@ class NormalMinchatMessageElement(
 				addLabel("")
 					.color(Color.lightGray)
 					.also { contentLabel = it.get() }
-			}.growX().padBottom(15f).row()
+
+				touchable = Touchable.enabled
+				clicked {
+					referencedMessage?.let { chat.chatPane.scrollToMessage(it) }
+				}
+			}.growX().padBottom(layoutPad).row()
 
 			launch {
 				referencedMessage = message.getReferencedMessage()?.also {
-					authorLabel.content = it.author.tag
-					contentLabel.content = it.content
+					authorLabel.content = it.author.tag.let { "$it: "}
+
+					contentLabel.content = it.content.replace("\n", " ").let {
+						if (it.length > 72) it.take(69) + "..." else it
+					}
 				}
 			}
 		}

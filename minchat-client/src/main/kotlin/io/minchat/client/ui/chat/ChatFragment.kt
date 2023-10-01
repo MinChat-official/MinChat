@@ -165,22 +165,29 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}).grow().pad(Style.layoutPad).row()
 
 			// Status bar above the chat
-			hider(hideVertical = { editListener == null && chatField.content.isEmpty() }) {
+			hider(hideVertical = { referencedMessage == null && editListener == null && chatField.content.isEmpty() }) {
 				background = Style.black(2)
 				left()
 
-				// TODO maybe better split into two hiders?
-				hider(hideHorizontal = { editListener == null && referencedMessage == null }) {
+				// Edit status
+				hider(hideHorizontal = { editListener == null }) {
 					textButton("[lightgray]Cancel", Styles.nonet) {
 						setEditMessage(null)
+					}.pad(Style.layoutPad).fillY()
+
+					addLabel("Editing a message...")
+						.pad(Style.layoutPad)
+
+					addSpace(width = 50f)
+				}
+
+				// Reply status
+				hider(hideHorizontal = { referencedMessage == null }) {
+					textButton("[lightgray]Cancel", Styles.nonet) {
 						setReplyMessage(null)
 					}.pad(Style.layoutPad).fillY()
 
-					addLabel({ when {
-						editListener != null -> "Editing message..."
-						referencedMessage != null -> "Replying to ${referencedMessage?.author?.displayName}"
-						else -> "Doing nothing, this should be hidden."
-					} })
+					addLabel({ "Replying to ${referencedMessage?.author?.displayName}" })
 						.pad(Style.layoutPad)
 
 					addSpace(width = 50f)
@@ -583,6 +590,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			return launch {
 				runSafe {
 					val msg = channel.createMessage(content, referencedMessage?.id)
+					referencedMessage = null
 					ClientEvents.fire(ClientMessageSendEvent(msg))
 				}
 			}.then { notif.cancel() }

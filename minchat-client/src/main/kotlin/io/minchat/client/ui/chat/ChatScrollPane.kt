@@ -5,6 +5,8 @@ import arc.scene.event.*
 import arc.scene.ui.ScrollPane
 import arc.scene.ui.layout.Table
 import arc.util.Time
+import io.minchat.rest.entity.MinchatMessage
+import mindustry.Vars
 import mindustry.ui.Styles
 
 /** Similar to ScrollPane but optimized for MinChat's needs. */
@@ -73,5 +75,17 @@ class ChatScrollPane(val chat: ChatFragment) : ScrollPane(Table(), Styles.defaul
 
 	override fun getPrefWidth(): Float {
 		return width
+	}
+
+	fun scrollToMessage(message: MinchatMessage) {
+		val element = (widget as? Table)?.children?.find {
+			(it as? NormalMinchatMessageElement)?.message?.id == message.id
+		} ?: run {
+			Vars.ui.showInfo("Cannot find message. Try scrolling up to load more messages.")
+			return
+		}
+
+		validate()
+		scrollY = widget.height - element.y - element.height
 	}
 }
