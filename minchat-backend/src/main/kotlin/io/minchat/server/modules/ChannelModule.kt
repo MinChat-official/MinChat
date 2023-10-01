@@ -27,6 +27,7 @@ class ChannelModule : MinchatServerModule() {
 			}
 			get(Route.Channel.messages) {
 				val id = call.parameters.getOrFail<Long>("id")
+				val token = call.tokenOrNull()
 
 				val fromTimestamp = call.request.queryParameters["from"]?.toLong() ?: 0L
 				val toTimestamp = call.request.queryParameters["to"]?.toLong() ?: System.currentTimeMillis()
@@ -34,7 +35,14 @@ class ChannelModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					val channel = Channels.getById(id)
 
-					lateinit var messages: List<Message>
+					if (channel.viewMode != Channel.AccessMode.EVERYONE) {
+						if (token == null) accessDenied("You cannot view this channel unless you are logged in.")
+
+						val user = Users.getByToken(token)
+						if (!user.canViewChannel(channel)) accessDenied("Your role is too low to view this channel.")
+					}
+
+					val messages: List<Message>
 					(Messages innerJoin Users).select {
 						not(Messages.isDeleted) and
 							(Messages.channel eq id) and
@@ -70,16 +78,22 @@ class ChannelModule : MinchatServerModule() {
 					val user = Users.getByToken(call.token()).checkAndUpdateUserPunishments()
 					val channel = Channels.getById(channelId)
 
+					// Cooldown check
 					val cooldown = user.lastMessageTimestamp + User.messageRateLimit - System.currentTimeMillis()
-					if (cooldown > 0 && !user.isAdmin) {
+					if (cooldown > 0 && !user.role.isAdmin) {
 						tooManyRequests("Wait $cooldown milliseconds before sending another message.")
+					}
+
+					// Access check
+					if (!user.canMessageChannel(channel)) {
+						accessDenied("You role is too low to send messages in this channel.")
 					}
 
 					val message = Messages.createMessage(channel, user, data.content)
 
 					Users.update({ Users.id eq user.id }) {
-						it[Users.messageCount] = user.messageCount + 1
-						it[Users.lastMessageTimestamp] = message.timestamp
+						it[messageCount] = user.messageCount + 1
+						it[lastMessageTimestamp] = message.timestamp
 					}
 
 					call.respond(message)
@@ -133,10 +147,10 @@ class ChannelModule : MinchatServerModule() {
 
 					Channels.update({ Channels.id eq id }) {
 						newName?.let { newName ->
-							it[Channels.name] = newName
+							it[name] = newName
 						}
 						data.newDescription?.let { newDescription ->
-							it[Channels.description] = newDescription
+							it[description] = newDescription
 						}
 					}.throwIfNotFound { "no such channel." }
 
@@ -158,7 +172,7 @@ class ChannelModule : MinchatServerModule() {
 					Channels.deleteWhere { with(it) { Channels.id eq channelId } }.throwIfNotFound { "no such channel." }
 
 					// also actually delete all associated messages
-					Messages.deleteWhere { with(it) { Messages.channel eq channelId } }
+					Messages.deleteWhere { with(it) { channel eq channelId } }
 				}
 
 				call.response.statusOk()

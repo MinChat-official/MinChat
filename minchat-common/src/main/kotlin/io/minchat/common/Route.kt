@@ -67,7 +67,7 @@ object Route {
 	/** Accepts an {id} request parameter. */
 	object Message : MinchatRoute("message/{id}") {
 		/** 
-		 * GET. 
+		 * GET. May require authorization if the message is in a restricted channel.
 		 * Response: a [Message] object.
 		 */
 		val fetch = to()
@@ -105,7 +105,8 @@ object Route {
 		 */
 		val send = to("send")
 		/** 
-		 * GET. 
+		 * GET.
+		 * May require authorization if the channel has restricted access.
 		 * Response: a list of [Message] objects ordered from oldest to newest.
 		 *
 		 * Query params:

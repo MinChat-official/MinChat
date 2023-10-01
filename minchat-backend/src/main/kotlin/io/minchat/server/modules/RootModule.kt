@@ -23,7 +23,9 @@ class RootModule : MinchatServerModule() {
 				val data = call.receive<TokenValidateRequest>()
 
 				val valid = transaction {
-					Users.select({ (Users.username eq data.username) and (Users.token eq data.token) })
+					Users
+						.slice(Users.username, Users.token)
+						.select({ (Users.username eq data.username) and (Users.token eq data.token) })
 						.empty().not()
 				}
 

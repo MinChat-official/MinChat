@@ -12,7 +12,10 @@ data class User(
 	/** A unique discriminator used to distinguish users with the same display names. */
 	val discriminator: Int,
 
-	val isAdmin: Boolean,
+	val role: RoleBitSet,
+
+	@Deprecated("Will be removed later. Callers instead should check `role.isAdmin`.", level = DeprecationLevel.WARNING)
+	val isAdmin: Boolean = role.isAdmin,
 	@Deprecated("Unused. To be removed in later versions of MinChat.", level = DeprecationLevel.ERROR)
 	val isBanned: Boolean = false,
 	/** If this user is muted, this property indicates the duration and reason. */
@@ -34,6 +37,12 @@ data class User(
 		"$username#$disc"
 	}
 
+	fun canViewChannel(channel: Channel) =
+		role.isAdmin || channel.viewMode.isApplicableTo(role)
+
+	fun canMessageChannel(channel: Channel) =
+		role.isAdmin || channel.sendMode.isApplicableTo(role)
+
 	companion object {
 		/** The minimum amount of milliseconds a normal user has to wait before sending another message. */
 		val messageRateLimit = 2500L
@@ -46,7 +55,7 @@ data class User(
 			"<this user was deleted>",
 			"<deleted_user>",
 			0,
-			false,
+			RoleBitSet.EMPTY,
 			messageCount = 0,
 			lastMessageTimestamp = 0L,
 			creationTimestamp = 0L
@@ -54,6 +63,37 @@ data class User(
 
 		/** Checks if the provided user is a placeholder. */
 		fun isDeletedUser(user: User) = user.id == deletedUser.id
+	}
+
+	@Serializable
+	@JvmInline
+	value class RoleBitSet(val bits: Long) {
+		val isAdmin get() = get(Masks.admin)
+		val isModerator get() = get(Masks.moderator) || isAdmin
+
+		/** Gets a value from the bit set. */
+		@Suppress("NOTHING_TO_INLINE")
+		inline fun get(bitMask: Long): Boolean
+			= bits and bitMask != 0L
+
+		/** Returns a copy of this bit set with the given bit changed. */
+		fun with(bitMask: Long, value: Boolean): RoleBitSet {
+			return RoleBitSet(if (value) {
+				bits or bitMask
+			} else {
+				bits and bitMask.inv()
+			})
+		}
+
+		object Masks {
+			const val admin = 0b1L
+			const val moderator = 0x2L
+		}
+
+		companion object {
+			val EMPTY = RoleBitSet(0)
+			val ALL = RoleBitSet(0x7fffffffffffffff)
+		}
 	}
 
 	/**

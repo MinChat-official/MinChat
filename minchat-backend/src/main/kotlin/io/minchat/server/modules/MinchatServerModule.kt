@@ -14,7 +14,7 @@ abstract class MinchatServerModule {
 
 	val name = createServiceName()
 
-	private val illegalCharRegex = """[^a-zA-Z0-9\-_()\[\]]""".toRegex()
+	private val illegalCharRegex = """[^a-zA-Z0-9\-_()\[\]#]""".toRegex()
 
 	@JvmName("onLoadPublic")
 	fun onLoad(application: Application) {

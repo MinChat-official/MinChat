@@ -1,6 +1,7 @@
 package io.minchat.server.databases
 
 import io.minchat.common.entity.User
+import io.minchat.common.entity.User.RoleBitSet
 import io.minchat.server.util.notFound
 import org.jetbrains.exposed.sql.*
 import org.mindrot.jbcrypt.BCrypt
@@ -14,7 +15,10 @@ object Users : MinchatEntityTable<User>() {
 
 	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
+	@Deprecated("This is to be moved to [role]", level = DeprecationLevel.WARNING)
 	val isAdmin = bool("admin").default(false)
+	/** The [RoleBitSet] of the user. */
+	val role = long("role").default(RoleBitSet.EMPTY.bits)
 
 	val discriminator = integer("discriminator")
 
@@ -32,8 +36,8 @@ object Users : MinchatEntityTable<User>() {
 	 * Unused: unreliable and hard to manage.
 	 * Will (or will not) be used in the future to prevent users from creating too many accounts.
 	 *
-	 * If you're reading this source code as a user, no. We do not store your ip.
-	 * And we will never store it in the raw form.
+	 * If you're reading this source code as a user, no. We do not store your ip. We may store its hash,
+	 * but we will never store it in the raw form.
 	 */
 	val lastIpHash = varchar("last-ip", 256 / 8).nullable().default(null)
 
@@ -56,7 +60,8 @@ object Users : MinchatEntityTable<User>() {
 			username = row[username],
 			nickname = row[nickname],
 			discriminator = row[discriminator],
-			isAdmin = row[isAdmin],
+			role = RoleBitSet(row[role]),
+			isAdmin = RoleBitSet(row[role]).isAdmin || row[isAdmin],
 
 			ban = if (row[bannedUntil] >= 0) User.Punishment(
 				expiresAt = row[bannedUntil],
