@@ -26,7 +26,9 @@ class MinchatRestClient(
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
 		install(WebSockets) {
-			contentConverter = KotlinxWebsocketSerializationConverter(Json)
+			contentConverter = KotlinxWebsocketSerializationConverter(Json {
+				ignoreUnknownKeys = true
+			})
 		}
 		install(ClientRateLimit) {
 			limiter = GlobalBucketRateLimiter()
