@@ -1,3 +1,6 @@
+#VERSION 0.6.1
+- Some critical ui fixes (mostly for mobile users)
+
 #VERSION 0.6.0
 Added message replies
 Added user roles (admin/moderator/etc)
