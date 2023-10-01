@@ -427,7 +427,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					// Otherwise, immediately remove normal message elements that should not be here anymore
 					chatContainer.children.forEach { element ->
 						if (element !is NormalMinchatMessageElement) return@forEach
-						if (element.message !in messages) {
+						if (messages.none { it.similar(element.message) }) {
 							element.animateDisappear(0.5f)
 						}
 					}
