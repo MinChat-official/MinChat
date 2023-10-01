@@ -21,7 +21,7 @@ data class MinchatUser(
  	/** A display name of this user in the form of displayName#discriminator. */
 	val tag by data::tag
 
-	val isAdmin by data::isAdmin
+	val role by data::role
 	/** If this user is muted, this property indicates the duration and reason. */
 	val mute by data::mute
 	/** If this user is banned, this property indicates the duration and reason. */
@@ -51,7 +51,7 @@ data class MinchatUser(
 		rest.deleteUser(id)
 
 	override fun toString() =
-		"MinchatUser(id=$id, tag=$tag, isAdmin=$isAdmin, ban=$ban, mute=$mute, messageCount=$messageCount)"
+		"MinchatUser(id=$id, tag=$tag, role=$role, ban=$ban, mute=$mute, messageCount=$messageCount)"
 
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
@@ -65,7 +65,7 @@ data class MinchatUser(
 		if (username != other.username) return false
 		if (discriminator != other.discriminator) return false
 		if (nickname != other.nickname) return false
-		if (isAdmin != other.isAdmin) return false
+		if (role != other.role) return false
 		if (mute != other.mute) return false
 		if (ban != other.ban) return false
 		return true

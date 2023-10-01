@@ -290,7 +290,7 @@ class MinchatRestClient(
 	 */
 	fun canEditUser(user: MinchatUser) =
 		selfOrNull()?.let {
-			it.id == user.id || it.isAdmin
+			it.id == user.id || it.role.isAdmin
 		} ?: false
 
 	/**
@@ -298,7 +298,7 @@ class MinchatRestClient(
 	 */
 	@Suppress("UNUSED_PARAMETER")
 	fun canEditChannel(channel: MinchatChannel) =
-		selfOrNull()?.isAdmin ?: false
+		selfOrNull()?.role?.isAdmin ?: false
 
 	/**
 	 * Returns true if the currently logged-in user can edit the specified message.
@@ -307,7 +307,7 @@ class MinchatRestClient(
 	 */
 	fun canEditMessage(message: MinchatMessage) =
 		selfOrNull()?.let {
-			it.isAdmin || message.author.id == it.id
+			it.role.isAdmin || message.author.id == it.id
 		} ?: false
 
 	/** Makes sure the current account (token) is valid by sending a request to the server. */
@@ -319,7 +319,7 @@ class MinchatRestClient(
 	// Admin-only
 	/** Modifies the punishments of the user with the specified id. Returns the updated user. Requires admin rights. */
 	suspend fun modifyUserPunishments(user: MinchatUser, newMute: User.Punishment?, newBan: User.Punishment?): MinchatUser {
-		require(self().isAdmin) { "Only admins can modify user punishments." }
+		require(self().role.isAdmin) { "Only admins can modify user punishments." }
 
 		return userService.modifyUserPunishments(account().token, user.id, newMute, newBan)
 			.also(cache::set)
