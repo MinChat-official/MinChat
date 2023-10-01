@@ -6,7 +6,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
-import io.minchat.common.AbstractLogger
+import io.minchat.common.*
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.*
 import io.minchat.rest.ratelimit.*
@@ -44,6 +44,8 @@ class MinchatRestClient(
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
+
+	var cache = CacheService(baseUrl, this)
 
 	/** 
 	 * Attempts to log into the provided Minchat account.
@@ -97,63 +99,112 @@ class MinchatRestClient(
 		}
 
 	// getX methods
-	/** Fetches the MinChat version of the server. */
+	/**
+	 * Fetches the MinChat version of the server.
+	 */
 	suspend fun getServerVersion() =
 		rootService.getServerVersion()
 
-	/** Fetches the most recent data of the currently logged-in user and returns it. */
+	/**
+	 * Fetches the most recent data of the currently logged-in user,
+	 * updates it in the cache, and returns it.
+	 *
+	 * For the non-rest version of this method, see [self].
+	 */
 	suspend fun getSelf() = run {
 		updateAccount()
-		self()
+		self().also { cache.set(it.data) }
 	}
 
-	/** Fetches the user with the specified ID. */
+	/**
+	 * Fetches the user with the specified ID and updates it in the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
 	suspend fun getUser(id: Long) =
-		userService.getUser(id).withClient(this)
+		userService.getUser(id)
+			.also(cache::set)
+			.withClient(this)
 
-	/** Fetches the user with the specified ID, returns null if it doesn't exist.. */
+	/**
+	 * Fetches the user with the specified ID, returns null if it doesn't exist.
+	 * This method also updates the [cache].
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
 	suspend fun getUserOrNull(id: Long) = runCatching {
 		getUser(id)
 	}.getOrNull()
 
-	/** Fetches the channel with the specified ID. */
+	/**
+	 * Fetches the channel with the specified ID and updates the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
 	suspend fun getChannel(id: Long) =
-		channelService.getChannel(id).withClient(this)
+		channelService.getChannel(id)
+			.also(cache::set)
+			.withClient(this)
 
-	/** Fetches the channel with the specified ID, returns null if it doesn't exist.. */
+	/**
+	 * Fetches the channel with the specified ID, returns null if it doesn't exist.
+	 * This method also updates the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
 	suspend fun getChannelOrNull(id: Long) = runCatching {
 		getChannel(id)
 	}.getOrNull()
 
-	/** Fetches all channels registered on the server. */
+	/**
+	 * Fetches all channels registered on the server.
+	 *
+	 * For the caching approach, you can try `cache.channelCache.values`.
+	 */
 	suspend fun getAllChannels() =
 		channelService.getAllChannels()
+			.onEach(cache::set)
 			.map { it.withClient(this) }
 
-	/** Fetches the message with the specified ID. */
+	/**
+	 * Fetches the message with the specified ID and updates the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
 	suspend fun getMessage(id: Long) =
-		messageService.getMessage(id).withClient(this)
+		messageService.getMessage(id).also {
+			cache.set(it)
+		}.withClient(this)
 
-	/** Fetches the message with the specified ID, returns null if it doesn't exist.. */
+	/**
+	 * Fetches the message with the specified ID, returns null if it doesn't exist.
+	 * This method also updates the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
 	suspend fun getMessageOrNull(id: Long) = runCatching {
 		getMessage(id)
 	}.getOrNull()
 
 	/** 
 	 * Fetches messages from the specified channel.
-	 * See [ChannelService.getMessages] for more info.
+	 * See [Route.Channel.messages] for more info.
+	 *
+	 * This method also updates all fetched messages in the cache.
 	 */
 	suspend fun getMessagesIn(
 		channelId: Long,
 		fromTimestamp: Long? = null,
 		toTimestamp: Long? = null
 	) = channelService.getMessages(channelId, fromTimestamp, toTimestamp).map {
+		cache.set(it)
 		it.withClient(this)
 	}
 
-	/** Sends a message in the specified channel. */
+	/** Sends a message in the specified channel and adds it to the cache. */
 	suspend fun createMessage(channelId: Long, content: String) =
 		channelService.createMessage(channelId, account().token, content)
+			.also(cache::set)
 			.withClient(this)
 
 	/** Creates a new channel. Requires a logged-in admin account. */
@@ -162,7 +213,7 @@ class MinchatRestClient(
 			name = name,
 			description = description,
 			token = account().token
-		).withClient(this)
+		).also(cache::set).withClient(this)
 	
 	// editX methods
 	/** 
@@ -172,11 +223,13 @@ class MinchatRestClient(
 	 */
 	suspend fun editUser(id: Long, newNickname: String?) =
 		userService.editUser(id, account().token, newNickname)
+			.also(cache::set)
 			.withClient(this)
 
 	/** Edits the currently logged-in account. */
 	suspend fun editSelf(newNickname: String?) =
 		editUser(account().id, newNickname).also {
+			cache.set(it)
 			account().user = it.data
 		}
 	
@@ -186,6 +239,7 @@ class MinchatRestClient(
 		newName: String? = null,
 		newDescription: String? = null
 	) = channelService.editChannel(id, account().token, newName, newDescription)
+		.also(cache::set)
 		.withClient(this)
 	
 	/** 
@@ -195,6 +249,7 @@ class MinchatRestClient(
 	 */
 	suspend fun editMessage(id: Long, newContent: String) =
 		messageService.editMessage(id, account().token, newContent)
+			.also(cache::set)
 			.withClient(this)
 	
 	// deleteX methods
@@ -264,6 +319,8 @@ class MinchatRestClient(
 	suspend fun modifyUserPunishments(user: MinchatUser, newMute: User.Punishment?, newBan: User.Punishment?): MinchatUser {
 		require(self().isAdmin) { "Only admins can modify user punishments." }
 
-		return userService.modifyUserPunishments(account().token, user.id, newMute, newBan).withClient(this)
+		return userService.modifyUserPunishments(account().token, user.id, newMute, newBan)
+			.also(cache::set)
+			.withClient(this)
 	}
 }

@@ -7,6 +7,7 @@ import arc.scene.ui.TextField
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
+import io.minchat.rest.service.CacheService
 import kotlinx.coroutines.*
 import java.nio.channels.UnresolvedAddressException
 import java.security.cert.*
@@ -14,7 +15,7 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import kotlin.math.*
 
-fun Throwable.userReadable() = when (this) {
+fun Throwable.userReadable(): String = when (this) {
 	is ResponseException -> {
 		val prefix = when {
 			response.status.value == 429 -> "You are being rate limited"
@@ -55,6 +56,8 @@ fun Throwable.userReadable() = when (this) {
 		}
 		"$causeString\nPlease, report to the developer (or the server owner if you're using a custom server) as soon as possible."
 	}
+	is CacheService.EntityNotFoundException ->
+		message.toString()
 	is IllegalStateException -> {
 		// Caused by calls to error()
 		"Error: ${message}"
@@ -66,7 +69,7 @@ fun Throwable.userReadable() = when (this) {
 }
 
 fun Throwable.isImportant() = when (this) {
-	is kotlinx.coroutines.CancellationException -> false
+	is CancellationException -> false
 	else -> true
 }
 
