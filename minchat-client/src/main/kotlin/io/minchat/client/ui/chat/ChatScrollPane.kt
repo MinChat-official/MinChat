@@ -52,12 +52,20 @@ class ChatScrollPane(val chat: ChatFragment) : ScrollPane(Table(), Styles.defaul
 	}
 
 	constructor(chat: ChatFragment, block: Table.(ChatScrollPane) -> Unit) : this(chat) {
-		block(widget as Table, this)
+		block(widget, this)
+	}
+
+	override fun getWidget(): Table {
+		return super.getWidget() as Table
 	}
 
 	override fun act(delta: Float) {
 		super.act(delta)
 		messageReloadDelay -= Time.delta
+	}
+
+	override fun layout() {
+		super.layout()
 	}
 
 	override fun sizeChanged() {
@@ -78,7 +86,7 @@ class ChatScrollPane(val chat: ChatFragment) : ScrollPane(Table(), Styles.defaul
 	}
 
 	fun scrollToMessage(message: MinchatMessage) {
-		val element = (widget as? Table)?.children?.find {
+		val element = widget.children.find {
 			(it as? NormalMinchatMessageElement)?.message?.id == message.id
 		} ?: run {
 			Vars.ui.showInfo("Cannot find message. Try scrolling up to load more messages.")

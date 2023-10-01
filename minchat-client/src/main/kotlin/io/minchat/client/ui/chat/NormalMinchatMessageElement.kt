@@ -36,14 +36,15 @@ class NormalMinchatMessageElement(
 
 			// Top row: referenced message
 			addTable {
-				left().margin(layoutMargin)
+				margin(layoutMargin)
 
 				addLabel("Reply to ")
 					.color(Color.darkGray)
-				addLabel("Loading reply message...")
+				addLabel("Loading reply message...", ellipsis = "...")
 					.color(Color.gray)
 					.also { authorLabel = it.get() }
-				addLabel("")
+				addLabel("", ellipsis = "...", align = Align.left)
+					.growX()
 					.color(Color.lightGray)
 					.also { contentLabel = it.get() }
 
@@ -51,7 +52,9 @@ class NormalMinchatMessageElement(
 				clicked {
 					referencedMessage?.let { chat.chatPane.scrollToMessage(it) }
 				}
-			}.growX().padBottom(layoutPad).row()
+			}.growX()
+				.padBottom(layoutPad)
+				.row()
 
 			launch {
 				referencedMessage = message.getReferencedMessage()?.also {
@@ -101,5 +104,4 @@ class NormalMinchatMessageElement(
 	override fun onRightClick() {
 		MessageContextMenu(chat, message).show()
 	}
-
 }

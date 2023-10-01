@@ -75,7 +75,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					.fill()
 					.padRight(10f).margin(Style.buttonMargin)
 
-				addTable(Style.surfaceBackground) {
+				addMinTable(Style.surfaceBackground) {
 					touchable = Touchable.enabled
 					margin(Style.layoutMargin)
 
@@ -137,7 +137,11 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		hsplitter(padBottom = 0f).colspan(3)
 
 		// left bar: channel list + notification label
-		addTable(Style.surfaceBackground) {
+		addMinSizedTable(
+			prefWidth = 150f,
+			prefHeight = 300f,
+			background = Style.surfaceBackground
+		) {
 			margin(Style.layoutMargin)
 			channelsBar = this
 
@@ -147,7 +151,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				it.isScrollingDisabledX = true
 				channelsContainer = this
 			}.grow().row()
-		}.width(150f).minHeight(300f).pad(Style.layoutPad).growY()
+		}.growY().pad(Style.layoutPad).growY()
 
 		vsplitter()
 

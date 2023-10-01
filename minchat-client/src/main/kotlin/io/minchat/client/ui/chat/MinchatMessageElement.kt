@@ -30,6 +30,7 @@ abstract class MinchatMessageElement(
 	private var tempDisableLayout = false
 
 	init {
+		clip = true
 		touchable = Touchable.enabled
 
 		addCaptureListener(object : InputListener() {
@@ -158,5 +159,9 @@ abstract class MinchatMessageElement(
 			return
 		}
 		super.layout()
+	}
+
+	override fun getMinWidth(): Float {
+		return 100f
 	}
 }
