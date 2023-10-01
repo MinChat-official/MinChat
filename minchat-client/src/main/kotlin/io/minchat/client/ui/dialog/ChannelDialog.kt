@@ -32,6 +32,8 @@ class ChannelDialog(
 		addStat("Name") { channel.name }
 		addStat("ID") { channel.id.toString() }
 		addStat("Description") { channel.description }
+		addStat("View mode") { channel.viewMode.readableName }
+		addStat("Send mode") { channel.sendMode.readableName }
 
 		action("Close", action = ::hide)
 		// It is assumed that the admin status of a user cannot change while they see this dialog.
@@ -43,8 +45,6 @@ class ChannelDialog(
 				ChannelDeleteConfirmDialog().show()
 			}
 		}
-
-
 	}
 
 	inner class ChannelEditDialog : ModalDialog() {

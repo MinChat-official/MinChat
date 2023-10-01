@@ -5,7 +5,7 @@ Before MinChat can undergo the first public release, the following features must
 | 1        | Done               | Custom chat input field that can properly display multi-line text and increase it's own size without scrolling the chat      |
 | 1        | Done               | Support for bans, mutes; The corresponding UI for admins                                                                     |
 | 1        | Not done           | Announcement system                                                                                                          |
-| 1        | Not done           | Admin ui for changing channel access modes and user roles                                                                    |
+| 1        | Not done           | Admin ui for changing channel access modes and user roles, and also ui for creating channels                                 |
 | 2        | Not done           | Proper GUI chat button, a hint for desktop players telling them that there's a shortcut they can use                         |
 | 2        | Partially done     | Chat replies                                                                                                                 |
 | 2        | Not done           | Chat notifications                                                                                                           |

@@ -14,6 +14,11 @@ data class MinchatChannel(
 	val name by data::name
 	val description by data::description
 
+	/** Users who can view this channel. */
+	val viewMode by data::viewMode
+	/** Users who can message this channel. AccessMode.EVERYONE has no effect here. */
+	val sendMode by data::sendMode
+
 	override suspend fun fetch() =
 		rest.getChannel(id)
 	

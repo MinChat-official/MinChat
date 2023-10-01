@@ -1,6 +1,7 @@
 #VERSION 0.6.0
-Implemented user roles (admin/moderator/etc)
-Implemented channel access modes (e.g. admin-only etc)
+Added message replies
+Added user roles (admin/moderator/etc)
+Added channel access modes (e.g. admin-only etc)
 You can now scroll the chat more to see older messages
 Minor ui fixes
 

@@ -12,7 +12,7 @@ data class User(
 	/** A unique discriminator used to distinguish users with the same display names. */
 	val discriminator: Int,
 
-	val role: RoleBitSet,
+	val role: RoleBitSet = RoleBitSet.REGULAR_USER,
 
 	@Deprecated("Will be removed later. Callers instead should check `role.isAdmin`.", level = DeprecationLevel.WARNING)
 	val isAdmin: Boolean = role.isAdmin,
@@ -55,7 +55,7 @@ data class User(
 			"<this user was deleted>",
 			"<deleted_user>",
 			0,
-			RoleBitSet.EMPTY,
+			RoleBitSet.REGULAR_USER,
 			messageCount = 0,
 			lastMessageTimestamp = 0L,
 			creationTimestamp = 0L
@@ -71,6 +71,12 @@ data class User(
 		val isAdmin get() = get(Masks.admin)
 		/** True for both admins and moderators. To check just for mod permissions, use `get(Masks.moderator)`. */
 		val isModerator get() = get(Masks.moderator) || isAdmin
+
+		val readableName get() = when {
+			isAdmin -> "Admin"
+			isModerator -> "Moderator"
+			else -> "Regular user"
+		}
 
 		/** Gets a value from the bit set. */
 		@Suppress("NOTHING_TO_INLINE")
@@ -92,7 +98,7 @@ data class User(
 		}
 
 		companion object {
-			val EMPTY = RoleBitSet(0)
+			val REGULAR_USER = RoleBitSet(0)
 			val ALL = RoleBitSet(0x7fffffffffffffff)
 		}
 	}

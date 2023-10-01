@@ -45,7 +45,7 @@ abstract class UserDialog(
 
 		addStat("Username") { user?.username }
 		addStat("ID") { user?.id?.toString() }
-		addStat("Is admin") { user?.isAdmin }
+		addStat("Role") { user?.role?.readableName }
 		addStat("Banned") { user?.let { it.ban.toExplanation() } }
 		addStat("Muted") { user?.let { it.mute.toExplanation() } }
 		addStat("Messages sent") { user?.messageCount?.toString() }
@@ -72,7 +72,7 @@ abstract class UserDialog(
 
 		// only add the punishments button if the logged-in user is an admin and the viewed user is not.
 		if (Minchat.client.account?.user?.let { self ->
-			(user?.isAdmin?.not() ?: false) && self.isAdmin && self != user?.data
+			(user?.role?.isAdmin?.not() ?: false) && self.role.isAdmin && self != user?.data
 		} ?: false) {
 			nextActionRow()
 			action("Punishments") {

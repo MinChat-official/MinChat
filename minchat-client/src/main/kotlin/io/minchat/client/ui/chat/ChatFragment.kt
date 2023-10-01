@@ -169,13 +169,18 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				background = Style.black(2)
 				left()
 
-				hider(hideHorizontal = { editListener == null }) {
+				// TODO maybe better split into two hiders?
+				hider(hideHorizontal = { editListener == null && referencedMessage == null }) {
 					textButton("[lightgray]Cancel", Styles.nonet) {
-						editListener = null
-						chatField.content = ""
+						setEditMessage(null)
+						setReplyMessage(null)
 					}.pad(Style.layoutPad).fillY()
 
-					addLabel("Editing message...")
+					addLabel({ when {
+						editListener != null -> "Editing message..."
+						referencedMessage != null -> "Replying to ${referencedMessage?.author?.displayName}"
+						else -> "Doing nothing, this should be hidden."
+					} })
 						.pad(Style.layoutPad)
 
 					addSpace(width = 50f)

@@ -297,7 +297,8 @@ class Minchat(
 					Row {
 						val color = when {
 							message.author.id == client.account?.id -> Color.BrightGreen
-							message.author.isAdmin -> Color.BrightMagenta // I just like pink~
+							message.author.role.isModerator -> Color.BrightCyan
+							message.author.role.isAdmin -> Color.BrightMagenta // I just like pink~
 							else -> Color.Magenta
 						}
 						Text("@")

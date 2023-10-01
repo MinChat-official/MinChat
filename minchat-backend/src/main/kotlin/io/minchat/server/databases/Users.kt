@@ -18,7 +18,7 @@ object Users : MinchatEntityTable<User>() {
 	@Deprecated("This is to be moved to [role]", level = DeprecationLevel.WARNING)
 	val isAdmin = bool("admin").default(false)
 	/** The [RoleBitSet] of the user. */
-	val role = long("role").default(RoleBitSet.EMPTY.bits)
+	val role = long("role").default(RoleBitSet.REGULAR_USER.bits)
 
 	val discriminator = integer("discriminator")
 

@@ -1,11 +1,15 @@
 package io.minchat.client.ui.chat
 
+import arc.graphics.Color
+import arc.scene.ui.Label
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
+import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
+import io.minchat.client.misc.MinchatStyle.layoutMargin
 import io.minchat.client.ui.dialog.*
 import io.minchat.rest.entity.MinchatMessage
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import io.minchat.client.misc.MinchatStyle as Style
 
 /**
@@ -18,31 +22,61 @@ class NormalMinchatMessageElement(
 ) : MinchatMessageElement(addContextActions), CoroutineScope by chat {
 	override val timestamp get() = message.timestamp
 
+	@Volatile
+	var referencedMessage: MinchatMessage? = null
+
 	init {
 		margin(4f)
 
-		val discriminator = message.author.discriminator.toString().padStart(4, '0')
+		if (message.referencedMessageId != null) {
+			lateinit var authorLabel: Label
+			lateinit var contentLabel: Label
 
-		// Top row: author tag + timestamp
+			// Top row: referenced message
+			addTable {
+				margin(layoutMargin)
+
+				addLabel("    Reply to ")
+					.color(Color.darkGray)
+				addLabel("Loading reply message...")
+					.color(Color.gray)
+					.also { authorLabel = it.get() }
+				addLabel("")
+					.color(Color.lightGray)
+					.also { contentLabel = it.get() }
+			}.growX().padBottom(15f).row()
+
+			launch {
+				referencedMessage = message.getReferencedMessage()?.also {
+					authorLabel.content = it.author.tag
+					contentLabel.content = it.content
+				}
+			}
+		}
+
+		// Middle row: author tag + timestamp
 		addTable {
 			left()
-			// display name
+
+			val discriminator = message.author.discriminator.toString().padStart(4, '0')
+			// Display name
 			addLabel(message.author.displayName, ellipsis = "...").color(when {
 				message.author.id == Minchat.client.account?.id -> Style.green
-				message.author.isAdmin -> Style.pink // I just like pink~
+				message.author.role.isModerator -> Style.purple
+				message.author.role.isAdmin -> Style.pink // I just like pink~
 				else -> Style.purple
 			}).fillY()
 				.get().clicked(::showUserDialog)
-			// tag
+			// Tag
 			addLabel("#$discriminator")
 				.fillY().color(Style.comment)
 				.get().clicked(::showUserDialog)
-			// timestamp
+			// Timestamp
 			addLabel({ formatTimestamp() }, ellipsis = "...", align = Align.right)
 				.growX()
 				.color(Style.comment).padLeft(20f)
 		}.growX().padBottom(5f).row()
-		// bottom row: message content
+		// Bottom row: message content
 		addLabel(message.content, wrap = true, align = Align.left)
 			.growX().color(Style.foreground)
 	}
