@@ -46,7 +46,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var chatField: TextField
 	lateinit var sendButton: TextButton
 
-	/** If present, a message being edited. This listener overrides the default "send" action, but only once. */
+	/** If present, the next sent message will be a reply to this message. See [setReplyMessage]. */
+	private var referencedMessage: MinchatMessage? = null
+	/**
+	 * If present, a message being edited. This listener overrides the default "send" action, but only once.
+	 * See [setEditMessage]
+	 */
 	private var editListener: (suspend (String) -> Unit)? = null
 	private var closeListener: (() -> Unit)? = null
 
@@ -556,7 +561,6 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 		val content = chatField.content.trim()
 		val channel = currentChannel ?: return null
-		runUi { chatField.content = "" }
 
 		if (!Minchat.client.isLoggedIn) {
 			Vars.ui.showInfo("You must login or register to send messages.")
@@ -567,11 +571,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			return null
 		}
 
+		runUi { chatField.content = "" }
+
 		if (editListener == null) {
 			val notif = notification("Sending...", 1)
 			return launch {
 				runSafe {
-					val msg = channel.createMessage(content)
+					val msg = channel.createMessage(content, referencedMessage?.id)
 					ClientEvents.fire(ClientMessageSendEvent(msg))
 				}
 			}.then { notif.cancel() }
@@ -589,12 +595,15 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	}
 
 	/**
-	 * Clears the current message and replaces it with the contents of the provided message.
+	 * Clears the current message and replaces it with the contents of the provided message;
+	 * clears [referencedMessage].
 	 *
 	 * Sets up an edit listener so that when the user presses "send", the message gets edited.
 	 */
 	fun setEditMessage(message: MinchatMessage?) {
+		// TODO editListener is dumb, should use editedMessage instead.
 		if (message != null) {
+			referencedMessage = null
 			editListener = {
 				val newMessage = message.edit(newContent = it)
 				ClientEvents.fire(ClientMessageEditEvent(message, newMessage))
@@ -604,6 +613,17 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			editListener = null
 			chatField.content = ""
 		}
+	}
+
+	/**
+	 * Sets [referencedMessage] to the given message.
+	 * The next sent message will be a reference to it.
+	 */
+	fun setReplyMessage(message: MinchatMessage?) {
+		if (message != null) {
+			editListener = null
+		}
+		referencedMessage = message
 	}
 
 	/** Executes an action when the close button is pressed. Overrides the previous listener. */

@@ -110,7 +110,7 @@ class RawGateway(
 							.orEmpty()
 
 						MinchatRestLogger.log("warn",
-							"Minchat gateway failed to decode an even: $e.$suffix")
+							"Minchat gateway failed to decode an event: $e.$suffix")
 						failureListener?.invoke(e)
 						continue
 					}

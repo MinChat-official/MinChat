@@ -52,12 +52,19 @@ object Messages : MinchatEntityTable<Message>() {
 	 *
 	 * Requires a transaction. 
 	 */
-	fun createMessageRaw(channelId: Long, authorId: Long, messageContent: String) = insert {
+	fun createMessageRaw(
+		channelId: Long,
+		authorId: Long,
+		messageContent: String,
+		referencedMessageId: Long? = null
+	) = insert {
 		it[content] = messageContent
 		it[author] = authorId
 		it[channel] = channelId
 
 		it[timestamp] = System.currentTimeMillis()
+
+		it[referencedMessage] = referencedMessageId
 	}.resultedValues!!.first()
 
 	/** 
@@ -69,8 +76,13 @@ object Messages : MinchatEntityTable<Message>() {
 	 *
 	 * Requires a transaction. 
 	 */
-	suspend fun createMessage(channel: Channel, author: User, messageContent: String) =
-		createMessageRaw(channel.id, author.id, messageContent).let {
+	suspend fun createMessage(
+		channel: Channel,
+		author: User,
+		messageContent: String,
+		referencedMessageId: Long? = null
+	) =
+		createMessageRaw(channel.id, author.id, messageContent, referencedMessageId).let {
 			// we need to increment the message count too
 			val newAuthor = author.copy(messageCount = author.messageCount + 1)
 			createEntity(it, newAuthor, channel)

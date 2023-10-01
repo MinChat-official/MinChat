@@ -89,7 +89,7 @@ class ChannelModule : MinchatServerModule() {
 						accessDenied("You role is too low to send messages in this channel.")
 					}
 
-					val message = Messages.createMessage(channel, user, data.content)
+					val message = Messages.createMessage(channel, user, data.content, data.referencedMessageId)
 
 					Users.update({ Users.id eq user.id }) {
 						it[messageCount] = user.messageCount + 1

@@ -69,6 +69,7 @@ data class User(
 	@JvmInline
 	value class RoleBitSet(val bits: Long) {
 		val isAdmin get() = get(Masks.admin)
+		/** True for both admins and moderators. To check just for mod permissions, use `get(Masks.moderator)`. */
 		val isModerator get() = get(Masks.moderator) || isAdmin
 
 		/** Gets a value from the bit set. */

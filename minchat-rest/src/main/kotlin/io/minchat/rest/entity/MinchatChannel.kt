@@ -1,6 +1,7 @@
 package io.minchat.rest.entity
 
 import io.minchat.common.entity.Channel
+import io.minchat.common.entity.Channel.AccessMode
 import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.flow.flow
 
@@ -17,8 +18,8 @@ data class MinchatChannel(
 		rest.getChannel(id)
 	
 	/** Creates a message in this channel. */
-	suspend fun createMessage(content: String) =
-		rest.createMessage(id, content)
+	suspend fun createMessage(content: String, referencedMessageId: Long? = null) =
+		rest.createMessage(id, content, referencedMessageId)
 	
 	/** 
 	 * See [MinchatRestClient.getMessagesIn] for more info. 
@@ -98,8 +99,18 @@ data class MinchatChannel(
 	/**
 	 * Copies this [MinchatChannel] object, allowing to override some of its data values.
 	 */
-	fun copy(name: String = data.name, description: String = data.description) =
-		MinchatChannel(data.copy(name = name, description = description), rest)
+	fun copy(
+		name: String = data.name,
+		description: String = data.description,
+		viewMode: AccessMode = data.viewMode,
+		sendMode: AccessMode = data.sendMode
+	) =
+		MinchatChannel(data.copy(
+			name = name,
+			description = description,
+			viewMode = viewMode,
+			sendMode = sendMode
+		), rest)
 }
 
 fun Channel.withClient(rest: MinchatRestClient) =

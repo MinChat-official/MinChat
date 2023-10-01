@@ -204,8 +204,8 @@ class MinchatRestClient(
 	}
 
 	/** Sends a message in the specified channel and adds it to the cache. */
-	suspend fun createMessage(channelId: Long, content: String) =
-		channelService.createMessage(channelId, account().token, content)
+	suspend fun createMessage(channelId: Long, content: String, referencedMessageId: Long? = null) =
+		channelService.createMessage(channelId, account().token, content, referencedMessageId)
 			.also(cache::set)
 			.withClient(this)
 

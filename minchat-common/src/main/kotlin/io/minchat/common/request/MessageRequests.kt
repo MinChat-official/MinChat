@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 /** Request to create a message in the channel. */
 @Serializable
 data class MessageCreateRequest(
-	val content: String
+	val content: String,
+	val referencedMessageId: Long? = null
 )
 
 /** Request to edit a message previously sent in the specified channel. */

@@ -49,12 +49,13 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 	suspend fun createMessage(
 		channelId: Long,
 		token: String,
-		content: String
+		content: String,
+		referencedMessageId: Long?
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.send, channelId)) {
 			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
-			setBody(MessageCreateRequest(content = content))
+			setBody(MessageCreateRequest(content = content, referencedMessageId = referencedMessageId))
 		}.body<Message>()
 	}
 
