@@ -9,6 +9,9 @@ object Messages : MinchatEntityTable<Message>() {
 	val channel = reference("channel", Channels)
 
 	val timestamp = long("timestamp")
+	val editTimestamp = long("edited").nullable().default(null)
+
+	val referencedMessage = reference("reference", Messages).nullable().default(null)
 
 	val isDeleted = bool("deleted").default(false)
 
@@ -36,7 +39,10 @@ object Messages : MinchatEntityTable<Message>() {
 			author = author,
 			channel = channel,
 
-			timestamp = row[timestamp]
+			timestamp = row[timestamp],
+			editTimestamp = row[editTimestamp],
+
+			referencedMessageId = row[referencedMessage]?.value
 		)
 	
 	/** 
@@ -55,8 +61,7 @@ object Messages : MinchatEntityTable<Message>() {
 	}.resultedValues!!.first()
 
 	/** 
-	 * Creates a message in the specified channel
-	 * and sends the corresponding event [TODO]. 
+	 * Creates a message in the specified channel.
 	 * Returns the created entity.
 	 *
 	 * The "channel" and "author" properties of the returned

@@ -28,10 +28,10 @@ data class User(
 	/** Returns [nickname] if the user has one, or [username] otherwise. */
 	val displayName get() = nickname ?: username
 
-	/** displayName#discriminator */
+	/** username#discriminator */
 	val tag get() = run {
 		val disc = discriminator.toString().padStart(4, '0')
-		"$displayName#$disc"
+		"$username#$disc"
 	}
 
 	companion object {

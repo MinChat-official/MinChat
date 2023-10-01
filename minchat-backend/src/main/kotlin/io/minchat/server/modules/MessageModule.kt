@@ -42,10 +42,11 @@ class MessageModule : MinchatServerModule() {
 						common = { Messages.id eq id },
 						userOnly = { Messages.author eq user.id }
 					)) {
-						it[Messages.content] = data.newContent
+						it[content] = data.newContent
+						it[editTimestamp] = System.currentTimeMillis()
 					}.throwIfNotFound { "A message matching the providen id-author pair does not exist (missing admin rights?)" }
 					
-					Log.info { "Message $id was edited." }
+					Log.info { "Message $id sent by ${user.tag} was edited." }
 
 					val message = Messages.getById(id)
 					server.sendEvent(MessageModifyEvent(message))
@@ -66,8 +67,8 @@ class MessageModule : MinchatServerModule() {
 						userOnly = { Messages.author eq user.id }
 					)) {
 						// actually deleting a message may lead to certain sync issues, so we avoid that
-						it[Messages.content] = ""
-						it[Messages.isDeleted] = true
+						it[content] = ""
+						it[isDeleted] = true
 					}.throwIfNotFound { "the message does not exist or you lack the permission to delete it." }
 
 					Log.info { "Message $id was deleted." }

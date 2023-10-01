@@ -16,6 +16,10 @@ data class MinchatMessage(
 	val channel by lazy { MinchatChannel(data.channel, rest) }
 
 	val timestamp by data::timestamp
+	val editTimestamp by data::editTimestamp
+
+	/** The id of the message this message references. See [getReferencedMessage]. */
+	val referencedMessageId by data::referencedMessageId
 
 	override suspend fun fetch() = 
 		rest.getMessage(id)
@@ -36,6 +40,18 @@ data class MinchatMessage(
 	suspend fun delete() =
 		rest.deleteMessage(id)
 
+	/**
+	 * Retrieves the referenced message. Tries to retrieve it from the cache first, then uses rest.
+	 *
+	 * Returns null if there's no referenced message (see [referencedMessageId]),
+	 * or if it's not found on the server (e.g. deleted).
+	 */
+	suspend fun getReferencedMessage(): MinchatMessage? {
+		val refId = referencedMessageId ?: return null
+
+		return rest.cache.getOrNull<MinchatMessage>(refId)
+	}
+
 	override fun toString(): String =
 		"MinchatMessage(id=$id, channelId=$channelId, authorId=$authorId, content=$content, timestamp=$timestamp)"
 
@@ -50,6 +66,7 @@ data class MinchatMessage(
 	/** Returns true if the two messages are indistinguishable in terms of visual info. */
 	fun similar(other: MinchatMessage): Boolean {
 		if (id != other.id) return false
+		if (editTimestamp != other.editTimestamp) return false
 		if (channelId != other.channelId) return false
 		if (authorId != other.authorId) return false
 		if (content != other.content) return false

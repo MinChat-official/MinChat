@@ -10,7 +10,10 @@ data class Message(
 	val author: User,
 	val channel: Channel,
 
-	val timestamp: Long
+	val timestamp: Long,
+	val editTimestamp: Long?,
+
+	val referencedMessageId: Long?
 ) {
 	companion object {
 		val contentLength = 1..1024
