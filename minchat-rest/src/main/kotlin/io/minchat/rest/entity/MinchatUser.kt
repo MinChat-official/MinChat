@@ -18,8 +18,10 @@ data class MinchatUser(
 
 	/** A unique discriminator used to distinguish users with the same display names. */
 	val discriminator by data::discriminator
- 	/** A display name of this user in the form of displayName#discriminator. */
+ 	/** The name of this user in the form of username#discriminator. */
 	val tag by data::tag
+	/** The display name of this user in the form of displayName#discriminator. */
+	val displayTag by data::displayTag
 
 	val role by data::role
 	/** If this user is muted, this property indicates the duration and reason. */

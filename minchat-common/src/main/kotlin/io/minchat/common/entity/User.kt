@@ -37,6 +37,12 @@ data class User(
 		"$username#$disc"
 	}
 
+	/** displayName#discriminator */
+	val displayTag get() = run {
+		val disc = discriminator.toString().padStart(4, '0')
+		"$displayName#$disc"
+	}
+
 	fun canViewChannel(channel: Channel) =
 		role.isAdmin || channel.viewMode.isApplicableTo(role)
 
