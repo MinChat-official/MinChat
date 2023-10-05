@@ -1,4 +1,4 @@
-package io.minchat.client.misc
+package io.minchat.client.ui
 
 import arc.graphics.Color
 import arc.scene.style.*

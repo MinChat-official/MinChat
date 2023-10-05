@@ -6,7 +6,7 @@ import arc.scene.ui.layout.Table
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.hint
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * A dialog used to let the user input some data,

@@ -10,7 +10,7 @@ import arc.scene.ui.layout.Table
 import io.minchat.client.Minchat
 import mindustry.Vars.mobile
 import java.time.Instant
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * Displays a message in MinChat. It's not guaranteed that a message represented with this class actually exists

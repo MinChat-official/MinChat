@@ -9,7 +9,7 @@ import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.abs
 import kotlin.random.Random
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * A dialog showing the stats of a channel and allowing to modify it.

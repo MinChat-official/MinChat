@@ -6,6 +6,7 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.cell
 import io.minchat.client.misc.*
+import io.minchat.client.ui.MinchatStyle
 import kotlinx.coroutines.*
 import kotlin.coroutines.EmptyCoroutineContext
 

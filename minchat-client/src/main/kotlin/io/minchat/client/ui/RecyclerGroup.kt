@@ -9,7 +9,6 @@ import arc.scene.event.*
 import arc.scene.style.Drawable
 import arc.util.Tmp
 import arc.util.pooling.Pool
-import io.minchat.client.misc.MinchatStyle
 import java.util.*
 import javax.naming.OperationNotSupportedException
 import kotlin.math.*

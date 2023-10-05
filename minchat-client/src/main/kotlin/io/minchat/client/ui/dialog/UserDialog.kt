@@ -7,16 +7,16 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
-import io.minchat.client.misc.MinchatStyle.buttonMargin
-import io.minchat.client.misc.MinchatStyle.layoutMargin
-import io.minchat.client.misc.MinchatStyle.layoutPad
+import io.minchat.client.ui.MinchatStyle.buttonMargin
+import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty0
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * A dialog showing the stats of a user and allowing to modify it.

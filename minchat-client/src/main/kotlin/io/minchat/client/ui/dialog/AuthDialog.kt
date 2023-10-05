@@ -10,7 +10,7 @@ import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * A dialog allowing the user to manage their MinChat account.

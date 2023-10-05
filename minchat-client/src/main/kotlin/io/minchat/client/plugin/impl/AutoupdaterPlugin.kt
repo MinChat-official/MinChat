@@ -20,7 +20,7 @@ import io.minchat.common.*
 import kotlinx.coroutines.*
 import mindustry.Vars
 import java.io.RandomAccessFile
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 	val maxAttempts = 3

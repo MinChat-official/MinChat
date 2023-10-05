@@ -3,7 +3,7 @@ package io.minchat.client.ui.chat
 import arc.math.Mathf
 import arc.scene.ui.TextArea
 import arc.util.Time
-import io.minchat.client.misc.MinchatStyle
+import io.minchat.client.ui.MinchatStyle
 import kotlin.math.max
 
 class ChatTextArea : TextArea("", MinchatStyle.TextInput) {

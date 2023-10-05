@@ -8,6 +8,7 @@ import arc.util.Scaling
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.*
 import io.minchat.client.misc.*
+import io.minchat.client.ui.MinchatStyle
 import io.minchat.client.ui.chat.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*

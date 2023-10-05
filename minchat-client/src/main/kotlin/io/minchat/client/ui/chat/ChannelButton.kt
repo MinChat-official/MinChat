@@ -10,7 +10,7 @@ import io.minchat.client.ui.dialog.ChannelDialog
 import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.CoroutineScope
 import mindustry.Vars
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 class ChannelButton(
 	val chat: ChatFragment,

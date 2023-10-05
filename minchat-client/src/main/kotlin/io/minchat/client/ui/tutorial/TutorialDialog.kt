@@ -8,11 +8,12 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.scaleFont
 import com.github.mnemotechnician.mkui.extensions.times
 import io.minchat.client.misc.*
-import io.minchat.client.misc.MinchatStyle.ActionButton
-import io.minchat.client.misc.MinchatStyle.buttonMargin
-import io.minchat.client.misc.MinchatStyle.layoutMargin
-import io.minchat.client.misc.MinchatStyle.layoutPad
-import io.minchat.client.misc.MinchatStyle.surfaceBackground
+import io.minchat.client.ui.MinchatStyle
+import io.minchat.client.ui.MinchatStyle.ActionButton
+import io.minchat.client.ui.MinchatStyle.buttonMargin
+import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.client.ui.MinchatStyle.layoutPad
+import io.minchat.client.ui.MinchatStyle.surfaceBackground
 
 class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 	var step = 0

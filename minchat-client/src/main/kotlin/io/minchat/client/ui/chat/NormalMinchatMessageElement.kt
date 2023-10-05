@@ -7,12 +7,12 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
-import io.minchat.client.misc.MinchatStyle.layoutMargin
-import io.minchat.client.misc.MinchatStyle.layoutPad
+import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.ui.dialog.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * Displays a MinChat message sent by a real user or a bot.
@@ -58,7 +58,7 @@ class NormalMinchatMessageElement(
 
 			launch {
 				referencedMessage = message.getReferencedMessage()?.also {
-					authorLabel.content = it.author.tag.let { "$it: "}
+					authorLabel.content = it.author.displayTag.let { "$it: "}
 
 					contentLabel.content = it.content.replace("\n", " ").let {
 						if (it.length > 72) it.take(69) + "..." else it
@@ -80,10 +80,13 @@ class NormalMinchatMessageElement(
 				else -> Style.purple
 			}).fillY()
 				.get().clicked(::showUserDialog)
-			// Tag
+			// Discriminator
 			addLabel("#$discriminator")
 				.fillY().color(Style.comment)
 				.get().clicked(::showUserDialog)
+
+			//
+
 			// Timestamp
 			addLabel({ formatTimestamp() }, ellipsis = "...", align = Align.right)
 				.growX()

@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.*
 import mindustry.Vars
 import mindustry.ui.Styles
 import java.util.concurrent.ConcurrentLinkedQueue
-import io.minchat.client.misc.MinchatStyle as Style
+import io.minchat.client.ui.MinchatStyle as Style
 
 class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentScope) {
 	@Volatile var currentChannel: MinchatChannel? = null

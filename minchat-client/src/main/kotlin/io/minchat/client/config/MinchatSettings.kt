@@ -10,9 +10,9 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
-import io.minchat.client.misc.MinchatStyle.buttonMargin
-import io.minchat.client.misc.MinchatStyle.layoutMargin
-import io.minchat.client.misc.MinchatStyle.layoutPad
+import io.minchat.client.ui.MinchatStyle.buttonMargin
+import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.misc.userReadable
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.plugin.impl.AutoupdaterPlugin
