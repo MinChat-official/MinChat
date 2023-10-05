@@ -1,5 +1,9 @@
+#VERSION 0.6.2
+Added role icons (can be turned off in the settings)
+Fixed nicknames not being used in replies
+
 #VERSION 0.6.1
-- Some critical ui fixes (mostly for mobile users)
+Some critical ui fixes (mostly for mobile users)
 
 #VERSION 0.6.0
 Added message replies
