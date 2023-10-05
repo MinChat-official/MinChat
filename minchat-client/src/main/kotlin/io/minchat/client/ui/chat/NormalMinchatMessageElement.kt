@@ -7,6 +7,7 @@ import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
+import io.minchat.client.config.MinchatSettings
 import io.minchat.client.misc.getIcon
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
@@ -87,9 +88,11 @@ class NormalMinchatMessageElement(
 				.get().clicked(::showUserDialog)
 
 			// Role icon
-			message.author.getIcon()?.let { icon ->
+			if (MinchatSettings.userIcons) message.author.getIcon()?.let { icon ->
 				addImage(icon, scaling = Scaling.fill)
+					.color(Color.valueOf(Tmp.c1, "#ffffff55"))
 					.fillY()
+					.padLeft(10f)
 			}
 
 			// Timestamp

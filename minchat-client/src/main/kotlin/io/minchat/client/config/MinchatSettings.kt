@@ -10,12 +10,12 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
-import io.minchat.client.ui.MinchatStyle.buttonMargin
-import io.minchat.client.ui.MinchatStyle.layoutMargin
-import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.misc.userReadable
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.plugin.impl.AutoupdaterPlugin
+import io.minchat.client.ui.MinchatStyle.buttonMargin
+import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.ui.tutorial.*
 import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.launch
@@ -32,6 +32,8 @@ object MinchatSettings {
 	/** Whether custom server url should be used. */
 	var useCustomUrl by setting(false, prefix)
 	var customUrl by setting("", prefix)
+	/** Whether to display user icons in the chat. */
+	val userIcons by setting(true, prefix)
 
 	/**
 	 * Creates all the necessary gui settings in the settings menu.
@@ -41,6 +43,10 @@ object MinchatSettings {
 		Vars.ui.settings.addCategory("MinChat", Icon.terminal) {
 			if (!Vars.mobile) {
 				it.checkPref("minchat.gui-button-desktop", true)
+			}
+
+			it.checkPref("minchat.user-icons", true) {
+				Minchat.chatFragment.updateChatUi(forcibly = true)
 			}
 
 			it.pref(SpacerSetting(50f))
