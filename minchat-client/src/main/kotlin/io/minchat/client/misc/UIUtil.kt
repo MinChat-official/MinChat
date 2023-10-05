@@ -1,8 +1,11 @@
 package io.minchat.client.misc
 
-import arc.scene.style.Drawable
+import arc.scene.style.*
 import arc.scene.ui.layout.*
+import io.minchat.common.entity.User.RoleBitSet.Masks
+import io.minchat.rest.entity.MinchatUser
 import mindustry.ui.Styles
+import io.minchat.client.ui.MinchatStyle as Style
 
 /** Adds a table whose min size can be provided by the caller (0 by default). */
 inline fun Table.addMinTable(
@@ -38,4 +41,13 @@ inline fun Table.addMinSizedTable(
 	return add(table.also {
 		it.constructor()
 	})
+}
+
+/** Returns an icon for this user's role, or null if it has no icon. */
+fun MinchatUser.getIcon(): TextureRegionDrawable? {
+	return when {
+		role.get(Masks.admin) -> Style.adminIcon
+		role.get(Masks.moderator) -> Style.moderatorIcon
+		else -> null
+	}
 }

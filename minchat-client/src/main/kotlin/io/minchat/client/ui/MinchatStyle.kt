@@ -4,7 +4,7 @@ import arc.graphics.Color
 import arc.scene.style.*
 import arc.scene.ui.*
 import com.github.mnemotechnician.mkui.extensions.times
-import mindustry.gen.Tex
+import mindustry.gen.*
 import mindustry.ui.Styles
 import arc.scene.ui.Label as MindustryLabel
 
@@ -33,6 +33,10 @@ object MinchatStyle {
 	val surfaceDown = surfaceBackground.tintMul(0.7f)
 	/** Surface that's hovered over. */
 	val surfaceOver = surfaceBackground.tintMul(0.9f)
+
+	// Icons
+	val adminIcon = Icon.admin.tintMul(pink)
+	val moderatorIcon = Icon.admin.tintMul(purple)
 
 	private val blackTints = (0..10).map { surfaceWhite.tint(0f, 0f, 0f, it / 10f) }
 

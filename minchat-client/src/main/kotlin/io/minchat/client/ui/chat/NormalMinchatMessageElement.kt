@@ -3,10 +3,11 @@ package io.minchat.client.ui.chat
 import arc.graphics.Color
 import arc.scene.event.Touchable
 import arc.scene.ui.Label
-import arc.util.Align
+import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
+import io.minchat.client.misc.getIcon
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.ui.dialog.*
@@ -85,7 +86,11 @@ class NormalMinchatMessageElement(
 				.fillY().color(Style.comment)
 				.get().clicked(::showUserDialog)
 
-			//
+			// Role icon
+			message.author.getIcon()?.let { icon ->
+				addImage(icon, scaling = Scaling.fill)
+					.fillY()
+			}
 
 			// Timestamp
 			addLabel({ formatTimestamp() }, ellipsis = "...", align = Align.right)
