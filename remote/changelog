@@ -1,6 +1,7 @@
 #VERSION 0.6.3
 Fixed replies and some other parts of the ui
 Added an (edited) label to edited messages (you can see when exactly it was edited using the context menu)
+Added a message when you cannot chat in a channel because of a mute/ban, or because of your role
 
 #VERSION 0.6.2
 Added role icons (can be turned off in the settings)

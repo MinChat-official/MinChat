@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 val MINCHAT_VERSION = BuildVersion(
 	major = 0,
 	minor = 6,
-	patch = 2
+	patch = 3
 )
 
 /**
@@ -27,7 +27,7 @@ val MINCHAT_VERSION = BuildVersion(
  *
  * @param major The major version of this build. If this number differs between
  * two applications, they're absolutely incompatible.
- * @param minor The minor version. Applications differing in this number can
+ * @param minor The minor version. Applications slightly differing in this number can
  * interact with each other in most cases.
  * @param patch The patch version. Differences in this number can be ignored.
  */
