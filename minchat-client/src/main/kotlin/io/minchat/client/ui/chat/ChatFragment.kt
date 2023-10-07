@@ -225,10 +225,6 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 				textButton(">", Style.ActionButton) { confirmCurrentMessage() }
 					.with { sendButton = it }
-					.disabled {
-						!Minchat.client.isLoggedIn || currentChannel == null ||
-							chatField.content.length !in Message.contentLength
-					}
 					.padLeft(8f).fill().width(80f)
 
 				updateChatbox()
@@ -564,10 +560,30 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	}
 
 	fun updateChatbox() {
+		val channel = currentChannel
+		val chatDisabled = when {
+			!Minchat.client.isLoggedIn -> true
+			channel == null -> true
+			Minchat.client.self().mute?.isExpired == false -> true
+			Minchat.client.self().ban?.isExpired == false -> true
+			!Minchat.client.self().canMessageChannel(channel) -> true
+			else -> false
+		}
+		val buttonDisabled = when {
+			chatDisabled -> true
+			chatField.content.length !in Message.contentLength -> true
+			else -> false
+		}
+		chatField.isDisabled = chatDisabled
+		sendButton.isDisabled = buttonDisabled
+
 		chatField.hint = when {
 			!Minchat.client.isLoggedIn -> "Log in or register to send messages."
-			currentChannel == null -> "Choose a channel to chat in."
-			else -> "Message #${currentChannel?.name}"
+			channel == null -> "Choose a channel to chat in."
+			Minchat.client.self().mute?.isExpired == false -> "You are muted. Check your user stats for more details."
+			Minchat.client.self().ban?.isExpired == false -> "You are banned. Check your user stats for more details."
+			!Minchat.client.self().canMessageChannel(channel) -> "You are not allowed to chat in #${channel.name}."
+			else -> "Message #${channel.name}"
 		}
 	}
 

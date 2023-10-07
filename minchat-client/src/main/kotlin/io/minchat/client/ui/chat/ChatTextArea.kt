@@ -8,6 +8,7 @@ import kotlin.math.max
 
 class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 	private var lastPrefHeight = -1f
+	private var textHidden = false
 
 	override fun act(delta: Float) {
 		super.act(delta)
@@ -17,6 +18,22 @@ class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 			if (lastPrefHeight != -1f) invalidateHierarchy()
 			lastPrefHeight = prefHeight
 		}
+	}
+
+	override fun draw() {
+		if (textHidden) {
+			if (isDisabled) {
+				displayText = ""
+			} else {
+				updateDisplayText()
+				textHidden = false
+			}
+		} else if (isDisabled) {
+			displayText = ""
+			textHidden = true
+		}
+
+		super.draw()
 	}
 
 	override fun getPrefHeight(): Float {

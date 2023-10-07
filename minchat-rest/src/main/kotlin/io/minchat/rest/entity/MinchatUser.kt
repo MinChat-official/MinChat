@@ -75,6 +75,10 @@ data class MinchatUser(
 
 	override fun hashCode(): Int = data.hashCode()
 
+	/** Returns true if this user is allowed to message the given channel. */
+	fun canMessageChannel(channel: MinchatChannel) =
+		data.canMessageChannel(channel.data)
+
 	/**
 	 * Copies this [MinchatUser] object, allowing to override some of its data values.
 	 */
