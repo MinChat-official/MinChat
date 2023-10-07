@@ -187,19 +187,22 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 					margin(Style.layoutMargin)
 
 					if (!latestVersion.isCompatibleWith(MINCHAT_VERSION)) {
-						addLabel("The current version is incompatible with the official MinChat server!")
-							.pad(Style.layoutPad).row()
-						addLabel("You will likely be unable to chat until you update!")
-							.color(Color.red).pad(Style.layoutPad)
-					} else {
-						addLabel("The current version may not be fully compatible with the official MinChat server.")
+						addLabel("The current version is incompatible with the official MinChat server!", wrap = true)
 							.pad(Style.layoutPad)
+							.growX().row()
+						addLabel("You will likely be unable to chat until you update!", wrap = true)
+							.color(Color.red).pad(Style.layoutPad)
+							.growX()
+					} else {
+						addLabel("The current version may not be fully compatible with the official MinChat server.", wrap = true)
+							.pad(Style.layoutPad)
+							.growX()
 					}
 				}.fillX().pad(Style.layoutPad).row()
 
 				// changelog
 				addTable(Style.surfaceBackground) {
-					margin(Style.layoutMargin)
+					top().margin(Style.layoutMargin)
 
 					var showChangelog = false
 					textToggle({ if (showChangelog) "Hide changelog" else "Show changelog" }, Style.ActionToggleButton) {
@@ -208,13 +211,16 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 						.margin(Style.buttonMargin)
 						.row()
 
-					hider(hideVertical = { !showChangelog }, hideHorizontal = { !showChangelog }) {
-						margin(Style.layoutMargin)
+					addMinTable {
+						clip = true
+						hider(hideVertical = { !showChangelog }, hideHorizontal = { !showChangelog }) {
+							margin(Style.layoutMargin)
 
-						scrollPane {
-							addChangelog()
-						}
-					}
+							limitedScrollPane(limitW = false, limitH = true) {
+								addChangelog()
+							}.grow()
+						}.grow()
+					}.maxHeight(500f)
 				}.fillX().pad(Style.layoutPad).row()
 
 				addTable(Style.surfaceBackground) {

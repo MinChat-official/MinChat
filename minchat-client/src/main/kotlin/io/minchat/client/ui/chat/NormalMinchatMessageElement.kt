@@ -31,7 +31,7 @@ class NormalMinchatMessageElement(
 
 	init {
 		clip = true
-		left().margin(6f)
+		left().margin(4f)
 
 		if (message.referencedMessageId != null) {
 			lateinit var authorLabel: Label
@@ -108,6 +108,7 @@ class NormalMinchatMessageElement(
 
 		addLabel(message.content + suffix, wrap = true, align = Align.left)
 			.growX().color(Style.foreground)
+			.padBottom(4f)
 	}
 
 	fun showUserDialog() {
