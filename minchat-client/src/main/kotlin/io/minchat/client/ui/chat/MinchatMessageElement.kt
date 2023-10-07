@@ -30,7 +30,6 @@ abstract class MinchatMessageElement(
 	private var tempDisableLayout = false
 
 	init {
-		clip = true
 		touchable = Touchable.enabled
 
 		addCaptureListener(object : InputListener() {
@@ -77,7 +76,7 @@ abstract class MinchatMessageElement(
 	}
 
 	/** Formats the timestamp to a user-readable form. */
-	protected fun formatTimestamp(): String {
+	internal fun formatTimestamp(timestamp: Long = this.timestamp): String {
 		val minutesSince = (System.currentTimeMillis() - timestamp) / 1000 / 60
 		if (minutesSince < 60 * 24) {
 			// less than 1 day ago

@@ -8,7 +8,7 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatSettings
-import io.minchat.client.misc.getIcon
+import io.minchat.client.misc.*
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.ui.dialog.*
@@ -30,15 +30,16 @@ class NormalMinchatMessageElement(
 	var referencedMessage: MinchatMessage? = null
 
 	init {
-		left().margin(4f)
+		clip = true
+		left().margin(6f)
 
 		if (message.referencedMessageId != null) {
 			lateinit var authorLabel: Label
 			lateinit var contentLabel: Label
 
 			// Top row: referenced message
-			addTable {
-				margin(layoutMargin)
+			addMinTable {
+				left().margin(layoutMargin)
 
 				addLabel("Reply to ")
 					.color(Color.darkGray)
@@ -46,6 +47,7 @@ class NormalMinchatMessageElement(
 					.color(Color.gray)
 					.also { authorLabel = it.get() }
 				addLabel("", ellipsis = "...", align = Align.left)
+					.left()
 					.growX()
 					.color(Color.lightGray)
 					.also { contentLabel = it.get() }
@@ -100,8 +102,11 @@ class NormalMinchatMessageElement(
 				.growX()
 				.color(Style.comment).padLeft(20f)
 		}.growX().padBottom(5f).row()
+
 		// Bottom row: message content
-		addLabel(message.content, wrap = true, align = Align.left)
+		val suffix = if (message.editTimestamp != null) "[#${Style.comment}] (edited)" else ""
+
+		addLabel(message.content + suffix, wrap = true, align = Align.left)
 			.growX().color(Style.foreground)
 	}
 

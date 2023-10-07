@@ -7,12 +7,12 @@ import arc.scene.ui.layout.Table
 import arc.util.Scaling
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.*
-import io.minchat.client.misc.*
-import io.minchat.client.ui.MinchatStyle
+import io.minchat.client.misc.Log
 import io.minchat.client.ui.chat.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
 import mindustry.gen.Icon
+import io.minchat.client.ui.MinchatStyle as Style
 
 /**
  * A context menu dialog that allows the user to
@@ -33,13 +33,21 @@ class MessageContextMenu(
 		buttons.remove()
 
 		cont.apply {
-			addTable(MinchatStyle.surfaceBackground) {
-				margin(MinchatStyle.layoutMargin)
+			addTable(Style.surfaceBackground) {
+				margin(Style.layoutMargin)
 
-				add(messageElement).minWidth(400f)
-			}.fill().pad(MinchatStyle.layoutPad).row()
+				add(messageElement)
+					.minWidth(400f)
+					.row()
 
-			hsplitter(MinchatStyle.foreground)
+				if (message.editTimestamp != null) {
+					addLabel("Edited: ${messageElement.formatTimestamp(message.editTimestamp!!)}")
+						.color(Style.comment)
+						.left()
+				}
+			}.fill().pad(Style.layoutPad).row()
+
+			hsplitter(Style.foreground)
 
 			addTable {
 				actionTable = this
@@ -50,19 +58,18 @@ class MessageContextMenu(
 			Core.app.clipboardText = messageElement.message.content
 		}
 
+		action(Icon.chat, "Reply") {
+			chat.setReplyMessage(message)
+			hide()
+		}
 		if (Minchat.client.canEditMessage(messageElement.message)) {
-			action(Icon.chat, "Reply") {
-				chat.setReplyMessage(message)
-				hide()
-			}
-
 			// TODO admins can abuse this!!! They should not be able to edit other's messages, only delete them!!!
 			action(Icon.pencil, "Edit message") {
 				chat.setEditMessage(message)
 				hide()
 			}
 
-			action(Icon.trash.tint(MinchatStyle.red), "Delete message") {
+			action(Icon.trash.tint(Style.red), "Delete message") {
 				launch {
 					runCatching {
 						messageElement.message.delete()
@@ -82,18 +89,18 @@ class MessageContextMenu(
 
 	inline fun action(icon: Drawable?, text: String, crossinline listener: () -> Unit) {
 		actionTable.customButton({
-			margin(MinchatStyle.buttonMargin)
+			margin(Style.buttonMargin)
 
-			addLabel(text, MinchatStyle.Label).growX()
+			addLabel(text, Style.Label).growX()
 
 			if (icon != null) {
 				addImage(icon, Scaling.fit)
 					.minSize(30f).fill()
 					.padLeft(20f)
 			}
-		}, MinchatStyle.ActionButton) {
+		}, Style.ActionButton) {
 			listener()
-		}.pad(MinchatStyle.layoutPad).growX()
+		}.pad(Style.layoutPad).growX()
 			.row()
 	}
 }
