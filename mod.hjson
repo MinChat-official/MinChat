@@ -1,6 +1,6 @@
 name: "minchat"
 description: '''
-The first mod adding global mindustry chat.
+The first mod adding a global mindustry chat.
 
 THIS MOD IS CURRENTLY IN THE BETA-STAGE! YOU CAN USE IT BUT EXPECT VARIOUS BUGS AND RAPID CHANGES!
 You can see the roadmap in the "TODO.md" file on github!
@@ -14,7 +14,7 @@ There are various tutorials that will guide you through the user interface of th
 displayName: "MinChat Official"
 author: "Mnemotechnician"
 minGameVersion: "137"
-version: "v0.6.2-beta"
+version: "v0.6.3-beta"
 
 main: "io.minchat.client.MinchatMod"
 hidden: true

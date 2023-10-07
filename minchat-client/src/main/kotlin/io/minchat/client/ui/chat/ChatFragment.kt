@@ -23,13 +23,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import mindustry.Vars
 import mindustry.ui.Styles
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ConcurrentLinkedDeque
 import io.minchat.client.ui.MinchatStyle as Style
 
 class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentScope) {
 	@Volatile var currentChannel: MinchatChannel? = null
 
-	val notificationStack = ConcurrentLinkedQueue<Notification>()
+	val notificationStack = ConcurrentLinkedDeque<Notification>()
 
 	/** A bar displaying the current notification. */
 	lateinit var notificationBar: Table
@@ -217,6 +217,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					// Send the current message when the user presses shift+enter
 					it.keyDown(KeyCode.enter) {
 						if (it.content.isEmpty()) return@keyDown
+						if (sendButton.isDisabled) return@keyDown
 						if (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight)) {
 							confirmCurrentMessage()
 						}
@@ -325,6 +326,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		} else {
 			notificationBar.color.a = 0f
 		}
+
+		updateChatbox()
 	}
 
 	/**
@@ -333,7 +336,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 */
 	fun notification(text: String, maxTime: Long) =
 		Notification(text, maxTime * 1000)
-			.also { notificationStack.add(it) }
+			.also { notificationStack.addFirst(it) }
 
 	/**
 	 * Adds a message to the list of messages.
@@ -559,6 +562,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		}
 	}
 
+	/** Lifecycle function to update the chat field and the send message button. */
 	fun updateChatbox() {
 		val channel = currentChannel
 		val chatDisabled = when {
