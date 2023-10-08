@@ -52,6 +52,7 @@ class CacheService(
 	 * or if rest returns null while searching for the entity.
 	 */
 	inline suspend fun <reified T> getOrNull(id: Long, restFallback: Boolean = true): T? {
+		// Note: data is ALWAYS a common entity type.
 		var data: Any? = when (T::class) {
 			Message::class, MinchatMessage::class -> messageCache[id]
 			User::class, MinchatUser::class -> userCache[id]
@@ -62,11 +63,15 @@ class CacheService(
 		if (data == null) {
 			if (restFallback) {
 				data = when (T::class) {
-					Message::class, MinchatMessage::class -> minchatClient.getMessageOrNull(id)
-					User::class, MinchatUser::class -> minchatClient.getUserOrNull(id)
-					Channel::class, MinchatChannel::class -> minchatClient.getChannelOrNull(id)
+					Message::class, MinchatMessage::class ->
+						minchatClient.getMessageOrNull(id)?.data
+					User::class, MinchatUser::class ->
+						minchatClient.getUserOrNull(id)?.data
+					Channel::class, MinchatChannel::class ->
+						minchatClient.getChannelOrNull(id)?.data
 					else -> error("guh")
 				}
+				data?.let { set(it) }
 			} else {
 				return null
 			}
@@ -83,7 +88,7 @@ class CacheService(
 				is User -> data.withClient(minchatClient) as T
 				is Message -> data.withClient(minchatClient) as T
 				is Channel -> data.withClient(minchatClient) as T
-				else -> error("guh")
+				else -> error("guh entity is $data you dumbfuck")
 			}
 		}
 	}
