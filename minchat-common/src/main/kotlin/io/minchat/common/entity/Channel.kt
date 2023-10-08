@@ -32,9 +32,9 @@ data class Channel(
 		EVERYONE("everyone"),
 		/** Only logged-in users can access. */
 		LOGGED_IN("logged-in users"),
-		/** Only moderators or higher can access (TODO: not supported yet) */
+		/** Only moderators or higher can access. */
 		MODERATORS("moderators only"),
-		/** Only admins can access (TODO: not supported yet) */
+		/** Only admins can access. */
 		ADMINS("admins only");
 
 		fun isApplicableTo(role: User.RoleBitSet?) = when (this) {
