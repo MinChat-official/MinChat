@@ -185,11 +185,39 @@ class ChannelModule : MinchatServerModule() {
 			get(Route.Channel.all) {
 				newSuspendedTransaction {
 					val list = Channels.selectAll()
-						.orderBy(Channels.id to SortOrder.ASC)
+						.orderBy(Channels.order to SortOrder.ASC, Channels.id to SortOrder.ASC)
 						.toList()
 						.map { Channels.createEntity(it) }
 					
 					call.respond(list)
+				}
+			}
+
+			get(Route.Channel.allGroups) {
+				newSuspendedTransaction {
+					// Get all available groups in the raw form (without creating entities yet)
+					val rawGroups = ChannelGroups.selectAll()
+						.orderBy(ChannelGroups.order to SortOrder.ASC, ChannelGroups.id to SortOrder.ASC)
+						.toList()
+
+					// Get all channels and associate them with the groups
+					val groups = Channels.selectAll()
+						.orderBy(Channels.order to SortOrder.ASC, Channels.id to SortOrder.ASC)
+						.toList()
+						.map { Channels.createEntity(it) }
+						.groupBy { it.groupId }
+						.map { (groupId, channels) ->
+							if (groupId == null) {
+								ChannelGroup.GLOBAL.copy(channels = channels)
+							} else {
+								// Create the respective group entities with these channels, or fall back to global.
+								rawGroups.find { it[ChannelGroups.id].value == groupId }
+									?.let { ChannelGroups.createEntity(it, channels) }
+									?: ChannelGroup.GLOBAL.copy(channels = channels)
+							}
+						}
+
+					call.respond(groups)
 				}
 			}
 		}

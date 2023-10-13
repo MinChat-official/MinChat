@@ -1,5 +1,6 @@
 package io.minchat.common
 
+import io.minchat.common.entity.ChannelGroup
 import io.minchat.common.event.Event
 import io.minchat.common.request.*
 
@@ -92,6 +93,14 @@ object Route {
 		 * Response: a list of [Channel] objects.
 		 */
 		val all = to("all").replace("/{id}", "")
+
+		/**
+		 * GET.
+		 * Unlike most subroutes in this route, this one does not acceot an ID parameter.
+		 *
+		 * Response: a list of [ChannelGroup] objects.
+		 */
+		val allGroups = to("all-groups")
 
 		/** 
 		 * GET. 

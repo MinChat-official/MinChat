@@ -11,6 +11,11 @@ object Channels : MinchatEntityTable<Channel>() {
 	val viewMode = enumeration<AccessMode>("view-mode").default(AccessMode.EVERYONE)
 	val sendMode = enumeration<AccessMode>("send-mode").default(AccessMode.LOGGED_IN)
 
+	val type = enumeration<Channel.Type>("type").default(Channel.Type.NORMAL)
+	val groupId = reference("group-id", ChannelGroups).nullable()
+
+	val order = integer("order").default(0)
+
 	override fun createEntity(row: ResultRow) =
 		Channel(
 			id = row[Channels.id].value,
@@ -18,6 +23,11 @@ object Channels : MinchatEntityTable<Channel>() {
 			description = row[description],
 
 			viewMode = row[viewMode],
-			sendMode = row[sendMode]
+			sendMode = row[sendMode],
+
+			type = row[type],
+			groupId = row[groupId]?.value,
+
+			order = row[order]
 		)
 }
