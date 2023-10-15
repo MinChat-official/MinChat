@@ -16,6 +16,11 @@ object Channels : MinchatEntityTable<Channel>() {
 
 	val order = integer("order").default(0)
 
+	/** Only applicable to DM channels. */
+	val user1 = reference("user1", Users)
+	/** Only applicable to DM channels. */
+	val user2 = reference("user2", Users)
+
 	override fun createEntity(row: ResultRow) =
 		Channel(
 			id = row[Channels.id].value,
@@ -28,6 +33,9 @@ object Channels : MinchatEntityTable<Channel>() {
 			type = row[type],
 			groupId = row[groupId]?.value,
 
-			order = row[order]
+			order = row[order],
+
+			user1id = row[user1]?.value,
+			user2id = row[user2]?.value
 		)
 }

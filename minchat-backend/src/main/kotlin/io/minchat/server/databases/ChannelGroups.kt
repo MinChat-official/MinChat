@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.*
 object ChannelGroups : MinchatEntityTable<ChannelGroup>() {
 	val name = varchar("name", ChannelGroup.nameLength.endInclusive)
 	val description = varchar("description", ChannelGroup.descriptionLength.endInclusive)
-	val type = enumeration<ChannelGroup.Type>("type").default(ChannelGroup.Type.NORMAL)
 
 	val order = integer("order").default(0)
 
@@ -28,14 +27,12 @@ object ChannelGroups : MinchatEntityTable<ChannelGroup>() {
 	}
 
 	/** Creates an entity from the specified result row, using the provided channels list. */
-	fun createEntity(row: ResultRow, channels: List<Channel>) =
+	open fun createEntity(row: ResultRow, channels: List<Channel>) =
 		ChannelGroup(
 			id = row[id].value,
 			name = row[name],
 			description = row[description],
-			type = row[type],
 			channels = channels,
-
 			order = row[order]
 		)
 

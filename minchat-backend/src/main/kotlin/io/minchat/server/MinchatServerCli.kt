@@ -135,6 +135,7 @@ open class MinchatLauncher : Runnable {
 			UserModule(),
 			AuthModule(),
 			ChannelModule(),
+			ChannelGroupModule(),
 			MessageModule(),
 			GatewayModule()
 		).filter { it.name !in excludedModules }

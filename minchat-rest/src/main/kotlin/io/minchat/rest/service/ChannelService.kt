@@ -63,14 +63,22 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 	suspend fun createChannel(
 		token: String,
 		name: String,
-		description: String
+		description: String,
+		viewMode: Channel.AccessMode,
+		sendMode: Channel.AccessMode,
+		groupId: Long?,
+		order: Int
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.create)) {
 			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(ChannelCreateRequest(
 				name = name,
-				description = description
+				description = description,
+				viewMode = viewMode,
+				sendMode = sendMode,
+				groupId = groupId,
+				order = order
 			))
 		}.body<Channel>()
 	}
@@ -80,14 +88,22 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		id: Long,
 		token: String,
 		newName: String?,
-		newDescription: String?
+		newDescription: String?,
+		newViewMode: Channel.AccessMode?,
+		newSendMode: Channel.AccessMode?,
+		newGroupId: Long?,
+		newOrder: Int
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.edit, id)) {
 			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(ChannelModifyRequest(
 				newName = newName,
-				newDescription = newDescription
+				newDescription = newDescription,
+				newViewMode = newViewMode,
+				newSendMode = newSendMode,
+				newGroupId = newGroupId,
+				newOrder = newOrder
 			))
 		}.body<Channel>()
 	}

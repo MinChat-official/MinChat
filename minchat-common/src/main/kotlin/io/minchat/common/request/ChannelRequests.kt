@@ -1,12 +1,17 @@
 package io.minchat.common.request
 
+import io.minchat.common.entity.Channel
 import kotlinx.serialization.Serializable
 
 /** Admin-only request to create a channel. */
 @Serializable
 data class ChannelCreateRequest(
 	val name: String,
-	val description: String
+	val description: String,
+	val viewMode: Channel.AccessMode,
+	val sendMode: Channel.AccessMode,
+	val order: Int,
+	val groupId: Long?
 )
 
 /** 
@@ -16,7 +21,11 @@ data class ChannelCreateRequest(
 @Serializable
 data class ChannelModifyRequest(
 	val newName: String?,
-	val newDescription: String?
+	val newDescription: String?,
+	val newViewMode: Channel.AccessMode?,
+	val newSendMode: Channel.AccessMode?,
+	val newOrder: Int?,
+	val newGroupId: Long?
 )
 
 /** Admin-only request to delete a channel. */

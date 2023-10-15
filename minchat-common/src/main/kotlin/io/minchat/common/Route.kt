@@ -1,6 +1,5 @@
 package io.minchat.common
 
-import io.minchat.common.entity.ChannelGroup
 import io.minchat.common.event.Event
 import io.minchat.common.request.*
 
@@ -94,14 +93,6 @@ object Route {
 		 */
 		val all = to("all").replace("/{id}", "")
 
-		/**
-		 * GET.
-		 * Unlike most subroutes in this route, this one does not acceot an ID parameter.
-		 *
-		 * Response: a list of [ChannelGroup] objects.
-		 */
-		val allGroups = to("all-groups")
-
 		/** 
 		 * GET. 
 		 * Response: a [Channel] object.
@@ -144,6 +135,43 @@ object Route {
 		/** 
 		 * POST. Requires authorization and admin access.
 		 * Body: [ChannelDeleteRequest]. 
+		 */
+		val delete = to("delete")
+	}
+
+	/** Accepts an {id} request parameter. */
+	object ChannelGroup : MinchatRoute("channel-group/{id}") {
+		/**
+		 * GET.
+		 * Unlike most subroutes in this route, this one does not acceot an ID parameter.
+		 *
+		 * Response: a list of [ChannelGroup] objects.
+		 */
+		val all = to("all")
+
+		/**
+		 * GET.
+		 * Response: a [ChannelGroup] object.
+		 */
+		val fetch = to()
+
+		/**
+		 * POST. Requires authorization and admin access.
+		 * Unlike most subroutes in this route, this one does not acceot an ID parameter.
+		 *
+		 * Body: [ChannelCreateRequest].
+		 * Response: a [Channel] object.
+		 */
+		val create = to("new").replace("/{id}", "")
+		/**
+		 * POST. Requires authorization and admin access.
+		 * Body: [ChannelModifyRequest].
+		 * Response: an updated [Channel] object.
+		 */
+		val edit = to("edit")
+		/**
+		 * POST. Requires authorization and admin access.
+		 * Body: [ChannelDeleteRequest].
 		 */
 		val delete = to("delete")
 	}

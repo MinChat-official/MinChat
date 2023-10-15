@@ -120,6 +120,10 @@ class ChannelModule : MinchatServerModule() {
 					val channelRow = Channels.insert {
 						it[name] = channelName
 						it[description] = data.description
+						it[viewMode] = data.viewMode
+						it[sendMode] = data.sendMode
+						it[order] = data.order
+						it[groupId] = data.groupId
 					}.resultedValues!!.first()
 
 					val channel = Channels.createEntity(channelRow)
@@ -151,6 +155,15 @@ class ChannelModule : MinchatServerModule() {
 						}
 						data.newDescription?.let { newDescription ->
 							it[description] = newDescription
+						}
+						data.newViewMode?.let { newViewMode ->
+							it[viewMode] = newViewMode
+						}
+						data.newSendMode?.let { newSendMode ->
+							it[sendMode] = newSendMode
+						}
+						data.newOrder?.let { newOrder ->
+							it[order] = newOrder
 						}
 					}.throwIfNotFound { "no such channel." }
 
@@ -185,39 +198,15 @@ class ChannelModule : MinchatServerModule() {
 			get(Route.Channel.all) {
 				newSuspendedTransaction {
 					val list = Channels.selectAll()
-						.orderBy(Channels.order to SortOrder.ASC, Channels.id to SortOrder.ASC)
+						.orderBy(
+							Channels.groupId to SortOrder.ASC,
+							Channels.order to SortOrder.ASC,
+							Channels.id to SortOrder.ASC
+						)
 						.toList()
 						.map { Channels.createEntity(it) }
 					
 					call.respond(list)
-				}
-			}
-
-			get(Route.Channel.allGroups) {
-				newSuspendedTransaction {
-					// Get all available groups in the raw form (without creating entities yet)
-					val rawGroups = ChannelGroups.selectAll()
-						.orderBy(ChannelGroups.order to SortOrder.ASC, ChannelGroups.id to SortOrder.ASC)
-						.toList()
-
-					// Get all channels and associate them with the groups
-					val groups = Channels.selectAll()
-						.orderBy(Channels.order to SortOrder.ASC, Channels.id to SortOrder.ASC)
-						.toList()
-						.map { Channels.createEntity(it) }
-						.groupBy { it.groupId }
-						.map { (groupId, channels) ->
-							if (groupId == null) {
-								ChannelGroup.GLOBAL.copy(channels = channels)
-							} else {
-								// Create the respective group entities with these channels, or fall back to global.
-								rawGroups.find { it[ChannelGroups.id].value == groupId }
-									?.let { ChannelGroups.createEntity(it, channels) }
-									?: ChannelGroup.GLOBAL.copy(channels = channels)
-							}
-						}
-
-					call.respond(groups)
 				}
 			}
 		}

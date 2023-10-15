@@ -7,7 +7,7 @@ import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.*
-import io.minchat.common.entity.User
+import io.minchat.common.entity.*
 import io.minchat.rest.entity.*
 import io.minchat.rest.ratelimit.*
 import io.minchat.rest.service.*
@@ -45,6 +45,7 @@ class MinchatRestClient(
 	val rootService = RootService(baseUrl, httpClient)
 	val userService = UserService(baseUrl, httpClient)
 	val channelService = ChannelService(baseUrl, httpClient)
+	val channelGroupService = ChannelGroupService(baseUrl, httpClient)
 	val messageService = MessageService(baseUrl, httpClient)
 
 	var cache = CacheService(baseUrl, this)
@@ -169,6 +170,16 @@ class MinchatRestClient(
 			.map { it.withClient(this) }
 
 	/**
+	 * Fetches all channels registered on the server.
+	 *
+	 * For the caching approach, try `cache.channelgroupCache.values`
+	 */
+	suspend fun getAllChannelGroups() =
+		channelGroupService.getAllGroups()
+			.onEach(cache::set)
+			.map { it.withClient(this) }
+
+	/**
 	 * Fetches the message with the specified ID and updates the cache.
 	 *
 	 * For the caching version of this method, see [cache].
@@ -187,6 +198,26 @@ class MinchatRestClient(
 	suspend fun getMessageOrNull(id: Long) = runCatching {
 		getMessage(id)
 	}.getOrNull()
+
+	/**
+	 * Fetches the channel group with the specified ID, returns null if it doesn't exist.
+	 * This method also updates the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
+	suspend fun getChannelGroupOrNull(id: Long) = runCatching {
+		getChannelGroup(id)
+	}.getOrNull()
+
+	/**
+	 * Fetches the channel group with the specified ID and updates the cache.
+	 *
+	 * For the caching version of this method, see [cache].
+	 */
+	suspend fun getChannelGroup(id: Long) =
+		channelGroupService.getGroup(id)
+			.also(cache::set)
+			.withClient(this)
 
 	/** 
 	 * Fetches messages from the specified channel.
@@ -210,10 +241,21 @@ class MinchatRestClient(
 			.withClient(this)
 
 	/** Creates a new channel. Requires a logged-in admin account. */
-	suspend fun createChannel(name: String, description: String) =
+	suspend fun createChannel(
+		name: String,
+		description: String,
+		viewMode: Channel.AccessMode,
+		sendMode: Channel.AccessMode,
+		groupId: Long?,
+		order: Int
+	) =
 		channelService.createChannel(
 			name = name,
 			description = description,
+			sendMode = sendMode,
+			viewMode = viewMode,
+			order = order,
+			groupId = groupId,
 			token = account().token
 		).also(cache::set).withClient(this)
 	
@@ -239,8 +281,22 @@ class MinchatRestClient(
 	suspend fun editChannel(
 		id: Long,
 		newName: String? = null,
-		newDescription: String? = null
-	) = channelService.editChannel(id, account().token, newName, newDescription)
+		newDescription: String? = null,
+		newViewMode: Channel.AccessMode? = null,
+		newSendMode: Channel.AccessMode? = null,
+		newType: Channel.Type? = null,
+		newOrder: Int? = null
+	) = channelService.editChannel(id, account().token, newName, newDescription, newViewMode, newSendMode, newType, newOrder)
+		.also(cache::set)
+		.withClient(this)
+
+	/** Edits the specified group. Requires a logged-in admin account. */
+	suspend fun editChannelGroup(
+		id: Long,
+		newName: String? = null,
+		newDescription: String? = null,
+		newOrder: Int? = null
+	) = channelGroupService.editGroup(id, account().token, newName, newDescription, newOrder)
 		.also(cache::set)
 		.withClient(this)
 	

@@ -6,20 +6,26 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Channel(
 	val id: Long,
-	val name: String,
-	val description: String,
-
-	val type: Type,
 	/** ID of the [ChannelGroup] this channel belongs to. May be null, which means this channel belongs to a global group. */
 	val groupId: Long?,
+
+	val name: String,
+	val description: String,
 
  	/** Users who can view messages in this channel. */
 	val viewMode: AccessMode,
 	/** Users who can send messages in this channel. [AccessMode.EVERYONE] has no effect here, only logged-in users can send messages. */
 	val sendMode: AccessMode,
 
-	/** The order of this channel as it should appear in the list. Lower order channels come first. */
-	val order: Int = 0
+	/** The order of this channel as it should appear within its group. Lower order channels come first. */
+	val order: Int = 0,
+
+	val type: Type,
+
+	/** ID of the first user in this (dm) channel. Non-null only if [this.Type] is Type.DM. */
+	val user1id: Long?,
+	/** ID of the second user in this (dm) channel. Non-null only if [this.Type] is Type.DM. */
+	val user2id: Long?
 ) {
 	fun canBeSeenBy(user: User) =
 		user.role.isAdmin || viewMode.isApplicableTo(user.role)
