@@ -38,13 +38,10 @@ class MessageModule : MinchatServerModule() {
 					val user = Users.getByToken(call.token())
 					user.checkAndUpdateUserPunishments()
 
-					Messages.update(opWithAdminAccess(user.isAdmin,
-						common = { Messages.id eq id },
-						userOnly = { Messages.author eq user.id }
-					)) {
+					Messages.update({ Messages.author eq user.id }) {
 						it[content] = data.newContent
 						it[editTimestamp] = System.currentTimeMillis()
-					}.throwIfNotFound { "A message matching the providen id-author pair does not exist (missing admin rights?)" }
+					}.throwIfNotFound { "A message matching the providen id-author pair does not exist." }
 					
 					Log.info { "Message $id sent by ${user.tag} was edited." }
 
