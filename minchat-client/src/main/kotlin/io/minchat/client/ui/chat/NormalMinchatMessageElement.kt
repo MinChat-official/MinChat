@@ -6,6 +6,7 @@ import arc.scene.ui.Label
 import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
+import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatSettings
 import io.minchat.client.misc.*
@@ -62,10 +63,12 @@ class NormalMinchatMessageElement(
 
 			launch {
 				referencedMessage = message.getReferencedMessage()?.also {
-					authorLabel.content = it.author.displayTag.let { "$it: "}
+					runUi {
+						authorLabel.content = it.author.displayTag.let { "$it: " }
 
-					contentLabel.content = it.content.replace("\n", " ").let {
-						if (it.length > 72) it.take(69) + "..." else it
+						contentLabel.content = it.content.replace("\n", " ").let {
+							if (it.length > 72) it.take(69) + "..." else it
+						}
 					}
 				}
 			}
