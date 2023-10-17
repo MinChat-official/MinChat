@@ -62,14 +62,14 @@ class MessageContextMenu(
 			chat.setReplyMessage(message)
 			hide()
 		}
-		if (Minchat.client.canEditMessage(messageElement.message)) {
+		if (Minchat.client.selfOrNull()?.canEditMessage(message) == true) {
 			action(Icon.pencil, "Edit message") {
 				chat.setEditMessage(message)
 				hide()
 			}
 		}
 
-		if (Minchat.client.canDeleteMessage(messageElement.message)) {
+		if (Minchat.client.selfOrNull()?.canDeleteMessage(message) == true) {
 			action(Icon.trash.tint(Style.red), "Delete message") {
 				launch {
 					runCatching {

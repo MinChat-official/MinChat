@@ -57,23 +57,22 @@ abstract class UserDialog(
 
 	/** Clears [actionsTable] and fills it using [action]. */
 	open fun createActions() {
+		val self = Minchat.client.selfOrNull()
 		clearActionRows()
 
-		// only add the "edit" and "delete" options if the user can be modified
-		if (user?.let(Minchat.client::canEditUser) ?: false) {
-			action("Edit") {
-				UserEditDialog().show()
-			}.disabled { user == null }
-
-			action("Delete") {
-				UserDeleteConfirmDialog().show()
-			}.disabled { user == null }
+		action("Edit") {
+			UserEditDialog().show()
+		}.disabled {
+			self != null && user?.let { self.canEditUser(it) } != true
 		}
 
-		// only add the punishments button if the logged-in user is an admin and the viewed user is not.
-		if (Minchat.client.account?.user?.let { self ->
-			(user?.role?.isAdmin?.not() ?: false) && self.role.isAdmin && self != user?.data
-		} ?: false) {
+		action("Delete") {
+			UserDeleteConfirmDialog().show()
+		}.disabled {
+			self != null && user?.let { self.canDeleteUser(it) } != true
+		}
+
+		if (self != null && user?.let { self.canModifyUserPunishments(it) } == true) {
 			nextActionRow()
 			action("Punishments") {
 				AdminPunishmentsDialog().show()

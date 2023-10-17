@@ -55,6 +55,9 @@ data class User(
 	fun canDeleteUser(other: User) =
 		(role.isAdmin && other.role < role) || id == other.id
 
+	fun canModifyUserPunishments(other: User) =
+		role.isModerator && other.role < role
+
 	fun canEditMessage(message: Message) =
 		message.canBeEditedBy(this)
 

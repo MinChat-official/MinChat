@@ -88,7 +88,7 @@ class MinchatRestClient(
 	
 	/** 
 	 * Returns the currently logged-in account without updating it, 
-	 * or null if this client is not loggec in.
+	 * or null if this client is not logged in.
 	 */
 	fun selfOrNull() = account?.user?.withClient(this)
 	

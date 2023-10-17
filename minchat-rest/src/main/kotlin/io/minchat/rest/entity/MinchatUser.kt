@@ -63,6 +63,9 @@ data class MinchatUser(
 	fun canDeleteMessage(message: MinchatMessage) =
 		data.canDeleteMessage(message.data)
 
+	fun canModifyUserPunishments(other: MinchatUser) =
+		data.canModifyUserPunishments(other.data)
+
 	/** 
 	 * Edits this user. 
 	 * Unless this user is same as [rest.account.user], requires admin rights. 
