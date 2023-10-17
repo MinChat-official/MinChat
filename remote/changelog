@@ -1,6 +1,7 @@
 #VERSION 0.7.0
 Implemented channel groups
 Implemented direct messages
+Improved the style and UX of modal dialogs
 Fixed a rare crash when reloading messages
 
 #VERSION 0.6.3

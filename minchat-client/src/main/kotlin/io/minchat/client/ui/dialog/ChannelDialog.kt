@@ -53,7 +53,7 @@ class ChannelDialog(
 		val channel = this@ChannelDialog.channel
 
 		init {
-			fields.addLabel("Editing channel #${channel.name}").row()
+			header.addLabel("Editing channel #${channel.name}").row()
 
 			// Common things
 			val nameField = addField("Name", false) {
@@ -119,7 +119,7 @@ class ChannelDialog(
 				abs(it % 27) + 'a'.code
 			}.joinToString("") { it.toChar().toString() }
 
-			fields.addLabel("""
+			header.addLabel("""
 				Are you sure you want to delete this channel?
 				
 				Make sure you are, or else some people may get very upset.

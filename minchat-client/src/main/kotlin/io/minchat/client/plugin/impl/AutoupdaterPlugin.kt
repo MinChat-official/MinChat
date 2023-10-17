@@ -172,7 +172,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 	inner class UpdatePromptDialog(val latestVersion: BuildVersion, val changelog: List<ChangelogEntry>?) : ModalDialog() {
 		init {
-			fields.apply {
+			header.apply {
 				addTable(Style.surfaceBackground) {
 					margin(Style.layoutMargin)
 					addLabel("""
@@ -263,7 +263,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 	inner class SimpleInfoDialog(val text: String) : ModalDialog() {
 		init {
-			fields.addTable(Style.surfaceBackground) {
+			header.addTable(Style.surfaceBackground) {
 				margin(Style.layoutMargin)
 
 				addLabel(text, wrap = true)
@@ -275,7 +275,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 	inner class RestartPromptDialog : ModalDialog() {
 		init {
-			fields.addTable(Style.surfaceBackground) {
+			header.addTable(Style.surfaceBackground) {
 				val begin = System.currentTimeMillis()
 
 				margin(Style.layoutMargin)

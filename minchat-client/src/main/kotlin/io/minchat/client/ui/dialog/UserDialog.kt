@@ -117,7 +117,7 @@ abstract class UserDialog(
 		val user = this@UserDialog.user!!
 
 		init {
-			fields.addLabel("Editing user ${user.tag} (${user.displayName}).", align = Align.left, wrap = true)
+			header.addLabel("Editing user ${user.tag} (${user.displayName}).", align = Align.left, wrap = true)
 				.fillX().row()
 
 			val usernameField = addField("New nickname", false) {
@@ -130,7 +130,6 @@ abstract class UserDialog(
 				hide()
 				launchWithStatus("Editing user ${user.username}...") {
 					runSafe {
-						// This will also update the minchat account
 						this@UserDialog.user = user.edit(
 							newNickname = usernameField.content
 						)
@@ -145,7 +144,7 @@ abstract class UserDialog(
 
 		init {
 			val confirmNumber = Random.nextInt(10_000, 100_000).toString()
-			fields.addLabel("""
+			header.addLabel("""
 				Are you sure you want to delete user "${user.nickname}?
 				Type "$confirmNumber" to confirm your intention.
 			""".trimIndent(), wrap = false).fillX().row()

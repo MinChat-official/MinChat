@@ -50,7 +50,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		val passwordField: TextField
 
 		init {
-			fields.addLabel("Enter your credentials:", Style.Label, align = Align.left)
+			header.addLabel("Enter your credentials:", Style.Label, align = Align.left)
 				.growX().pad(Style.layoutPad)
 				.row()
 
@@ -88,7 +88,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		val passwordConfirmField: TextField
 
 		init {
-			fields.addLabel("Create a new MinChat account:", Style.Label, align = Align.left)
+			header.addLabel("Create a new MinChat account:", Style.Label, align = Align.left)
 				.growX().pad(Style.layoutPad)
 				.row()
 			

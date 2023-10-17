@@ -103,9 +103,9 @@ object MinchatStyle {
 	object TextInput : TextField.TextFieldStyle(Styles.areaField) {
 		init {
 			fontColor = foreground
-			background = surfaceBackground.margin(layoutMargin)
-			focusedBackground = surfaceOver.margin(layoutMargin)
-			invalidBackground = surfaceBackground.tintMul(0.9f, 0.88f, 0.88f).margin(layoutMargin)
+			background = surfaceBackground.margin(buttonMargin)
+			focusedBackground = surfaceOver.margin(buttonMargin)
+			invalidBackground = surfaceBackground.tintMul(0.9f, 0.88f, 0.88f).margin(buttonMargin)
 		}
 	}
 }

@@ -13,7 +13,11 @@ import io.minchat.client.ui.MinchatStyle as Style
  * choose an action or confirm an action.
  */
 abstract class ModalDialog : Dialog() {
+	/** A table atop all other tables. */
+	lateinit var header: Table
+	/** A table containing the fields of this dialog. If you use [addField], it will contain two columns. */
 	lateinit var fields: Table
+	/** A table containing actions of this modal dialog. */
 	lateinit var actionsTable: Table
 	val actionRows = mutableListOf<Table>()
 
@@ -23,6 +27,11 @@ abstract class ModalDialog : Dialog() {
 
 		titleTable.remove()
 		buttons.remove()
+
+		cont.addTable {
+			left().defaults().growX()
+			header = this
+		}.fillX().row()
 
 		cont.addTable {
 			fields = this
@@ -35,12 +44,24 @@ abstract class ModalDialog : Dialog() {
 		clearActionRows()
 	}
 
-	protected fun addField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) =
+	protected fun addField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) = run {
+		fields.addTable(Style.surfaceBackground) {
+			addLabel(hint, Style.Label)
+				.color(Style.comment)
+				.grow()
+		}.pad(Style.layoutPad)
+			.margin(Style.layoutMargin)
+			.padTop(Style.layoutPad + 5f)
+			.fill()
+			.left()
+
 		fields.textField(style = Style.TextInput)
 			.growX().pad(Style.layoutPad)
+			.padTop(Style.layoutPad + 5f)
 			.minWidth(250f)
+			.fill()
 			.with {
-				it.hint = hint
+				it.hint = "<none>"
 				it.validator = validator
 				it.setAlignment(Align.left)
 				it.setPasswordCharacter('*') // the bullet character is absent in the font
@@ -48,6 +69,7 @@ abstract class ModalDialog : Dialog() {
 			}
 			.also { it.row() }
 			.get()
+	}
 
 	/** Removes all action rows and adds a default one. */
 	protected fun clearActionRows() {
