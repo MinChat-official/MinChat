@@ -46,7 +46,7 @@ abstract class ModalDialog : Dialog() {
 
 	protected fun addField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) = run {
 		fields.addTable(Style.surfaceBackground) {
-			addLabel(hint, Style.Label)
+			addLabel(hint, Style.Label, align = Align.left)
 				.color(Style.comment)
 				.grow()
 		}.pad(Style.layoutPad)
