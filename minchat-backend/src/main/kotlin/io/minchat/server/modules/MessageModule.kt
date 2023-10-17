@@ -37,17 +37,21 @@ class MessageModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					val user = Users.getByToken(call.token())
 					user.checkAndUpdateUserPunishments()
+					val oldMessage = Messages.getById(id)
 
-					Messages.update({ Messages.author eq user.id }) {
+					require(user.canEditMessage(oldMessage)) {
+						"You are not allowed to edit this message."
+					}
+
+					Messages.update({ (Messages.id eq id) and (Messages.author eq user.id) }) {
 						it[content] = data.newContent
 						it[editTimestamp] = System.currentTimeMillis()
 					}.throwIfNotFound { "A message matching the providen id-author pair does not exist." }
-					
-					Log.info { "Message $id sent by ${user.tag} was edited." }
 
-					val message = Messages.getById(id)
-					server.sendEvent(MessageModifyEvent(message))
-					call.respond(message)
+					val newMessage = Messages.getById(id)
+					Log.info { "${oldMessage.loggable()} was edited by ${user.loggable()}. Now: ${newMessage.loggable()}" }
+					server.sendEvent(MessageModifyEvent(newMessage))
+					call.respond(newMessage)
 				}
 			}
 

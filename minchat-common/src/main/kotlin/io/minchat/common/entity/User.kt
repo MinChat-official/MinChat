@@ -44,10 +44,26 @@ data class User(
 	}
 
 	fun canViewChannel(channel: Channel) =
-		role.isAdmin || channel.viewMode.isApplicableTo(role)
+		channel.canBeSeenBy(this)
 
 	fun canMessageChannel(channel: Channel) =
-		role.isAdmin || channel.sendMode.isApplicableTo(role)
+		channel.canBeMessagedBy(this)
+
+	fun canEditUser(other: User) =
+		(role.isAdmin && !other.role.isAdmin) || id == other.id
+
+	fun canDeleteUser(other: User) =
+		(role.isAdmin && other.role < role) || id == other.id
+
+	fun canEditMessage(message: Message) =
+		message.canBeEditedBy(this)
+
+	fun canDeleteMessage(message: Message) =
+		message.canBeDeletedBy(this)
+
+	/** Creates a short string containing data useful for logging. */
+	fun loggable() =
+		"User($id, @$tag)"
 
 	companion object {
 		/** The minimum amount of milliseconds a normal user has to wait before sending another message. */
@@ -73,7 +89,7 @@ data class User(
 
 	@Serializable
 	@JvmInline
-	value class RoleBitSet(val bits: Long) {
+	value class RoleBitSet(val bits: Long) : Comparable<RoleBitSet> {
 		val isAdmin get() = get(Masks.admin)
 		/** True for both admins and moderators. To check just for mod permissions, use `get(Masks.moderator)`. */
 		val isModerator get() = get(Masks.moderator) || isAdmin
@@ -98,6 +114,12 @@ data class User(
 			})
 		}
 
+		override fun compareTo(other: RoleBitSet) = when {
+			isAdmin != other.isAdmin -> isAdmin.compareTo(other.isAdmin)
+			isModerator != other.isModerator -> isModerator.compareTo(other.isModerator)
+			else -> 0
+		}
+
 		object Masks {
 			const val admin = 0b1L
 			const val moderator = 0x2L
@@ -105,6 +127,8 @@ data class User(
 
 		companion object {
 			val REGULAR_USER = RoleBitSet(0)
+			val MODERATOR = RoleBitSet(Masks.moderator)
+			val ADMIN = RoleBitSet(Masks.admin)
 			val ALL = RoleBitSet(0x7fffffffffffffff)
 		}
 	}

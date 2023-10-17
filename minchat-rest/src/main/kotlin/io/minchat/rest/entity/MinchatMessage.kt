@@ -52,6 +52,12 @@ data class MinchatMessage(
 		return rest.cache.getMessage(refId)
 	}
 
+	fun canBeEditedBy(user: MinchatUser) =
+		data.canBeEditedBy(user.data)
+
+	fun canBeDeletedBy(user: MinchatUser) =
+		data.canBeDeletedBy(user.data)
+
 	override fun toString(): String =
 		"MinchatMessage(id=$id, channelId=$channelId, authorId=$authorId, content=$content, timestamp=$timestamp)"
 

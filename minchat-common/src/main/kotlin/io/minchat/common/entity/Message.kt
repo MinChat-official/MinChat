@@ -15,6 +15,17 @@ data class Message(
 
 	val referencedMessageId: Long?
 ) {
+	fun canBeEditedBy(user: User) = user.id == author.id
+
+	fun canBeDeletedBy(user: User) = (user.id == author.id) || when (channel.type) {
+		Channel.Type.NORMAL -> user.role.isAdmin
+		Channel.Type.DM -> false
+	}
+
+	/** Creates a short string containing data useful for logging. */
+	fun loggable() =
+		"Message($id, #${channel.name}, @${author.tag}, ${content.length} chars)"
+
 	companion object {
 		val contentLength = 1..1024
 	}

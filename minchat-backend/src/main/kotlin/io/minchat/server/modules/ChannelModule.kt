@@ -80,11 +80,10 @@ class ChannelModule : MinchatServerModule() {
 
 					// Cooldown check
 					val cooldown = user.lastMessageTimestamp + User.messageRateLimit - System.currentTimeMillis()
-					if (cooldown > 0 && !user.role.isAdmin) {
+					if (cooldown > 0) {
 						tooManyRequests("Wait $cooldown milliseconds before sending another message.")
 					}
 
-					// Access check
 					if (!user.canMessageChannel(channel)) {
 						accessDenied("You role is too low to send messages in this channel.")
 					}
@@ -96,8 +95,8 @@ class ChannelModule : MinchatServerModule() {
 						it[lastMessageTimestamp] = message.timestamp
 					}
 
+					Log.lifecycle { "A new message was sent by ${user.loggable()} in ${channel.loggable()}: ${message.loggable()}" }
 					call.respond(message)
-					
 					server.sendEvent(MessageCreateEvent(message))
 				}
 			}
@@ -127,7 +126,7 @@ class ChannelModule : MinchatServerModule() {
 					}.resultedValues!!.first()
 
 					val channel = Channels.createEntity(channelRow)
-					Log.info { "A new channel was created: #${channel.name}" }
+					Log.info { "A new channel was created: ${channel.loggable()}" }
 
 					call.respond(channel)
 					server.sendEvent(ChannelCreateEvent(channel))
@@ -147,7 +146,12 @@ class ChannelModule : MinchatServerModule() {
 				}
 
 				newSuspendedTransaction {
-					call.requireAdmin()
+					val oldChannel = Channels.getById(id)
+					val invokingUser = Users.getByToken(call.token())
+
+					if (!oldChannel.canBeEditedBy(invokingUser)) {
+						accessDenied("You cannot edit this channel.")
+					}
 
 					Channels.update({ Channels.id eq id }) {
 						newName?.let { newName ->
@@ -170,9 +174,8 @@ class ChannelModule : MinchatServerModule() {
 						}
 					}.throwIfNotFound { "no such channel." }
 
-					Log.info { "Channel $id was edited." }
-
 					val newChannel = Channels.getById(id)
+					Log.info { "${oldChannel.loggable()} was edited by ${invokingUser.loggable()}. Now: ${newChannel.loggable()}" }
 					call.respond(newChannel)
 					server.sendEvent(ChannelModifyEvent(newChannel))
 				}
@@ -183,17 +186,22 @@ class ChannelModule : MinchatServerModule() {
 				call.receive<ChannelDeleteRequest>()
 
 				transaction {
-					call.requireAdmin()
+					val oldChannel = Channels.getById(channelId)
+					val invokingUser = Users.getByToken(call.token())
+
+					if (!oldChannel.canBeDeletedBy(invokingUser)) {
+						accessDenied("You cannot delete this channel.")
+					}
 
 					Channels.deleteWhere { with(it) { Channels.id eq channelId } }.throwIfNotFound { "no such channel." }
 
 					// also actually delete all associated messages
 					Messages.deleteWhere { with(it) { channel eq channelId } }
+
+					Log.info { "${oldChannel.loggable()} was deleted by ${invokingUser.loggable()}" }
 				}
 
 				call.response.statusOk()
-
-				Log.info { "Channel $channelId was deleted." }
 
 				server.sendEvent(ChannelDeleteEvent(channelId))
 			}

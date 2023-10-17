@@ -44,12 +44,13 @@ class UserModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					val requestedBy = Users.getByToken(token)
 					requestedBy.checkAndUpdateUserPunishments(checkMute = false)
+					val oldUser = Users.getById(id)
 
-					Users.update(opWithAdminAccess(requestedBy.isAdmin,
-						common = { Users.id eq id },
-						userOnly = { Users.token eq token }
-					)) { row ->
-						// todo: support more fields
+					require(requestedBy.canEditUser(oldUser)) {
+						"You are not allowed to edit this user."
+					}
+
+					Users.update({ Users.id eq id }) { row ->
 						newNickname?.let {
 							row[Users.nickname] = it
 							// generate a new unique discriminator on name change
@@ -60,7 +61,7 @@ class UserModule : MinchatServerModule() {
 					val newUser = Users.getById(id)
 
 					call.respond(newUser)
-					Log.info { "User $id was modified." }
+					Log.info { "${oldUser.loggable()} was edited by ${requestedBy.loggable()}. Now: ${newUser.loggable()}" }
 					server.sendEvent(UserModifyEvent(newUser))
 				}
 			}
@@ -71,10 +72,14 @@ class UserModule : MinchatServerModule() {
 				val token = call.token()
 
 				transaction {
-					Users.update(opWithAdminAccess(Users.isAdminToken(token),
-						common = { Users.id eq id },
-						userOnly = { Users.token eq token }
-					)) {
+					val invokingUser = Users.getByToken(token)
+					val oldUser = Users.getById(id)
+
+					require(invokingUser.canDeleteUser(oldUser)) {
+						"You are not allowed to delete this user."
+					}
+
+					Users.update({ Users.id eq id }) {
 						it[Users.username] = Constants.deletedAccountName
 						it[Users.token] = "" // token() will fail if an empty string is provided
 						it[Users.passwordHash] = Constants.deletedAccountPasswordHash
@@ -82,10 +87,10 @@ class UserModule : MinchatServerModule() {
 						it[Users.discriminator] = 0
 						it[Users.isDeleted] = true
 					}.throwIfNotFound { "user with the provide id-token pair does not exist." }
+
+					Log.info { "${oldUser.loggable()} was deleted by ${invokingUser.loggable()}" }
 				}
 				call.response.statusOk()
-
-				Log.info { "User $id was deleted." }
 
 				// getById would throw an exception since the user is already deleted
 				server.sendEvent(UserModifyEvent(
@@ -112,7 +117,7 @@ class UserModule : MinchatServerModule() {
 						it[muteReason] = request.newMute?.reason
 					} // hopefully no need to validate
 
-					Log.info { "${user.username} had their punishments modified." }
+					Log.info { "${user.loggable()}'s punishments were modified by ${caller.loggable()}" }
 
 					val newUser = Users.getById(id)
 					call.respond(newUser)

@@ -19,6 +19,22 @@ class MinchatChannelGroup(
 	override suspend fun fetch(): MinchatChannelGroup {
 		return rest.getChannelGroup(id)
 	}
+
+	fun canBeEditedBy(user: MinchatUser) =
+		data.canBeEditedBy(user.data)
+
+	fun canBeDeletedBy(user: MinchatUser) =
+		data.canBeDeletedBy(user.data)
+
+	/** Requires admin rights. */
+	suspend fun edit(
+		newName: String = data.name,
+		newDescription: String = data.description,
+		newOrder: Int = data.order
+	) = rest.editChannelGroup(id, newName, newDescription, newOrder)
+
+	/** Requires admin rights. */
+	suspend fun delete() = rest.deleteChannelGroup(id)
 }
 
 fun ChannelGroup.withClient(client: MinchatRestClient)

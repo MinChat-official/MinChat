@@ -26,6 +26,10 @@ sealed class MinchatChannel(
 	override suspend fun fetch() =
 		rest.getChannel(id)
 
+	/** Deletes this channel. Requirements differ depending on the type of the channel. */
+	suspend fun delete() =
+		rest.deleteChannel(id)
+
 	/** Creates a message in this channel. */
 	suspend fun createMessage(content: String, referencedMessageId: Long? = null) =
 		rest.createMessage(id, content, referencedMessageId)
@@ -82,6 +86,18 @@ sealed class MinchatChannel(
 		}
 	}
 
+	fun canBeSeenBy(user: MinchatUser) =
+		data.canBeSeenBy(user.data)
+
+	fun canBeMessagedBy(user: MinchatUser) =
+		data.canBeMessagedBy(user.data)
+
+	fun canBeEditedBy(user: MinchatUser) =
+		data.canBeEditedBy(user.data)
+
+	fun canBeDeletedBy(user: MinchatUser) =
+		data.canBeDeletedBy(user.data)
+
 	override fun toString() =
 		"MinchatChannel(id=$id, name=$name, description=$description)"
 
@@ -92,10 +108,6 @@ sealed class MinchatChannel(
 	}
 
 	override fun hashCode(): Int = data.hashCode()
-
-	/** Returns true if the given user is allowed to message this channel. */
-	fun canBeMessagedBy(user: MinchatUser) =
-		data.canBeMessagedBy(user.data)
 
 	/**
 	 * Copies this [MinchatChannel] object, allowing to override some of its data values.
@@ -144,10 +156,6 @@ class NormalMinchatChannel(
 		newOrder: Int? = null
 	) =
 		rest.editChannel(id, newName, newDescription, newViewMode, newSendMode, newGroupId, newOrder)
-
-	/** Deletes this channel. Requires admin rights. */
-	suspend fun delete() =
-		rest.deleteChannel(id)
 }
 
 class MinchatDMChannel(
@@ -163,10 +171,6 @@ class MinchatDMChannel(
 		}
 	}
 
-	/** Requires the logged-in account to be a participant of this channel. */
-	suspend fun delete() =
-		rest.deleteChannel(id)
-
 	/** Tries to get the first user. Uses the cache. */
 	suspend fun getUser1() =
 		rest.cache.getUser(user1id)
@@ -174,6 +178,18 @@ class MinchatDMChannel(
 	/** Tries to get the second user. Uses the cache. */
 	suspend fun getUser2() =
 		rest.cache.getUser(user2id)
+
+	/**
+	 * Edits this Channel. Requires the logged-in user to be a member of this DM channel.
+	 *
+	 * This function returns a __new__ channel object.
+	 */
+	suspend fun edit(
+		newName: String? = null,
+		newDescription: String? = null,
+		newOrder: Int? = null
+	) =
+		rest.editChannel(id, newName, newDescription, null, null, null, newOrder)
 }
 
 fun Channel.withClient(rest: MinchatRestClient) =

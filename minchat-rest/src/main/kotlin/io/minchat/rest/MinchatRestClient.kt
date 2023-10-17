@@ -337,44 +337,9 @@ class MinchatRestClient(
 	suspend fun deleteMessage(id: Long) =
 		messageService.deleteMessage(id, account().token)
 
-	// canX methods
-	/**
-	 * Returns true if the currently logged-in user can edit the specified user.
-	 *
-	 * True is returned if the current user is an admin or is the same user as
-	 * the provided user.
-	 */
-	fun canEditUser(user: MinchatUser) =
-		selfOrNull()?.let {
-			it.id == user.id || it.role.isAdmin
-		} ?: false
-
-	/**
-	 * Returns true if and only if the currently logged-in user is an admin.
-	 */
-	@Suppress("UNUSED_PARAMETER")
-	fun canEditChannel(channel: MinchatChannel) =
-		selfOrNull()?.role?.isAdmin ?: false
-
-	/**
-	 * Returns true if the currently logged-in user can edit the specified message.
-	 *
-	 * True is returned if the current user is the author of the message.
-	 */
-	fun canEditMessage(message: MinchatMessage) =
-		selfOrNull()?.let {
-			message.author.id == it.id
-		} ?: false
-
-	/**
-	 * Returns true if the currently logged-in user can delete the specified message.
-	 *
-	 * True is returned if the current user is an admin or is the author of the message.
-	 */
-	fun canDeleteMessage(message: MinchatMessage) =
-		selfOrNull()?.let {
-			it.role.isAdmin || message.author.id == it.id
-		} ?: false
+	/** Deletes the specified channel group. Requires a logged-in admin account. */
+	suspend fun deleteChannelGroup(id: Long) =
+		channelGroupService.deleteGroup(id, account().token)
 
 	/** Makes sure the current account (token) is valid by sending a request to the server. */
 	suspend fun validateCurrentAccount(): Boolean {

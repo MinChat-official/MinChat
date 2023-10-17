@@ -39,6 +39,30 @@ data class MinchatUser(
 
 	override suspend fun fetch() = rest.getUser(id)
 
+	fun canViewChannel(channel: MinchatChannel) =
+		channel.data.canBeSeenBy(data)
+
+	fun canMessageChannel(channel: MinchatChannel) =
+		channel.data.canBeMessagedBy(data)
+
+	fun canEditChannel(channel: MinchatChannel) =
+		channel.data.canBeEditedBy(data)
+
+	fun canDeleteChannel(channel: MinchatChannel) =
+		channel.data.canBeDeletedBy(data)
+
+	fun canEditUser(other: MinchatUser) =
+		data.canEditUser(other.data)
+
+	fun canDeleteUser(other: MinchatUser) =
+		data.canDeleteUser(other.data)
+
+	fun canEditMessage(message: MinchatMessage) =
+		data.canEditMessage(message.data)
+
+	fun canDeleteMessage(message: MinchatMessage) =
+		data.canDeleteMessage(message.data)
+
 	/** 
 	 * Edits this user. 
 	 * Unless this user is same as [rest.account.user], requires admin rights. 
@@ -74,10 +98,6 @@ data class MinchatUser(
 	}
 
 	override fun hashCode(): Int = data.hashCode()
-
-	/** Returns true if this user is allowed to message the given channel. */
-	fun canMessageChannel(channel: MinchatChannel) =
-		data.canMessageChannel(channel.data)
 
 	/**
 	 * Copies this [MinchatUser] object, allowing to override some of its data values.

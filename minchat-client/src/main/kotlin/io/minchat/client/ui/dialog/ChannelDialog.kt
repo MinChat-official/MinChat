@@ -5,7 +5,7 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
 import io.minchat.common.entity.Channel
-import io.minchat.rest.entity.MinchatChannel
+import io.minchat.rest.entity.*
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.abs
 import kotlin.random.Random
@@ -35,44 +35,81 @@ class ChannelDialog(
 		addStat("View mode") { channel.viewMode.readableName }
 		addStat("Send mode") { channel.sendMode.readableName }
 
-		action("Close", action = ::hide)
-		// It is assumed that the admin status of a user cannot change while they see this dialog.
-		if (Minchat.client.canEditChannel(channel)) {
+		if (Minchat.client.selfOrNull()?.canEditChannel(channel) == true) {
 			action("Edit") {
 				ChannelEditDialog().show()
 			}
+		}
+		if (Minchat.client.selfOrNull()?.canDeleteChannel(channel) == true) {
 			action("Delete") {
 				ChannelDeleteConfirmDialog().show()
 			}
 		}
+
+		action("Close", action = ::hide)
 	}
 
 	inner class ChannelEditDialog : ModalDialog() {
+		val channel = this@ChannelDialog.channel
+
 		init {
 			fields.addLabel("Editing channel #${channel.name}").row()
 
+			// Common things
 			val nameField = addField("Name", false) {
 				it.length in Channel.nameLength
-			}.also {
-				it.content = channel.name
-			}
+			}.also { it.content = channel.name }
+
 			val descriptionField = addField("Description", false) {
 				it.length in Channel.descriptionLength
-			}.also {
-				it.content = channel.description
+			}.also { it.content = channel.description }
+
+			val orderField = addField("Order", false) {
+				it.toIntOrNull() != null
+			}.also { it.content = channel.order.toString() }
+
+			// Normal channel-specific things
+			if (channel is NormalMinchatChannel) {
+				val groupIdField = addField("Group ID", false) {
+					it.toLongOrNull() != null
+				}.also { it.content = channel.groupId.toString() }
+
+				val viewModeField = addField("View mode", false) { mode ->
+					Channel.AccessMode.values().any { it.name == mode.uppercase() }
+				}.also { it.content = channel.viewMode.toString() }
+
+				val sendModeField = addField("Send mode", false) { mode ->
+					Channel.AccessMode.values().any { it.name == mode.uppercase() }
+				}.also { it.content = channel.sendMode.toString() }
+
+				action("Confirm") {
+					hide()
+					launchSafeWithStatus("Editing channel #${channel.name}...") {
+						this@ChannelDialog.channel = channel.edit(
+							newName = nameField.content,
+							newDescription = descriptionField.content,
+							newOrder = orderField.content.toInt(),
+							newGroupId = groupIdField.content.toLong(),
+							newViewMode = viewModeField.content.uppercase().let(Channel.AccessMode::valueOf),
+							newSendMode = sendModeField.content.uppercase().let(Channel.AccessMode::valueOf)
+						)
+					}
+				}.disabled { !nameField.isValid || !descriptionField.isValid }
 			}
 
-			action("Confirm") {
-				hide()
-				launchWithStatus("Editing channel #${channel.name}...") {
-					runSafe {
-						channel = channel.edit(
+			// DM-specific things
+			if (channel is MinchatDMChannel) {
+				action("Confirm") {
+					hide()
+					launchSafeWithStatus("Editing DM channel #${channel.name}...") {
+						this@ChannelDialog.channel = channel.edit(
 							newName = nameField.content,
-							newDescription = descriptionField.content
+							newDescription = descriptionField.content,
+							newOrder = orderField.content.toInt()
 						)
 					}
 				}
-			}.disabled { !nameField.isValid || !descriptionField.isValid }
+			}
 		}
 	}
 
