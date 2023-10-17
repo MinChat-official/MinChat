@@ -11,6 +11,7 @@ import io.ktor.server.plugins.ratelimit.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.minchat.common.*
+import io.minchat.common.entity.User
 import io.minchat.server.databases.*
 import io.minchat.server.modules.*
 import io.minchat.server.util.*
@@ -237,7 +238,13 @@ open class DbManager : Runnable {
 					} ?: "<THIS WILL BE REPLACED>"
 					
 					transaction {
-						val row = Users.register(name, null, hash, isAdmin)
+						val row = Users.register(
+							name = name,
+							nickname = null,
+							passwordHash = hash,
+							if (isAdmin) User.RoleBitSet.ADMIN else User.RoleBitSet.REGULAR_USER
+						)
+
 						// if password generation was skipped, substitute the password hash in the db
 						if (password == null) {
 							Users.update({ Users.id eq row[Users.id] }) {
@@ -261,6 +268,7 @@ open class DbManager : Runnable {
 						println()
 					}
 				}
+
 				"sql" -> {
 					println("Launching the H2 SQL shell.\n\n")
 					org.h2.tools.Shell.main("-url", "jdbc:h2:file:${context.dbFile};ifexists=true")

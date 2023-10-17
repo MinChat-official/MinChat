@@ -15,8 +15,6 @@ object Users : MinchatEntityTable<User>() {
 
 	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
-	@Deprecated("This is to be moved to [role]", level = DeprecationLevel.WARNING)
-	val isAdmin = bool("admin").default(false)
 	/** The [RoleBitSet] of the user. */
 	val role = long("role").default(RoleBitSet.REGULAR_USER.bits)
 
@@ -61,7 +59,7 @@ object Users : MinchatEntityTable<User>() {
 			nickname = row[nickname],
 			discriminator = row[discriminator],
 			role = RoleBitSet(row[role]),
-			isAdmin = RoleBitSet(row[role]).isAdmin || row[isAdmin],
+			isAdmin = RoleBitSet(row[role]).isAdmin,
 
 			ban = if (row[bannedUntil] >= 0) User.Punishment(
 				expiresAt = row[bannedUntil],
@@ -94,7 +92,7 @@ object Users : MinchatEntityTable<User>() {
 
 	/** Returns true if the user with the provided token is an admin; false otherwise. */
 	fun isAdminToken(token: String) =
-		select { Users.token eq token }.firstOrNull()?.get(isAdmin) ?: false
+		select { Users.token eq token }.firstOrNull()?.get(role)?.let(::RoleBitSet)?.isAdmin ?: false
 
 	/**
 	 * Registers a new user.
@@ -107,7 +105,7 @@ object Users : MinchatEntityTable<User>() {
 		name: String,
 		nickname: String?,
 		passwordHash: String,
-		admin: Boolean
+		role: RoleBitSet
 	): ResultRow {
 		val salt = BCrypt.gensalt(12)
 		val hashedHash = BCrypt.hashpw(passwordHash, salt)
@@ -135,7 +133,7 @@ object Users : MinchatEntityTable<User>() {
 			it[token] = userToken
 
 			it[discriminator] = nextDiscriminator(nickname ?: name)
-			it[isAdmin] = admin
+			it[Users.role] = role.value
 
 			it[creationTimestamp] = System.currentTimeMillis()
 			it[lastLoginTimestamp] = System.currentTimeMillis()

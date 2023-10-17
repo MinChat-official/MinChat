@@ -14,7 +14,7 @@ data class User(
 
 	val role: RoleBitSet = RoleBitSet.REGULAR_USER,
 
-	@Deprecated("Will be removed later. Callers instead should check `role.isAdmin`.", level = DeprecationLevel.WARNING)
+	@Deprecated("Will be removed later. Callers instead should check `role.isAdmin`.", level = DeprecationLevel.ERROR)
 	val isAdmin: Boolean = role.isAdmin,
 	@Deprecated("Unused. To be removed in later versions of MinChat.", level = DeprecationLevel.ERROR)
 	val isBanned: Boolean = false,
@@ -93,6 +93,8 @@ data class User(
 	@Serializable
 	@JvmInline
 	value class RoleBitSet(val bits: Long) : Comparable<RoleBitSet> {
+		val value get() = bits
+
 		val isAdmin get() = get(Masks.admin)
 		/** True for both admins and moderators. To check just for mod permissions, use `get(Masks.moderator)`. */
 		val isModerator get() = get(Masks.moderator) || isAdmin

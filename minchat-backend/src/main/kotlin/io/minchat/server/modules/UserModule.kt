@@ -107,8 +107,9 @@ class UserModule : MinchatServerModule() {
 					val caller = Users.getByToken(token)
 					val user = Users.getById(id)
 
-					if (!caller.isAdmin) accessDenied("The provided token is not an admin token.")
-					if (user.isAdmin) accessDenied("The target user is an admin. Admins cannot be punished.")
+					require(caller.canModifyUserPunishments(user)) {
+						"You are not allowed to modify this user's punishments."
+					}
 
 					Users.update({ Users.id eq id }) {
 						it[bannedUntil] = request.newBan?.expiresAt ?: -1

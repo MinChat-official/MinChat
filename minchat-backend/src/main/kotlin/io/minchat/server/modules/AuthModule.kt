@@ -68,7 +68,7 @@ class AuthModule : MinchatServerModule() {
 						illegalInput("This username is already taken. Create a unique username; you will use it to log in later.")
 					}
 					
-					val userRow = Users.register(name, nickname, data.passwordHash, false)
+					val userRow = Users.register(name, nickname, data.passwordHash, User.RoleBitSet.REGULAR_USER)
 
 					UserRegisterRequest.Response(
 						token = userRow[Users.token],
