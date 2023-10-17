@@ -15,11 +15,14 @@ import io.minchat.client.ui.MinchatStyle as Style
 abstract class AbstractModalDialog : Dialog() {
 	/** A table atop all other tables. */
 	lateinit var header: Table
-	/** A table containing the fields of this dialog. If you use [addField], it will contain two columns. */
-	lateinit var fields: Table
+	/** A table containing the fields of this dialog. Normally contains two columns. */
+	lateinit var body: Table
 	/** A table containing actions of this modal dialog. */
 	lateinit var actionsTable: Table
 	val actionRows = mutableListOf<Table>()
+
+	var closeButtonText = "Cancel"
+	var minValueLabelWidth = 250f
 
 	init {
 		setFillParent(true)
@@ -34,7 +37,7 @@ abstract class AbstractModalDialog : Dialog() {
 		}.fillX().row()
 
 		cont.addTable {
-			fields = this
+			body = this
 		}.fillX().pad(Style.layoutPad).row()
 
 		cont.addTable {
@@ -44,8 +47,10 @@ abstract class AbstractModalDialog : Dialog() {
 		clearActionRows()
 	}
 
-	protected fun addField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) = run {
-		fields.addTable(Style.surfaceBackground) {
+	protected fun inputField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) = run {
+		body.row()
+
+		body.addTable(Style.surfaceBackground) {
 			addLabel(hint, Style.Label, align = Align.left)
 				.color(Style.comment)
 				.grow()
@@ -55,10 +60,10 @@ abstract class AbstractModalDialog : Dialog() {
 			.fill()
 			.left()
 
-		fields.textField(style = Style.TextInput)
+		body.textField(style = Style.TextInput)
 			.growX().pad(Style.layoutPad)
 			.padTop(Style.layoutPad + 5f)
-			.minWidth(250f)
+			.minWidth(minValueLabelWidth)
 			.fill()
 			.with {
 				it.hint = "<none>"
@@ -76,7 +81,7 @@ abstract class AbstractModalDialog : Dialog() {
 		actionsTable.clearChildren()
 		actionRows.clear()
 		nextActionRow()
-		action("Cancel", action = ::hide)
+		action(closeButtonText, action = ::hide)
 	}
 
 	/** Adds an action to the specified action row. */

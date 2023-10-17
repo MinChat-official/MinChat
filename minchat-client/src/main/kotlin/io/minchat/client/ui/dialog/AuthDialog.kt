@@ -28,7 +28,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		}
 
 		// login + register
-		headerTable.row().addTable {
+		header.row().addTable {
 			textButton({ if (user == null) "LOG IN" else "CHANGE ACCOUNT" }, Style.ActionButton) {
 				LoginDialog().show()
 			} //.disabled { user != null }
@@ -54,10 +54,10 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 
-			usernameField = addField("Username", false) {
+			usernameField = inputField("Username", false) {
 				it.trim().length in User.nameLength
 			}
-			passwordField = addField("Password", true) {
+			passwordField = inputField("Password", true) {
 				it.length in User.passwordLength
 			}
 
@@ -92,16 +92,16 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				.growX().pad(Style.layoutPad)
 				.row()
 			
-			usernameField = addField("Username", false) {
+			usernameField = inputField("Username", false) {
 				it.trim().length in User.nameLength
 			}
-			nicknameField = addField("Nickname (can be empty)", false) {
+			nicknameField = inputField("Nickname (can be empty)", false) {
 				it.isEmpty() || it.isNotBlank()
 			}
-			passwordField = addField("Confirm password", true) {
+			passwordField = inputField("Confirm password", true) {
 				it.length in User.passwordLength
 			}
-			passwordConfirmField = addField("Password", true) {
+			passwordConfirmField = inputField("Password", true) {
 				it == passwordField.content
 			}
 

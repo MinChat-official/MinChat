@@ -21,7 +21,7 @@ class ChannelDialog(
 	lateinit var channelLabel: Label
 
 	init {
-		headerTable.addTable(Style.surfaceBackground) {
+		header.addTable(Style.surfaceBackground) {
 			margin(Style.buttonMargin)
 			addLabel("#")
 			addLabel({ channel.name })
@@ -29,11 +29,11 @@ class ChannelDialog(
 				.scaleFont(1.1f)
 		}.minWidth(300f).growX().pad(Style.layoutPad)
 
-		addStat("Name") { channel.name }
-		addStat("ID") { channel.id.toString() }
-		addStat("Description") { channel.description }
-		addStat("View mode") { channel.viewMode.readableName }
-		addStat("Send mode") { channel.sendMode.readableName }
+		stat("Name") { channel.name }
+		stat("ID") { channel.id.toString() }
+		stat("Description") { channel.description }
+		stat("View mode") { channel.viewMode.readableName }
+		stat("Send mode") { channel.sendMode.readableName }
 
 		if (Minchat.client.selfOrNull()?.canEditChannel(channel) == true) {
 			action("Edit") {
@@ -45,8 +45,6 @@ class ChannelDialog(
 				ChannelDeleteConfirmDialog().show()
 			}
 		}
-
-		action("Close", action = ::hide)
 	}
 
 	inner class ChannelEditDialog : AbstractModalDialog() {
@@ -56,29 +54,29 @@ class ChannelDialog(
 			header.addLabel("Editing channel #${channel.name}").row()
 
 			// Common things
-			val nameField = addField("Name", false) {
+			val nameField = inputField("Name", false) {
 				it.length in Channel.nameLength
 			}.also { it.content = channel.name }
 
-			val descriptionField = addField("Description", false) {
+			val descriptionField = inputField("Description", false) {
 				it.length in Channel.descriptionLength
 			}.also { it.content = channel.description }
 
-			val orderField = addField("Order", false) {
+			val orderField = inputField("Order", false) {
 				it.toIntOrNull() != null
 			}.also { it.content = channel.order.toString() }
 
 			// Normal channel-specific things
 			if (channel is NormalMinchatChannel) {
-				val groupIdField = addField("Group ID", false) {
+				val groupIdField = inputField("Group ID", false) {
 					it.toLongOrNull() != null
 				}.also { it.content = channel.groupId.toString() }
 
-				val viewModeField = addField("View mode", false) { mode ->
+				val viewModeField = inputField("View mode", false) { mode ->
 					Channel.AccessMode.values().any { it.name == mode.uppercase() }
 				}.also { it.content = channel.viewMode.toString() }
 
-				val sendModeField = addField("Send mode", false) { mode ->
+				val sendModeField = inputField("Send mode", false) { mode ->
 					Channel.AccessMode.values().any { it.name == mode.uppercase() }
 				}.also { it.content = channel.sendMode.toString() }
 
@@ -127,7 +125,7 @@ class ChannelDialog(
 				Type "$confirmString" to confirm your intentions.
 			""".trimIndent(), wrap = true).fillX().row()
 
-			val confirmField = addField("Type $confirmString", false) {
+			val confirmField = inputField("Type $confirmString", false) {
 				it == confirmString
 			}
 

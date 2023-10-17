@@ -36,21 +36,21 @@ abstract class UserDialog(
 				"$time$reason"
 			} ?: "No"
 
-		headerTable.addTable(Style.surfaceBackground) {
+		header.addTable(Style.surfaceBackground) {
 			margin(Style.buttonMargin)
 			addLabel({ user?.tag ?: "Invalid User" })
 				.with { userLabel = it }
 				.scaleFont(1.1f)
 		}.growX().pad(layoutPad)
 
-		addStat("Username") { user?.username }
-		addStat("ID") { user?.id?.toString() }
-		addStat("Role") { user?.role?.readableName }
-		addStat("Banned") { user?.let { it.ban.toExplanation() } }
-		addStat("Muted") { user?.let { it.mute.toExplanation() } }
-		addStat("Messages sent") { user?.messageCount?.toString() }
-		addStat("Last active") { user?.lastMessageTimestamp?.let(::formatTimestamp) }
-		addStat("Registered") { user?.creationTimestamp?.let(::formatTimestamp) }
+		stat("Username") { user?.username }
+		stat("ID") { user?.id?.toString() }
+		stat("Role") { user?.role?.readableName }
+		stat("Banned") { user?.let { it.ban.toExplanation() } }
+		stat("Muted") { user?.let { it.mute.toExplanation() } }
+		stat("Messages sent") { user?.messageCount?.toString() }
+		stat("Last active") { user?.lastMessageTimestamp?.let(::formatTimestamp) }
+		stat("Registered") { user?.creationTimestamp?.let(::formatTimestamp) }
 
 		createActions()
 	}
@@ -120,7 +120,7 @@ abstract class UserDialog(
 			header.addLabel("Editing user ${user.tag} (${user.displayName}).", align = Align.left, wrap = true)
 				.fillX().row()
 
-			val usernameField = addField("New nickname", false) {
+			val usernameField = inputField("New nickname", false) {
 				it.length in 3..40
 			}.also {
 				it.content = user.nickname ?: user.username
@@ -149,7 +149,7 @@ abstract class UserDialog(
 				Type "$confirmNumber" to confirm your intention.
 			""".trimIndent(), wrap = false).fillX().row()
 
-			val confirmField = addField("Type $confirmNumber", false) {
+			val confirmField = inputField("Type $confirmNumber", false) {
 				it == confirmNumber
 			}
 
@@ -187,7 +187,7 @@ abstract class UserDialog(
 		}
 
 		fun update() {
-			fields.clearChildren()
+			body.clearChildren()
 			addPunishmentView(
 				"Ban",
 				"banned",
@@ -208,7 +208,7 @@ abstract class UserDialog(
 			getter: () -> User.Punishment?,
 			crossinline action: () -> Unit
 		) {
-			fields.addTable(Style.surfaceBackground) {
+			body.addTable(Style.surfaceBackground) {
 				defaults().left()
 
 				addLabel("$name status").pad(layoutPad).row()
@@ -240,19 +240,19 @@ abstract class UserDialog(
 			val punishment = property.get()
 
 			init {
-				fields.addLabel("You are modifying a punishment value of the user ${user.displayName}!", wrap = true)
+				body.addLabel("You are modifying a punishment value of the user ${user.displayName}!", wrap = true)
 					.pad(layoutPad)
 					.fillX()
 					.row()
 
-				val duration = addField("Duration (forever, 10m, 20h, 10d)", false) {
+				val duration = inputField("Duration (forever, 10m, 20h, 10d)", false) {
 					it.equals("forever", true) || it.parseUnitedDuration() != null
 				}
 				punishment?.expiresAt?.let {
 					duration.content = (it - System.currentTimeMillis()).toUnitedDuration()
 				}
 
-				val reason = addField("Reason", false) { true }
+				val reason = inputField("Reason", false) { true }
 				punishment?.reason?.let { reason.content = it }
 
 				action("Change") {
