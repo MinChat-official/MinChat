@@ -6,7 +6,7 @@ import io.minchat.rest.MinchatRestClient
 data class MinchatMessage(
 	val data: Message,
 	override val rest: MinchatRestClient
-) : MinchatEntity<MinchatMessage>() {
+) : AbstractMinchatEntity<MinchatMessage>() {
 	override val id by data::id
 	val channelId by data.channel::id
 	val authorId by data.author::id

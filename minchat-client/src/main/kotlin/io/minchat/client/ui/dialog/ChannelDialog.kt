@@ -17,7 +17,7 @@ import io.minchat.client.ui.MinchatStyle as Style
 class ChannelDialog(
 	var channel: MinchatChannel,
 	parentScope: CoroutineScope
-) : StatDialog(parentScope) {
+) : AbstractStatDialog(parentScope) {
 	lateinit var channelLabel: Label
 
 	init {
@@ -49,7 +49,7 @@ class ChannelDialog(
 		action("Close", action = ::hide)
 	}
 
-	inner class ChannelEditDialog : ModalDialog() {
+	inner class ChannelEditDialog : AbstractModalDialog() {
 		val channel = this@ChannelDialog.channel
 
 		init {
@@ -113,7 +113,7 @@ class ChannelDialog(
 		}
 	}
 
-	inner class ChannelDeleteConfirmDialog : ModalDialog() {
+	inner class ChannelDeleteConfirmDialog : AbstractModalDialog() {
 		init {
 			val confirmString = Random.nextBytes(15).map {
 				abs(it % 27) + 'a'.code

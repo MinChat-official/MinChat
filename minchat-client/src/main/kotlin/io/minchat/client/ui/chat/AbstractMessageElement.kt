@@ -16,7 +16,7 @@ import io.minchat.client.ui.MinchatStyle as Style
  * Displays a message in MinChat. It's not guaranteed that a message represented with this class actually exists
  * and/or visible to others.
  */
-abstract class MinchatMessageElement(
+abstract class AbstractMessageElement(
 	val addContextActions: Boolean = true
 ) : Table(Style.surfaceInner) {
 	abstract val timestamp: Long

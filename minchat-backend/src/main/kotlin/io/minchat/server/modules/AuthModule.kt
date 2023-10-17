@@ -15,7 +15,7 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 
-class AuthModule : MinchatServerModule() {
+class AuthModule : AbstractMinchatServerModule() {
 	override fun Application.onLoad() {
 		routing {
 			post(Route.Auth.login) {

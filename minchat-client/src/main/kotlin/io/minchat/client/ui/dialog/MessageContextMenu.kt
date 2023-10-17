@@ -23,7 +23,7 @@ class MessageContextMenu(
 	val message: MinchatMessage,
 	parentScope: CoroutineScope
 ) : Dialog(), CoroutineScope by parentScope {
-	val messageElement = NormalMinchatMessageElement(chat, message, false)
+	val messageElement = NormalMessageElement(chat, message, false)
 	lateinit var actionTable: Table
 
 	init {

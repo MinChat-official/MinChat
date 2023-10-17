@@ -4,7 +4,7 @@ import io.minchat.common.entity.*
 import io.minchat.server.databases.Channels.groupId
 import org.jetbrains.exposed.sql.*
 
-object ChannelGroups : MinchatEntityTable<ChannelGroup>() {
+object ChannelGroups : AbstractMinchatEntityTable<ChannelGroup>() {
 	val name = varchar("name", ChannelGroup.nameLength.endInclusive)
 	val description = varchar("description", ChannelGroup.descriptionLength.endInclusive)
 

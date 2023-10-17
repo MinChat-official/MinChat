@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.flow
 sealed class MinchatChannel(
 	val data: Channel,
 	override val rest: MinchatRestClient
-) : MinchatEntity<MinchatChannel>() {
+) : AbstractMinchatEntity<MinchatChannel>() {
 	override val id by data::id
 	/** ID of the [MinchatChannelGroup] this channel belongs to. May be null, which means this channel belongs to a global group. */
 	val groupId by data::groupId

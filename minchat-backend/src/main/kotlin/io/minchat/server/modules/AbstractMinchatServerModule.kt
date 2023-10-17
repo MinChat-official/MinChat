@@ -9,7 +9,7 @@ import org.jetbrains.exposed.sql.*
 import java.time.*
 import java.time.format.DateTimeFormatter
 
-abstract class MinchatServerModule {
+abstract class AbstractMinchatServerModule {
 	lateinit var server: ServerContext
 
 	val name = createServiceName()

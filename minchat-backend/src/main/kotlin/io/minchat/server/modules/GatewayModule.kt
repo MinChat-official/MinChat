@@ -16,7 +16,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 
-class GatewayModule : MinchatServerModule() {
+class GatewayModule : AbstractMinchatServerModule() {
 	val connections = Collections.synchronizedSet<Connection>(LinkedHashSet())
 	/** Events to send to the clients. */
 	val pendingEvents = ConcurrentLinkedQueue<Event>()

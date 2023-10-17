@@ -4,7 +4,7 @@ import io.minchat.server.util.notFound
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 
-abstract class MinchatEntityTable<T> : LongIdTable() {
+abstract class AbstractMinchatEntityTable<T> : LongIdTable() {
 	/** Returns a raw entity roq with the specified id, or throws an exception if it doesn't exist. */
 	fun getRawById(id: Long): ResultRow =
 		getRawByIdOrNull(id) ?: notFound("Entity with id $id was not found.")

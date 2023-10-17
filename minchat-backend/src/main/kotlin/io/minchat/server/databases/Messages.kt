@@ -3,7 +3,7 @@ package io.minchat.server.databases
 import io.minchat.common.entity.*
 import org.jetbrains.exposed.sql.*
 
-object Messages : MinchatEntityTable<Message>() {
+object Messages : AbstractMinchatEntityTable<Message>() {
 	val content = varchar("content", Message.contentLength.endInclusive)
 	val author = reference("author", Users)
 	val channel = reference("channel", Channels)

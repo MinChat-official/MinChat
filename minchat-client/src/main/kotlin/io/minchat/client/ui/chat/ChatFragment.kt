@@ -257,7 +257,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					is MinchatMessageCreate -> {
 						val message = event.message
 						if (message.channelId == currentChannel?.id && chatPane.isAtEnd) {
-							val element = NormalMinchatMessageElement(this@ChatFragment, message)
+							val element = NormalMessageElement(this@ChatFragment, message)
 							addMessage(element, 0.5f)
 						}
 					}
@@ -268,9 +268,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 							// Find and replace the old message element in its cell
 							val messageCell = chatContainer.cells.find {
 								// getAsOrNull won't work for some reason
-								(it.get() as? NormalMinchatMessageElement)?.message?.id == newMessage.id
+								(it.get() as? NormalMessageElement)?.message?.id == newMessage.id
 							}
-							messageCell.setElement<Element>(NormalMinchatMessageElement(this@ChatFragment, newMessage))
+							messageCell.setElement<Element>(NormalMessageElement(this@ChatFragment, newMessage))
 							chatContainer.invalidateHierarchy()
 						}
 					}
@@ -279,9 +279,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 						if (event.channelId == currentChannel?.id) {
 							// Play a shrinking animation and finally rremove the element.
 							chatContainer.children.find {
-								(it as? NormalMinchatMessageElement)?.message?.id == event.messageId
+								(it as? NormalMessageElement)?.message?.id == event.messageId
 							}?.let {
-								(it as NormalMinchatMessageElement).animateDisappear(1f)
+								(it as NormalMessageElement).animateDisappear(1f)
 							}
 						}
 					}
@@ -296,13 +296,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					is MinchatUserModify -> {
 						val newUser = event.user
 						chatContainer.cells.forEach {
-							val element = (it.get() as? NormalMinchatMessageElement)?.let { old ->
+							val element = (it.get() as? NormalMessageElement)?.let { old ->
 								old.takeIf { it.message.authorId == newUser.id }?.let {
-									NormalMinchatMessageElement(old.chat, old.message.copy(author = newUser.data))
+									NormalMessageElement(old.chat, old.message.copy(author = newUser.data))
 								}
 							} ?: return@forEach
 
-							it.setElement<NormalMinchatMessageElement>(element)
+							it.setElement<NormalMessageElement>(element)
 						}
 					}
 				}
@@ -345,7 +345,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	 * it will be scrolled down more to show the message.
 	 */
 	fun addMessage(
-		element: MinchatMessageElement,
+		element: AbstractMessageElement,
 		animationLength: Float = 1f,
 		autoscroll: Boolean = true
 	) = synchronized(chatContainer) {
@@ -415,29 +415,29 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				updateChatbox()
 
 				// take a sample and determine if the messages are from the same channel as before
-				val sameChannel = chatContainer.children.find { it is NormalMinchatMessageElement }
-					?.let { it as NormalMinchatMessageElement }
+				val sameChannel = chatContainer.children.find { it is NormalMessageElement }
+					?.let { it as NormalMessageElement }
 					?.message?.channelId == currentChannel?.id
 
 				if (forcibly || !sameChannel) {
 					// If not, replace everything and play an incrementing move-in animation
 					chatContainer.clearChildren()
 					messages.forEachIndexed { index, message ->
-						addMessage(NormalMinchatMessageElement(this@ChatFragment, message),
+						addMessage(NormalMessageElement(this@ChatFragment, message),
 							animationLength = 0.5f + 0.01f * (messages.size - index))
 					}
 				} else {
 					// Otherwise, immediately remove normal message elements that should not be here anymore
 					chatContainer.children.forEach { element ->
-						if (element !is NormalMinchatMessageElement) return@forEach
+						if (element !is NormalMessageElement) return@forEach
 						if (messages.none { it.similar(element.message) }) {
 							element.animateDisappear(0.5f)
 						}
 					}
 					// Then add all the missing message elements
 					messages.forEach { message ->
-						if (chatContainer.children.none { it is NormalMinchatMessageElement && it.message.similar(message) }) {
-							addMessage(NormalMinchatMessageElement(this@ChatFragment, message), 1f)
+						if (chatContainer.children.none { it is NormalMessageElement && it.message.similar(message) }) {
+							addMessage(NormalMessageElement(this@ChatFragment, message), 1f)
 						}
 					}
 					sortMessageElements()
@@ -462,7 +462,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		val batchSize = 60
 		val channel = currentChannel ?: return null
 
-		val messageElements = chatContainer.children.filterIsInstance<MinchatMessageElement>()
+		val messageElements = chatContainer.children.filterIsInstance<AbstractMessageElement>()
 		if (messageElements.isEmpty()) return null
 
 		val oldest = messageElements.minOf { it.timestamp }
@@ -487,16 +487,16 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}.getOrThrow()
 
 			val messages = rawMessages.filter { msg ->
-				messageElements.none { (it as? NormalMinchatMessageElement)?.message?.id == msg.id }
+				messageElements.none { (it as? NormalMessageElement)?.message?.id == msg.id }
 			}
 
 			if (channel != currentChannel || messages.isEmpty()) return@launch
 
 			runUi {
 				// Remove any old non-message elements from chat container
-				val oldChildren = chatContainer.children.filterIsInstance<MinchatMessageElement>()
+				val oldChildren = chatContainer.children.filterIsInstance<AbstractMessageElement>()
 				val newChildren = messages.map {
-					NormalMinchatMessageElement(this@ChatFragment, it, true)
+					NormalMessageElement(this@ChatFragment, it, true)
 				}
 
 				chatContainer.clearChildren() // to remove empty cells
@@ -546,11 +546,11 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			val b = cellB.get()
 
 			when {
-				a is MinchatMessageElement && b is MinchatMessageElement -> {
+				a is AbstractMessageElement && b is AbstractMessageElement -> {
 					a.timestamp.compareTo(b.timestamp)
 				}
-				a is MinchatMessageElement -> 1
-				b is MinchatMessageElement -> -1
+				a is AbstractMessageElement -> 1
+				b is AbstractMessageElement -> -1
 				else -> 0
 			}
 		}

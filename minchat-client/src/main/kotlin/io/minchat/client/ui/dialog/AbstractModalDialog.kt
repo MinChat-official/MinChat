@@ -12,7 +12,7 @@ import io.minchat.client.ui.MinchatStyle as Style
  * A dialog used to let the user input some data,
  * choose an action or confirm an action.
  */
-abstract class ModalDialog : Dialog() {
+abstract class AbstractModalDialog : Dialog() {
 	/** A table atop all other tables. */
 	lateinit var header: Table
 	/** A table containing the fields of this dialog. If you use [addField], it will contain two columns. */

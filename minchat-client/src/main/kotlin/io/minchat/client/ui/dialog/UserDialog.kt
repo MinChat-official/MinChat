@@ -23,7 +23,7 @@ import io.minchat.client.ui.MinchatStyle as Style
  */
 abstract class UserDialog(
 	parentScope: CoroutineScope
-) : StatDialog(parentScope) {
+) : AbstractStatDialog(parentScope) {
 	abstract var user: MinchatUser?
 	lateinit var userLabel: Label
 
@@ -113,7 +113,7 @@ abstract class UserDialog(
 		}
 	}
 
-	inner class UserEditDialog : ModalDialog() {
+	inner class UserEditDialog : AbstractModalDialog() {
 		val user = this@UserDialog.user!!
 
 		init {
@@ -139,7 +139,7 @@ abstract class UserDialog(
 		}
 	}
 	
-	inner class UserDeleteConfirmDialog : ModalDialog() {
+	inner class UserDeleteConfirmDialog : AbstractModalDialog() {
 		val user = this@UserDialog.user!!
 
 		init {
@@ -167,7 +167,7 @@ abstract class UserDialog(
 		}
 	}
 
-	inner class AdminPunishmentsDialog : ModalDialog() {
+	inner class AdminPunishmentsDialog : AbstractModalDialog() {
 		val user = this@UserDialog.user!!
 		var newMute = user.mute
 		var newBan = user.ban
@@ -236,7 +236,7 @@ abstract class UserDialog(
 			}.margin(layoutMargin).pad(layoutPad).fillX().row()
 		}
 
-		inner class AddPunishmentDialog(val property: KMutableProperty0<User.Punishment?>) : ModalDialog() {
+		inner class AddPunishmentDialog(val property: KMutableProperty0<User.Punishment?>) : AbstractModalDialog() {
 			val punishment = property.get()
 
 			init {

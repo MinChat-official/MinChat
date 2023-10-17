@@ -87,7 +87,7 @@ class ChatScrollPane(val chat: ChatFragment) : ScrollPane(Table(), Styles.defaul
 
 	fun scrollToMessage(message: MinchatMessage) {
 		val element = widget.children.find {
-			(it as? NormalMinchatMessageElement)?.message?.id == message.id
+			(it as? NormalMessageElement)?.message?.id == message.id
 		} ?: run {
 			Vars.ui.showInfo("Cannot find message. Try scrolling up to load more messages.")
 			return

@@ -12,7 +12,7 @@ import io.minchat.server.databases.Users
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
-class RootModule : MinchatServerModule() {
+class RootModule : AbstractMinchatServerModule() {
 	override fun Application.onLoad() {
 		routing {
 			get(Route.Root.version) {

@@ -6,7 +6,7 @@ import io.minchat.rest.MinchatRestClient
 data class MinchatUser(
 	val data: User,
 	override val rest: MinchatRestClient
-) : MinchatEntity<MinchatUser>() {
+) : AbstractMinchatEntity<MinchatUser>() {
 	override val id by data::id
 
 	/** The real name of the user. Used for login. */

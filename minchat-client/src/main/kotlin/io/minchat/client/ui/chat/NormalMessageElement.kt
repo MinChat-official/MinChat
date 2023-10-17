@@ -20,11 +20,11 @@ import io.minchat.client.ui.MinchatStyle as Style
 /**
  * Displays a MinChat message sent by a real user or a bot.
  */
-class NormalMinchatMessageElement(
+class NormalMessageElement(
 	val chat: ChatFragment,
 	val message: MinchatMessage,
 	addContextActions: Boolean = true
-) : MinchatMessageElement(addContextActions), CoroutineScope by chat {
+) : AbstractMessageElement(addContextActions), CoroutineScope by chat {
 	override val timestamp get() = message.timestamp
 
 	@Volatile

@@ -9,7 +9,7 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.random.Random
 
-object Users : MinchatEntityTable<User>() {
+object Users : AbstractMinchatEntityTable<User>() {
 	val username = varchar("name", User.nameLength.endInclusive)
 	val nickname = varchar("nickname", User.nameLength.endInclusive).nullable().default(null)
 

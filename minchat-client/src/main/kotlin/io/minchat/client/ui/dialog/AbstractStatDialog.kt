@@ -12,7 +12,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 // TODO: should this extend ModalDialog?
 // They share a lot of logic and technically stat dialogs ARE modal.
-abstract class StatDialog(
+abstract class AbstractStatDialog(
 	parentScope: CoroutineScope
 ) : Dialog(), CoroutineScope {
 	override val coroutineContext = parentScope.newCoroutineContext(EmptyCoroutineContext)

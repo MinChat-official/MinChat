@@ -14,7 +14,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-class ChannelGroupModule : MinchatServerModule() {
+class ChannelGroupModule : AbstractMinchatServerModule() {
 	override fun Application.onLoad() {
 		routing {
 			get(Route.Channel.fetch) {

@@ -2,7 +2,7 @@ package io.minchat.rest.entity
 
 import io.minchat.rest.MinchatRestClient
 
-abstract class MinchatEntity<T : MinchatEntity<T>> {
+abstract class AbstractMinchatEntity<T : AbstractMinchatEntity<T>> {
 	abstract val id: Long
 	abstract val rest: MinchatRestClient
 

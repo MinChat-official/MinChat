@@ -45,7 +45,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		Tutorials.authorization.trigger()
 	}
 
-	inner class LoginDialog : ModalDialog() {
+	inner class LoginDialog : AbstractModalDialog() {
 		val usernameField: TextField
 		val passwordField: TextField
 
@@ -81,7 +81,7 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		}
 	}
 
-	inner class RegisterDialog : ModalDialog() {
+	inner class RegisterDialog : AbstractModalDialog() {
 		val usernameField: TextField
 		val nicknameField: TextField
 		val passwordField: TextField

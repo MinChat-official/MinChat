@@ -4,7 +4,7 @@ import io.minchat.common.entity.Channel
 import io.minchat.common.entity.Channel.AccessMode
 import org.jetbrains.exposed.sql.ResultRow
 
-object Channels : MinchatEntityTable<Channel>() {
+object Channels : AbstractMinchatEntityTable<Channel>() {
 	val name = varchar("name", Channel.nameLength.endInclusive)
 	val description = varchar("description", Channel.descriptionLength.endInclusive)
 

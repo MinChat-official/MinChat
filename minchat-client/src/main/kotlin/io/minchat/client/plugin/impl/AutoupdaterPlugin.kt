@@ -15,7 +15,7 @@ import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatGithubClient.ChangelogEntry
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPlugin
-import io.minchat.client.ui.dialog.ModalDialog
+import io.minchat.client.ui.dialog.AbstractModalDialog
 import io.minchat.common.*
 import kotlinx.coroutines.*
 import mindustry.Vars
@@ -170,7 +170,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		}
 	}
 
-	inner class UpdatePromptDialog(val latestVersion: BuildVersion, val changelog: List<ChangelogEntry>?) : ModalDialog() {
+	inner class UpdatePromptDialog(val latestVersion: BuildVersion, val changelog: List<ChangelogEntry>?) : AbstractModalDialog() {
 		init {
 			header.apply {
 				addTable(Style.surfaceBackground) {
@@ -261,7 +261,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 	enum class CheckResult { NO_UPDATE, UPDATE_FOUND, ERROR }
 
-	inner class SimpleInfoDialog(val text: String) : ModalDialog() {
+	inner class SimpleInfoDialog(val text: String) : AbstractModalDialog() {
 		init {
 			header.addTable(Style.surfaceBackground) {
 				margin(Style.layoutMargin)
@@ -273,7 +273,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		}
 	}
 
-	inner class RestartPromptDialog : ModalDialog() {
+	inner class RestartPromptDialog : AbstractModalDialog() {
 		init {
 			header.addTable(Style.surfaceBackground) {
 				val begin = System.currentTimeMillis()

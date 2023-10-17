@@ -9,7 +9,7 @@ import java.io.File
 
 class ServerContext(
 	val engine: ApplicationEngine,
-	val modules: List<MinchatServerModule>,
+	val modules: List<AbstractMinchatServerModule>,
 	val dataDir: File,
 	val dbFile: File
 ) : CoroutineScope {
@@ -21,7 +21,7 @@ class ServerContext(
 	override val coroutineContext = SupervisorJob() + exceptionHandler + Dispatchers.Default
 
 	/** Returns the first module of the specified type. */
-	inline fun <reified T : MinchatServerModule> module() =
+	inline fun <reified T : AbstractMinchatServerModule> module() =
 		modules.find { it is T } as T?
 	
 	/** 

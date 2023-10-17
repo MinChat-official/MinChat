@@ -6,7 +6,7 @@ import io.minchat.rest.MinchatRestClient
 class MinchatChannelGroup(
 	val data: ChannelGroup,
 	override val rest: MinchatRestClient
-) : MinchatEntity<MinchatChannelGroup>() {
+) : AbstractMinchatEntity<MinchatChannelGroup>() {
 	override val id by data::id
 
 	val name by data::name
