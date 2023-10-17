@@ -10,7 +10,7 @@ import io.minchat.common.request.*
 import io.minchat.rest.*
 import org.mindrot.jbcrypt.BCrypt
 
-class UserService(baseUrl: String, client: HttpClient) : RestService(baseUrl, client) {
+class UserService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
 	/** Gets the user with the specified ID. */
 	suspend fun getUser(id: Long) = run {
 		client.get(makeRouteUrl(Route.User.fetch, id))

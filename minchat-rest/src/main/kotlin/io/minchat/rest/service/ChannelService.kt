@@ -8,7 +8,7 @@ import io.minchat.common.Route
 import io.minchat.common.entity.*
 import io.minchat.common.request.*
 
-class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl, client) {
+class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
 	suspend fun getChannel(id: Long) = run {
 		client.get(makeRouteUrl(Route.Channel.fetch, id))
 			.body<Channel>()

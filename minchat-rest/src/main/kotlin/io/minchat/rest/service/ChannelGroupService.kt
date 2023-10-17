@@ -8,7 +8,7 @@ import io.minchat.common.Route
 import io.minchat.common.entity.*
 import io.minchat.common.request.*
 
-class ChannelGroupService(baseUrl: String, client: HttpClient) : RestService(baseUrl, client) {
+class ChannelGroupService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
 	suspend fun getGroup(id: Long) = run {
 		client.get(makeRouteUrl(Route.ChannelGroup.fetch, id))
 			.body<ChannelGroup>()

@@ -3,7 +3,7 @@ package io.minchat.rest.service
 import io.ktor.client.*
 import io.ktor.client.request.*
 
-abstract class RestService(
+abstract class AbstractRestService(
 	val baseUrl: String,
 	val client: HttpClient
 ) {

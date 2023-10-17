@@ -40,7 +40,7 @@ val generateCacheService by tasks.registering {
 		class CacheService(
 			baseUrl: String,
 			val minchatClient: MinchatRestClient
-		) : RestService(baseUrl, minchatClient.httpClient) {
+		) : AbstractRestService(baseUrl, minchatClient.httpClient) {
 		
 		/** Up to how many entities of each type can be cached. */
 		var maxCacheSize = 100

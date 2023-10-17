@@ -9,7 +9,7 @@ import io.minchat.common.*
 import io.minchat.common.request.TokenValidateRequest
 import kotlinx.coroutines.delay
 
-class RootService(baseUrl: String, client: HttpClient) : RestService(baseUrl, client) {
+class RootService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
 	suspend fun getServerVersion() = run {
 		client.get(makeRouteUrl(Route.Root.version))
 			.body<BuildVersion>()

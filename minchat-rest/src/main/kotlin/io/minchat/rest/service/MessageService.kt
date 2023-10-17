@@ -8,7 +8,7 @@ import io.minchat.common.Route
 import io.minchat.common.entity.Message
 import io.minchat.common.request.*
 
-class MessageService(baseUrl: String, client: HttpClient) : RestService(baseUrl, client) {
+class MessageService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
 	suspend fun getMessage(id: Long) = run {
 		client.get(makeRouteUrl(Route.Message.fetch, id))
 			.body<Message>()

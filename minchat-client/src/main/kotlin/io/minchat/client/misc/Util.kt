@@ -7,7 +7,7 @@ import arc.scene.ui.TextField
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.ktor.client.network.sockets.*
 import io.ktor.client.plugins.*
-import io.minchat.rest.service.RestService
+import io.minchat.rest.service.AbstractRestService
 import kotlinx.coroutines.*
 import java.nio.channels.UnresolvedAddressException
 import java.security.cert.*
@@ -56,7 +56,7 @@ fun Throwable.userReadable(): String = when (this) {
 		}
 		"$causeString\nPlease, report to the developer (or the server owner if you're using a custom server) as soon as possible."
 	}
-	is RestService.EntityNotFoundException ->
+	is AbstractRestService.EntityNotFoundException ->
 		message.toString()
 	is IllegalStateException -> {
 		// Caused by calls to error()
