@@ -117,15 +117,9 @@ class ChannelModule : AbstractMinchatServerModule() {
 				val data = call.receive<ChannelCreateRequest>()
 				val channelName = data.name.nameConvention()
 
-				channelName.requireLength(Channel.nameLength) {
-					"Name length must be in range of Channels.nameLength"
-				}
-				data.description.requireLength(Channel.descriptionLength) { 
-					"Description length must be shorter than 512" 
-				}
-
 				newSuspendedTransaction {
 					call.requireAdmin()
+					validate(channelName, data.description)
 
 					val channelRow = Channels.insert {
 						it[name] = channelName
@@ -149,13 +143,6 @@ class ChannelModule : AbstractMinchatServerModule() {
 				val data = call.receive<ChannelModifyRequest>()
 				val newName = data.newName?.nameConvention()
 
-				newName?.requireLength(Channel.nameLength) {
-					"Name length must be in range of Channels.nameLength"
-				}
-				data.newDescription?.requireLength(Channel.descriptionLength) { 
-					"Description length must be shorter than 512" 
-				}
-
 				newSuspendedTransaction {
 					val oldChannel = Channels.getById(id)
 					val invokingUser = Users.getByToken(call.token())
@@ -163,6 +150,8 @@ class ChannelModule : AbstractMinchatServerModule() {
 					if (!oldChannel.canBeEditedBy(invokingUser)) {
 						accessDenied("You cannot edit this channel.")
 					}
+
+					validate(newName, data.newDescription)
 
 					Channels.update({ Channels.id eq id }) {
 						newName?.let { newName ->
@@ -231,6 +220,19 @@ class ChannelModule : AbstractMinchatServerModule() {
 					call.respond(list)
 				}
 			}
+		}
+	}
+
+	fun validate(name: String?, description: String?) {
+		name?.requireLength(Channel.nameLength) {
+			"Name length must be in range of Channels.nameLength"
+		}
+		description?.requireLength(Channel.descriptionLength) {
+			"Description length must be shorter than 512"
+		}
+
+		if (name != null && Channels.select { Channels.name eq name }.any()) {
+			illegalInput("A channel with this name already exists.")
 		}
 	}
 }

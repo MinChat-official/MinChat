@@ -50,35 +50,38 @@ class AuthModule : AbstractMinchatServerModule() {
 				val name = data.username.nameConvention()
 				val nickname = data.nickname?.nameConvention()
 
-				name.requireLength(User.nameLength) {
-					"Username length must be in the range of ${User.nameLength} characters!" 
-				}
-				nickname?.requireLength(User.nameLength) {
-					"Nickname length must be in the range of ${User.nameLength} characters!"
-				}
-
 				val complexity = Constants.hashComplexityPre
 				if (data.passwordHash.startsWith("\$2a\$$complexity\$").not()) {
 					illegalInput("The password must be hashed with BCrypt and use a complexity of $complexity.")
 				}
 
 				newSuspendedTransaction {
-					// ensure the name is vacant
-					if (Users.select { Users.username.lowerCase() eq name.lowercase() }.empty().not()) {
-						illegalInput("This username is already taken. Create a unique username; you will use it to log in later.")
-					}
-					
+					validate(name, nickname)
+
 					val userRow = Users.register(name, nickname, data.passwordHash, User.RoleBitSet.REGULAR_USER)
 
 					UserRegisterRequest.Response(
 						token = userRow[Users.token],
 						user = Users.createEntity(userRow)
 					).let {	
-						Log.info { "A new user has been registered: ${it.user.tag}" }
+						Log.info { "A new user has been registered: ${it.user.loggable()}" }
 						call.respond(it)
 					}
 				}
 			}
+		}
+	}
+
+	fun validate(username: String?, nickname: String?) {
+		username?.requireLength(User.nameLength) {
+			"Username length must be in the range of ${User.nameLength} characters!"
+		}
+		nickname?.requireLength(User.nameLength) {
+			"Nickname length must be in the range of ${User.nameLength} characters!"
+		}
+
+		if (username != null && Users.select { Users.username.lowerCase() eq username.lowercase() }.empty().not()) {
+			illegalInput("This username is already taken. Create a unique username; you will use it to log in later.")
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package io.minchat.server.util
 
-/** Http statua 400. */
+/** Http status 400. */
 class IllegalInputException(message: String?) : Exception(message)
 
 /** Http status 401. */

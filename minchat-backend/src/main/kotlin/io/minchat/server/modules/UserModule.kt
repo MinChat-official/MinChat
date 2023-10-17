@@ -7,9 +7,9 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.*
 import io.minchat.common.Route
-import io.minchat.common.entity.User
 import io.minchat.common.event.UserModifyEvent
 import io.minchat.common.request.*
+import io.minchat.server.ServerContext
 import io.minchat.server.databases.Users
 import io.minchat.server.util.*
 import org.jetbrains.exposed.sql.*
@@ -17,6 +17,8 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class UserModule : AbstractMinchatServerModule() {
+	lateinit var authModule: AuthModule
+
 	override fun Application.onLoad() {
 		routing {
 			get(Route.User.fetch) {
@@ -37,13 +39,10 @@ class UserModule : AbstractMinchatServerModule() {
 
 				val newNickname = data.newNickname?.nameConvention()
 
-				newNickname?.requireLength(User.nameLength) {
-					"Username length must be in the range of ${User.nameLength} characters!" 
-				}
-
 				newSuspendedTransaction {
 					val requestedBy = Users.getByToken(token)
 					requestedBy.checkAndUpdateUserPunishments(checkMute = false)
+					authModule.validate(null, newNickname)
 					val oldUser = Users.getById(id)
 
 					require(requestedBy.canEditUser(oldUser)) {
@@ -126,5 +125,9 @@ class UserModule : AbstractMinchatServerModule() {
 				}
 			}
 		}
+	}
+
+	override suspend fun ServerContext.afterLoad() {
+		authModule = module<AuthModule>() ?: error("User module requires auth module to be loaded.")
 	}
 }

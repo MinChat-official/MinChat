@@ -56,11 +56,14 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 			post(Route.ChannelGroup.create) {
 				val data = call.receive<ChannelGroupCreateRequest>()
 
+				val name = data.name.nameConvention()
+
 				newSuspendedTransaction {
 					call.requireAdmin()
+					validate(name, data.description)
 
 					val group = ChannelGroups.insert {
-						it[name] = data.name
+						it[ChannelGroups.name] = name
 						it[description] = data.description
 						it[order] = data.order
 					}.resultedValues!!.first().let { ChannelGroups.createEntity(it, listOf()) }
@@ -77,16 +80,13 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 				val newName = data.newName?.nameConvention()
 				val newDescription = data.newDescription?.nameConvention()
 
-				newName?.requireLength(ChannelGroup.nameLength) {
-					"Name length must be in range of ${ChannelGroup.nameLength} characters!"
-				}
-
-				newDescription?.requireLength(ChannelGroup.descriptionLength) {
-					"Description length must be in range of ${ChannelGroup.descriptionLength} characters!"
-				}
-
 				newSuspendedTransaction {
 					call.requireAdmin()
+					validate(newName, newDescription)
+
+					if (newName != null && ChannelGroups.select { ChannelGroups.name eq newName }.any()) {
+						illegalInput("A group with this name already exists.")
+					}
 
 					ChannelGroups.update({ ChannelGroups.id eq id }) {
 						newName?.let { newName ->
@@ -111,6 +111,19 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 					ChannelGroups.deleteWhere { ChannelGroups.id eq id }.throwIfNotFound { "no such group." }
 				}
 			}
+		}
+	}
+
+	fun validate(name: String?, description: String?) {
+		name?.requireLength(ChannelGroup.nameLength) {
+			"Name length must be in range of ${ChannelGroup.nameLength} characters!"
+		}
+		description?.requireLength(ChannelGroup.descriptionLength) {
+			"Description length must be in range of ${ChannelGroup.descriptionLength} characters!"
+		}
+
+		if (name != null && ChannelGroups.select { ChannelGroups.name eq name }.any()) {
+			illegalInput("A group with this name already exists.")
 		}
 	}
 }
