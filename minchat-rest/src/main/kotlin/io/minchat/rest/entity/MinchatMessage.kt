@@ -12,8 +12,8 @@ data class MinchatMessage(
 	val authorId by data.author::id
 
 	val content by data::content
-	val author by lazy { MinchatUser(data.author, rest) }
-	val channel by lazy { MinchatChannel(data.channel, rest) }
+	val author by lazy { data.author.withClient(rest) }
+	val channel by lazy { data.channel.withClient(rest) }
 
 	val timestamp by data::timestamp
 	val editTimestamp by data::editTimestamp
@@ -49,7 +49,7 @@ data class MinchatMessage(
 	suspend fun getReferencedMessage(): MinchatMessage? {
 		val refId = referencedMessageId ?: return null
 
-		return rest.cache.getOrNull<MinchatMessage>(refId)
+		return rest.cache.getMessage(refId)
 	}
 
 	override fun toString(): String =

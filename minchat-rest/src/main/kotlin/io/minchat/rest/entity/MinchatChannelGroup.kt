@@ -1,6 +1,6 @@
 package io.minchat.rest.entity
 
-import io.minchat.common.entity.*
+import io.minchat.common.entity.ChannelGroup
 import io.minchat.rest.MinchatRestClient
 
 class MinchatChannelGroup(
@@ -11,7 +11,6 @@ class MinchatChannelGroup(
 
 	val name by data::name
 	val description by data::description
-	val type by data::type
 
 	val order by data::order
 

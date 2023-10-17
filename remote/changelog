@@ -1,3 +1,8 @@
+#VERSION 0.7.0
+Implemented channel groups
+Implemented direct messages
+Fixed a rare crash when reloading messages
+
 #VERSION 0.6.3
 Fixed replies and some other parts of the ui
 Added an (edited) label to edited messages (you can see when exactly it was edited using the context menu)

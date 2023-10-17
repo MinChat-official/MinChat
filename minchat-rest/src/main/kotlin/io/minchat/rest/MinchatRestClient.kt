@@ -284,9 +284,9 @@ class MinchatRestClient(
 		newDescription: String? = null,
 		newViewMode: Channel.AccessMode? = null,
 		newSendMode: Channel.AccessMode? = null,
-		newType: Channel.Type? = null,
+		newGroupId: Long? = null,
 		newOrder: Int? = null
-	) = channelService.editChannel(id, account().token, newName, newDescription, newViewMode, newSendMode, newType, newOrder)
+	) = channelService.editChannel(id, account().token, newName, newDescription, newViewMode, newSendMode, newGroupId, newOrder)
 		.also(cache::set)
 		.withClient(this)
 
@@ -359,9 +359,19 @@ class MinchatRestClient(
 	/**
 	 * Returns true if the currently logged-in user can edit the specified message.
 	 *
-	 * True is returned if the current user is an admin or is the author of the message.
+	 * True is returned if the current user is the author of the message.
 	 */
 	fun canEditMessage(message: MinchatMessage) =
+		selfOrNull()?.let {
+			message.author.id == it.id
+		} ?: false
+
+	/**
+	 * Returns true if the currently logged-in user can delete the specified message.
+	 *
+	 * True is returned if the current user is an admin or is the author of the message.
+	 */
+	fun canDeleteMessage(message: MinchatMessage) =
 		selfOrNull()?.let {
 			it.role.isAdmin || message.author.id == it.id
 		} ?: false

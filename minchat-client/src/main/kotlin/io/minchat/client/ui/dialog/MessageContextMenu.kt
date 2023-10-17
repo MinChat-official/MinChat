@@ -63,12 +63,13 @@ class MessageContextMenu(
 			hide()
 		}
 		if (Minchat.client.canEditMessage(messageElement.message)) {
-			// TODO admins can abuse this!!! They should not be able to edit other's messages, only delete them!!!
 			action(Icon.pencil, "Edit message") {
 				chat.setEditMessage(message)
 				hide()
 			}
+		}
 
+		if (Minchat.client.canDeleteMessage(messageElement.message)) {
 			action(Icon.trash.tint(Style.red), "Delete message") {
 				launch {
 					runCatching {

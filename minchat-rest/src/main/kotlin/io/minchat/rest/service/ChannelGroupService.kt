@@ -28,7 +28,7 @@ class ChannelGroupService(baseUrl: String, client: HttpClient) : RestService(bas
 		token: String,
 		newName: String?,
 		newDescription: String?,
-		newOrder: Int
+		newOrder: Int?
 	) = run {
 		client.post(makeRouteUrl(Route.ChannelGroup.edit, id)) {
 			contentType(ContentType.Application.Json)

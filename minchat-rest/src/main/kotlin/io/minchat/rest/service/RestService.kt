@@ -23,4 +23,8 @@ abstract class RestService(
 			append("Authorization", "Bearer $token")
 		}
 	}
+
+	class EntityNotFoundException(message: String) : Exception(message) {
+		constructor(id: Long, reason: String = "") : this("Entity with id $id not found: $reason")
+	}
 }

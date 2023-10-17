@@ -3,7 +3,6 @@ package io.minchat.rest.entity
 import io.minchat.common.entity.Channel
 import io.minchat.common.entity.Channel.AccessMode
 import io.minchat.rest.MinchatRestClient
-import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.flow.flow
 
 sealed class MinchatChannel(
@@ -141,10 +140,10 @@ class NormalMinchatChannel(
 		newDescription: String? = null,
 		newViewMode: AccessMode? = null,
 		newSendMode: AccessMode? = null,
-		newType: Channel.Type? = null,
+		newGroupId: Long? = null,
 		newOrder: Int? = null
 	) =
-		rest.editChannel(id, newName, newDescription, newViewMode, newSendMode, newType, newOrder)
+		rest.editChannel(id, newName, newDescription, newViewMode, newSendMode, newGroupId, newOrder)
 
 	/** Deletes this channel. Requires admin rights. */
 	suspend fun delete() =

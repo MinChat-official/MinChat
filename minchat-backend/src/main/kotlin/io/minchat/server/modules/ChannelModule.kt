@@ -162,6 +162,9 @@ class ChannelModule : MinchatServerModule() {
 						data.newSendMode?.let { newSendMode ->
 							it[sendMode] = newSendMode
 						}
+						data.newGroupId?.let { newGroupId ->
+							it[groupId] = newGroupId
+						}
 						data.newOrder?.let { newOrder ->
 							it[order] = newOrder
 						}

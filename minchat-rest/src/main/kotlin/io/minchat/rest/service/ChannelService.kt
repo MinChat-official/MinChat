@@ -92,7 +92,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : RestService(baseUrl,
 		newViewMode: Channel.AccessMode?,
 		newSendMode: Channel.AccessMode?,
 		newGroupId: Long?,
-		newOrder: Int
+		newOrder: Int?
 	) = run {
 		client.post(makeRouteUrl(Route.Channel.edit, id)) {
 			contentType(ContentType.Application.Json)
