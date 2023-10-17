@@ -17,9 +17,9 @@ object Channels : MinchatEntityTable<Channel>() {
 	val order = integer("order").default(0)
 
 	/** Only applicable to DM channels. */
-	val user1 = reference("user1", Users)
+	val user1 = reference("user1", Users).nullable()
 	/** Only applicable to DM channels. */
-	val user2 = reference("user2", Users)
+	val user2 = reference("user2", Users).nullable()
 
 	override fun createEntity(row: ResultRow) =
 		Channel(
