@@ -6,7 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.Route
-import io.minchat.common.entity.ChannelGroup
+import io.minchat.common.entity.*
 import io.minchat.common.request.*
 import io.minchat.server.databases.*
 import io.minchat.server.util.*
@@ -33,7 +33,7 @@ class ChannelGroupModule : MinchatServerModule() {
 						.toList()
 
 					// Get all channels and associate them with the groups
-					val groups = Channels.selectAll()
+					val groups = Channels.select({ Channels.type eq Channel.Type.NORMAL })
 						.orderBy(Channels.order to SortOrder.ASC, Channels.id to SortOrder.ASC)
 						.toList()
 						.map { Channels.createEntity(it) }

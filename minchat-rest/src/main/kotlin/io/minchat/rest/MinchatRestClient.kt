@@ -145,7 +145,7 @@ class MinchatRestClient(
 	 * For the caching version of this method, see [cache].
 	 */
 	suspend fun getChannel(id: Long) =
-		channelService.getChannel(id)
+		channelService.getChannel(id, account?.token)
 			.also(cache::set)
 			.withClient(this)
 
@@ -229,7 +229,7 @@ class MinchatRestClient(
 		channelId: Long,
 		fromTimestamp: Long? = null,
 		toTimestamp: Long? = null
-	) = channelService.getMessages(channelId, fromTimestamp, toTimestamp).map {
+	) = channelService.getMessages(channelId, account?.token, fromTimestamp, toTimestamp).map {
 		cache.set(it)
 		it.withClient(this)
 	}

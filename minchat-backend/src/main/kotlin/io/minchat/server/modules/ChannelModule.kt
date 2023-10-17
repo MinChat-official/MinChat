@@ -20,11 +20,22 @@ class ChannelModule : MinchatServerModule() {
 		routing {
 			get(Route.Channel.fetch) {
 				val id = call.parameters.getOrFail<Long>("id")
+				val token = call.tokenOrNull()
 
 				newSuspendedTransaction {
-					call.respond(Channels.getById(id))
+					val channel = Channels.getById(id)
+
+					if (channel.type == Channel.Type.DM || channel.viewMode != Channel.AccessMode.EVERYONE) {
+						if (token == null) accessDenied("You cannot view this channel unless you are logged in.")
+
+						val user = Users.getByToken(token)
+						if (!user.canViewChannel(channel)) accessDenied("Your role is too low to view this channel.")
+					}
+
+					call.respond(channel)
 				}
 			}
+
 			get(Route.Channel.messages) {
 				val id = call.parameters.getOrFail<Long>("id")
 				val token = call.tokenOrNull()
@@ -35,7 +46,7 @@ class ChannelModule : MinchatServerModule() {
 				newSuspendedTransaction {
 					val channel = Channels.getById(id)
 
-					if (channel.viewMode != Channel.AccessMode.EVERYONE) {
+					if (channel.type == Channel.Type.DM || channel.viewMode != Channel.AccessMode.EVERYONE) {
 						if (token == null) accessDenied("You cannot view this channel unless you are logged in.")
 
 						val user = Users.getByToken(token)
@@ -208,7 +219,7 @@ class ChannelModule : MinchatServerModule() {
 
 			get(Route.Channel.all) {
 				newSuspendedTransaction {
-					val list = Channels.selectAll()
+					val list = Channels.select({ Channels.type eq Channel.Type.NORMAL })
 						.orderBy(
 							Channels.groupId to SortOrder.ASC,
 							Channels.order to SortOrder.ASC,

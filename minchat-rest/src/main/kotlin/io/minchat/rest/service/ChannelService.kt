@@ -9,17 +9,22 @@ import io.minchat.common.entity.*
 import io.minchat.common.request.*
 
 class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
-	suspend fun getChannel(id: Long) = run {
-		client.get(makeRouteUrl(Route.Channel.fetch, id))
-			.body<Channel>()
+	suspend fun getChannel(
+		id: Long,
+		token: String? = null
+	) = run {
+		client.get(makeRouteUrl(Route.Channel.fetch, id)) {
+			token?.let { authorizeBearer(it) }
+		}.body<Channel>()
 	}
 
 	/**
 	 * Fetches all channels registered on the server.
 	 */
-	suspend fun getAllChannels() = run {
-		client.get(makeRouteUrl(Route.Channel.all))
-			.body<List<Channel>>()
+	suspend fun getAllChannels(token: String? = null) = run {
+		client.get(makeRouteUrl(Route.Channel.all)) {
+			token?.let { authorizeBearer(it) }
+		}.body<List<Channel>>()
 	}
 
 	/** 
@@ -31,10 +36,12 @@ class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(
 	 */
 	suspend fun getMessages(
 		id: Long,
+		token: String? = null,
 		fromTimestamp: Long? = null,
 		toTimestamp: Long? = null
 	) = run {
 		client.get(makeRouteUrl(Route.Channel.messages, id)) {
+			token?.let { authorizeBearer(it) }
 			url {
 				fromTimestamp?.let { parameters.append("from", it.toString()) }
 				toTimestamp?.let { parameters.append("to", it.toString()) }
