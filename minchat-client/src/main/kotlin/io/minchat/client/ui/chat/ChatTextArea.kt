@@ -37,7 +37,7 @@ class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 	}
 
 	override fun getPrefHeight(): Float {
-		val rowsHeight = Mathf.clamp(lines + 1, 2, 20) * textHeight
+		val rowsHeight = Mathf.clamp(lines,1, 20) * textHeight
 		val requiredHeight = max(
 			style.background.bottomHeight + style.background.topHeight,
 			style.background.minHeight
