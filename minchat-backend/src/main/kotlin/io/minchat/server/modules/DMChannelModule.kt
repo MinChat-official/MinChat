@@ -55,6 +55,13 @@ class DMChannelModule : AbstractMinchatServerModule() {
 						illegalInput("You cannot create a DM channel with yourself.")
 					}
 
+					if (Channels.select {
+						(Channels.user1 eq invokingUser.id) and (Channels.user2 eq otherUser.id) or
+						(Channels.user1 eq otherUser.id) and (Channels.user2 eq invokingUser.id)
+					}.count() > Channel.maxDMCount) {
+						illegalInput("You cannot create more than ${Channel.maxDMCount} DM channels with one user.")
+					}
+
 					val channel = Channels.insert {
 						it[name] = data.name
 						it[description] = data.description
