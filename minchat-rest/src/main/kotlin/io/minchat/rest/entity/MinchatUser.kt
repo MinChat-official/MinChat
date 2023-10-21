@@ -79,6 +79,10 @@ data class MinchatUser(
 	suspend fun delete() =
 		rest.deleteUser(id)
 
+	/** Fetches all DM channels associated with this user. */
+	suspend fun getDMChannels() =
+		rest.getAllDMChannels()[id].orEmpty()
+
 	override fun toString() =
 		"MinchatUser(id=$id, tag=$tag, role=$role, ban=$ban, mute=$mute, messageCount=$messageCount)"
 

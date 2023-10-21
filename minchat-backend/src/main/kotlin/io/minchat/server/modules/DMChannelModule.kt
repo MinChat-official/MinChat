@@ -21,12 +21,24 @@ class DMChannelModule : AbstractMinchatServerModule() {
 				newSuspendedTransaction {
 					val invokingUser = Users.getByToken(token)
 
-					val result = Channels.select {
+					val allDms = Channels.select {
 						(Channels.type eq Channel.Type.DM) and
 						((Channels.user1 eq invokingUser.id) or (Channels.user2 eq invokingUser.id))
-					}.map(Channels::createEntity)
+					}.map(Channels::createEntity).filter {
+						it.user1id != null && it.user2id != null // to avoid errors
+					}
 
-					call.respond(result)
+					val map = allDms.associateBy {
+						// For channels where invokingUser is user1, associate with user 2, and vice versa.
+						// This results in a map where keys are ids of other users and values are conversations with them
+						if (it.user1id == invokingUser.id) {
+							it.user2id!!
+						} else {
+							it.user1id!!
+						}
+					}
+
+					call.respond(map)
 				}
 			}
 

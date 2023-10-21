@@ -142,7 +142,7 @@ object Route {
 	object DMChannel : MinchatRoute("dm-channel") {
 		/**
 		 * GET. Requires authorization.
-		 * Response: a list of DM [Channel] objects associated with the user.
+		 * Response: a map of type <[Long], List<[Channel]>> associated with the user.
 		 */
 		val all = to("all")
 

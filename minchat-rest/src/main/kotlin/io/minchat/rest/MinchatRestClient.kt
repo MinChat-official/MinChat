@@ -172,8 +172,12 @@ class MinchatRestClient(
 	/** Fetches all DM channels registered on the server. */
 	suspend fun getAllDMChannels() =
 		channelService.getAllDMChannels(account().token)
-			.onEach(cache::set)
-			.map { it.withClient(this) }
+			.onEach { (_, channels) ->
+				channels.forEach { cache.set(it) }
+			}
+			.mapValues { (_, channels) ->
+				channels.map { it.withClient(this) }
+			}
 
 	/**
 	 * Fetches all channels registered on the server.

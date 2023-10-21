@@ -31,7 +31,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(
 	suspend fun getAllDMChannels(token: String) = run {
 		client.get(makeRouteUrl(Route.DMChannel.all)) {
 			authorizeBearer(token)
-		}.body<List<Channel>>()
+		}.body<Map<Long, List<Channel>>>()
 	}
 
 	/** 
