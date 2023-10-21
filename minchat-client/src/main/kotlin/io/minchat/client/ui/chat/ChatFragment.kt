@@ -35,6 +35,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	lateinit var notificationBar: Table
 	/** A bar containing the channel list. */
 	lateinit var channelsBar: Table
+	lateinit var dmsSubBar: DMGroupBar
+	/** A vertical table containing [ChannelGroupElement]s */
 	lateinit var channelsContainer: Table
 
 	lateinit var chatBar: Table
@@ -145,7 +147,22 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 			channelsBar = this
 
-			addLabel("Channels").color(Style.purple).growX().row()
+			addLabel("DMs", Style.Label)
+				.color(Style.purple)
+				.pad(Style.layoutPad)
+				.growX().row()
+
+			limitedScrollPane {
+				it.isScrollingDisabledX = true
+				dmsSubBar = DMGroupBar(this@ChatFragment, emptyMap())
+
+				add(dmsSubBar).grow()
+			}.grow()
+
+			addLabel("Channels", Style.Label)
+				.color(Style.purple)
+				.pad(Style.layoutPad)
+				.growX().row()
 
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
@@ -166,6 +183,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 				chatPane = it
 				chatContainer = this
+
+				defaults().growX().pad(Style.layoutPad)
 			}).grow().pad(Style.layoutPad).row()
 
 			// Status bar above the chat
@@ -227,7 +246,6 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				textButton(">", Style.ActionButton) { confirmCurrentMessage() }
 					.with { sendButton = it }
 					.padLeft(8f).fill().width(80f)
-
 				updateChatbox()
 			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
 		}.grow()
@@ -382,22 +400,15 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 	}
 
 	fun reloadChannels(): Job {
-		val notif = notification("Loading channels...", 10)
+		val notif = notification("Loading channels and DMs...", 10)
 		return launch {
 			runSafe {
-				val channels = Minchat.client.getAllChannels()
-				runUi { setChannels(channels) }
+				val channels = Minchat.client.getAllChannelGroups()
+				val dms = Minchat.client.getAllDMChannels()
+
+				channelsContainer.clearChildren()
 			}
 		}.then { notif.cancel() }
-	}
-
-	fun setChannels(channels: List<MinchatChannel>) {
-		channelsContainer.clearChildren()
-
-		channels.forEach { channel ->
-			channelsContainer.add(ChannelElement(this, channel))
-				.pad(Style.layoutPad).growX().row()
-		}
 	}
 
 	/**
