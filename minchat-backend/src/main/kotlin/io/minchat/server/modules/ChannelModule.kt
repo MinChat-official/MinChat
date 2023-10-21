@@ -119,7 +119,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 
 				newSuspendedTransaction {
 					call.requireAdmin()
-					validate(channelName, data.description)
+					validate(channelName, data.description, forEdit = false)
 
 					val channelRow = Channels.insert {
 						it[name] = channelName
@@ -159,7 +159,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 						}
 					}
 
-					validate(newName, data.newDescription)
+					validate(newName, data.newDescription, forEdit = true)
 
 					Channels.update({ Channels.id eq id }) {
 						newName?.let { newName ->
@@ -238,7 +238,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 		}
 	}
 
-	fun validate(name: String?, description: String?) {
+	fun validate(name: String?, description: String?, forEdit: Boolean) {
 		name?.requireLength(Channel.nameLength) {
 			"Name length must be in range of Channels.nameLength"
 		}
@@ -246,7 +246,8 @@ class ChannelModule : AbstractMinchatServerModule() {
 			"Description length must be shorter than 512"
 		}
 
-		if (name != null && Channels.select { Channels.name eq name }.any()) {
+		val maxCount = if (forEdit) 1 else 0
+		if (name != null && Channels.select { Channels.name eq name }.count() > maxCount) {
 			illegalInput("A channel with this name already exists.")
 		}
 	}
