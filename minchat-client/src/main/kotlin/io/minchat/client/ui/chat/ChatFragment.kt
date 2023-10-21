@@ -256,7 +256,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				when (event) {
 					is MinchatMessageCreate -> {
 						val message = event.message
-						if (message.channelId == currentChannel?.id && chatPane.isAtEnd) {
+						if (message.channelId == currentChannel?.id) {
 							val element = NormalMessageElement(this@ChatFragment, message)
 							addMessage(element, 0.5f)
 						}
@@ -270,14 +270,23 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 								// getAsOrNull won't work for some reason
 								(it.get() as? NormalMessageElement)?.message?.id == newMessage.id
 							}
-							messageCell.setElement<Element>(NormalMessageElement(this@ChatFragment, newMessage))
+							val oldElement = messageCell?.get()
+							val newElement = NormalMessageElement(this@ChatFragment, newMessage)
+							messageCell?.setElement<Element>(newElement)
+
+							// Replace the old element
+							val index = chatContainer.children.indexOf(oldElement)
+							if (index != -1) {
+								chatContainer.children.set(index, newElement)
+							}
+
 							chatContainer.invalidateHierarchy()
 						}
 					}
 
 					is MinchatMessageDelete -> {
 						if (event.channelId == currentChannel?.id) {
-							// Play a shrinking animation and finally rremove the element.
+							// Play a shrinking animation and finally remove the element.
 							chatContainer.children.find {
 								(it as? NormalMessageElement)?.message?.id == event.messageId
 							}?.let {

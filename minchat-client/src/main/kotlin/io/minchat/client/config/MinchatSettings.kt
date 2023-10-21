@@ -52,8 +52,12 @@ object MinchatSettings {
 			it.pref(SpacerSetting(50f))
 
 			it.checkPref("minchat.use-custom-url", false) { enabled ->
-				if (enabled == false) return@checkPref
-				it.validateCustomUrl()
+				if (enabled) {
+					it.validateCustomUrl()
+				}
+				Minchat.launch {
+					Minchat.connectToDefault()
+				}
 			}
 
 			it.pref(ConditionalTextSetting("minchat.custom-url", "NONE", { !useCustomUrl }))
