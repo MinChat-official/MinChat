@@ -1,13 +1,18 @@
 package io.minchat.client.config
 
 import arc.*
-import arc.input.*
+import arc.input.InputDevice.DeviceType
+import arc.input.KeyCode
+import arc.struct.ObjectMap
 import arc.util.Reflect
 import io.minchat.client.Minchat
 import io.minchat.client.misc.Log
 
 object MinchatKeybinds {
 	val allBindings = mutableListOf<KeyBind>()
+
+	private val defaultsCache: ObjectMap<KeyBind, ObjectMap<DeviceType, KeyBinds.Axis>> =
+		Reflect.get(Core.keybinds, "defaultCache")
 
 	val openFullscreen = KeyBind("minchat-open-fullscreen", KeyCode.backtick, "general") {
 		Minchat.showChatDialog()
@@ -30,13 +35,13 @@ object MinchatKeybinds {
 	 * Registers a key binding.
 	 */
 	fun register(keybinding: KeyBind) {
-		val bindings = Core.keybinds.sections[0].binds.get(InputDevice.DeviceType.keyboard)
+		val bindings = Core.keybinds.sections[0].binds.get(DeviceType.keyboard)
 		if (bindings == null) {
 			Log.warn { "No keyboard device detected; Cannot register $keybinding" }
 			return
 		}
 
-		bindings.put(keybinding, keybinding)
+		bindings.put(keybinding, KeyBinds.Axis(keybinding.key))
 		allBindings += keybinding
 
 		// Core.keybindings has a weird type - can't use Array.plus here
@@ -49,6 +54,8 @@ object MinchatKeybinds {
 			}
 		}
 		Reflect.set(Core.keybinds, "definitions", definitions)
+
+		keybinding.putDefault()
 	}
 
 	data class KeyBind internal constructor(
@@ -56,10 +63,21 @@ object MinchatKeybinds {
 		val key: KeyCode,
 		val category: String,
 		val action: () -> Unit
-	) : KeyBinds.Axis(key), KeyBinds.KeyBind {
+	) : KeyBinds.KeyBind {
+		fun putDefault() {
+			defaultsCache.put(this, ObjectMap())
+
+			for (type in DeviceType.values()) {
+				defaultsCache.get(this)?.put(
+					type,
+					KeyBinds.Axis(this.key)
+				)
+			}
+		}
+
 		override fun name() = name
 
-		override fun defaultValue(type: InputDevice.DeviceType?) = this // This is gonna be a headache
+		override fun defaultValue(type: DeviceType?) = key
 
 		override fun category() = category
 	}

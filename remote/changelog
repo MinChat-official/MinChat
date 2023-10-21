@@ -4,7 +4,8 @@ Implemented direct messages
 Improved the style and UX of modal dialogs
 Fixed a rare crash when reloading messages
 Fixed message editing causing UI issues
-Fixed switching MinChat servers requiring a full restart
+Fixed switching MinChat servers requiring a restart
+Fixed keybinding issues on desktop
 
 #VERSION 0.6.3
 Fixed replies and some other parts of the ui
