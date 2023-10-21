@@ -8,6 +8,7 @@ import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.minchat.common.*
 import io.minchat.common.entity.*
+import io.minchat.common.util.Observable
 import io.minchat.rest.entity.*
 import io.minchat.rest.ratelimit.*
 import io.minchat.rest.service.*
@@ -39,7 +40,8 @@ class MinchatRestClient(
 		}
 	}
 
-	var account: MinchatAccount? = null
+	var accountObservable = Observable<MinchatAccount?>(null)
+	var account by accountObservable
 	val isLoggedIn get() = account != null
 
 	val rootService = RootService(baseUrl, httpClient)

@@ -5,6 +5,7 @@ import io.minchat.rest.*
 import io.minchat.rest.event.MinchatEvent
 import io.minchat.rest.gateway.MinchatGateway.EventTransformer
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.lang.reflect.Constructor
 import kotlin.reflect.KClass
 
@@ -20,7 +21,7 @@ class MinchatGateway(
 	/**
 	 * The underlying raw MinChat gateway.
 	 */
-	val rawGateway = RawGateway(client.baseUrl, client.httpClient)
+	var rawGateway = RawGateway(client.baseUrl, client.httpClient, token = client.account?.token)
 
 	val isConnected by rawGateway::isConnected
 	
@@ -38,14 +39,30 @@ class MinchatGateway(
 					null
 				}
 		}
+
+	init {
+		client.accountObservable.observe {
+			if (isConnected) {
+				MinchatRestLogger.log("lifecycle", "MinChat gateway: reconnecting due to account change.")
+				disconnect()
+				client.launch {
+					connect()
+				}
+			}
+		}
+	}
 	
 	/** See [RawGateway.connectIfNecessary]. */
-	suspend fun connectIfNecessary() =
+	suspend fun connectIfNecessary() {
+		rawGateway.token = client.account?.token
 		rawGateway.connectIfNecessary()
+	}
 
 	/** See [RawGateway.connect]. */
-	suspend fun connect() =
+	suspend fun connect() {
+		rawGateway.token = client.account?.token
 		rawGateway.connect()
+	}
 
 	/** See [RawGateway.disconnect]. */
 	fun disconnect() =

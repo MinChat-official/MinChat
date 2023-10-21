@@ -26,6 +26,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 class RawGateway(
 	val baseUrl: String,
 	val client: HttpClient,
+	var token: String?,
 	val useTsl: Boolean = baseUrl.startsWith("https")
 ) : CoroutineScope {
 	override val coroutineContext = client.newCoroutineContext(EmptyCoroutineContext)
@@ -143,6 +144,7 @@ class RawGateway(
 			)
 
 			parameter("version", MINCHAT_VERSION.toString())
+			parameter("token", token)
 		}
 	}
 

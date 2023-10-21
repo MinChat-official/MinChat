@@ -37,7 +37,9 @@ class GatewayModule : AbstractMinchatServerModule() {
 			webSocket(Route.Gateway.websocket) {
 				val version = call.request.queryParameters["version"]
 					?.let(BuildVersion::fromStringOrNull)
-				val connection = Connection(this, version).also(connections::add)
+				val token = call.request.queryParameters["token"]
+				val connection = Connection(this, version, token)
+					.also(connections::add)
 
 				Log.lifecycle { "Incoming: $connection" }
 
@@ -90,12 +92,14 @@ class GatewayModule : AbstractMinchatServerModule() {
 
 	class Connection(
 		val session: WebSocketServerSession,
-		val clientVersion: BuildVersion?
+		val clientVersion: BuildVersion?,
+		val token: String?
 	) {
 		val id = lastId.getAndIncrement()
+		val tokenHash = token?.hashCode()?.toString(16)
 
 		override fun toString() =
-			"Connection #$id (v${clientVersion ?: "unknown"})"
+			"Connection #$id (v${clientVersion ?: "unknown"}, $tokenHash)"
 
 		companion object {
 			val lastId = AtomicLong(0L)
