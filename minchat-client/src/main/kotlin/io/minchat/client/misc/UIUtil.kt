@@ -56,6 +56,6 @@ fun MinchatUser.getIcon(): TextureRegionDrawable? {
 /** Makes it so that the button only gets enabled when all of the specified fields are valid. */
 fun Button.enabledWhenValid(vararg fields: TextField) {
 	setDisabled {
-		fields.all { it.isValid }
+		!fields.all { it.isValid }
 	}
 }
