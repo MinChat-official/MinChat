@@ -150,6 +150,14 @@ class ChannelModule : AbstractMinchatServerModule() {
 					if (!oldChannel.canBeEditedBy(invokingUser)) {
 						accessDenied("You cannot edit this channel.")
 					}
+					if (oldChannel.type == Channel.Type.DM) {
+						if (data.newSendMode != null || data.newViewMode != null) {
+							illegalInput("Cannot change access modes of a DM channel.")
+						}
+						if (data.newGroupId != null) {
+							illegalInput("DM channels do not support groups.")
+						}
+					}
 
 					validate(newName, data.newDescription)
 
