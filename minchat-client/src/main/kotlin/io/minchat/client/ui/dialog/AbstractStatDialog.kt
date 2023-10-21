@@ -14,9 +14,9 @@ abstract class AbstractStatDialog(
 	/** A status string shown at the top. */
 	@Volatile var status: String? = null
 
-	init {
-		closeButtonText = "Close"
+	override val closeButtonText get() = "Close"
 
+	init {
 		header.addLabel({ status.orEmpty() }, wrap = true)
 			.color(MinchatStyle.red).fillX().row()
 

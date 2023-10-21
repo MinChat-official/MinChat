@@ -15,7 +15,7 @@ import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatGithubClient.ChangelogEntry
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPlugin
-import io.minchat.client.ui.dialog.AbstractModalDialog
+import io.minchat.client.ui.dialog.*
 import io.minchat.common.*
 import kotlinx.coroutines.*
 import mindustry.Vars
@@ -42,10 +42,10 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		return performCheck().also {
 			when {
 				it == CheckResult.NO_UPDATE -> {
-					SimpleInfoDialog("No update found.").show()
+					Dialogs.info("No update found.")
 				}
 				it == CheckResult.ERROR -> {
-					SimpleInfoDialog("An error has occurred. Check your internet connection or try again later.").show()
+					Dialogs.info("An error has occurred. Check your internet connection or try again later.")
 				}
 			}
 		}
@@ -89,7 +89,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 			show("Preparing to download...")
 			setButton {
 				job.cancel()
-				SimpleInfoDialog("The update has been aborted.").show()
+				Dialogs.info("The update has been aborted.")
 			}
 
 			job = Minchat.launch {
@@ -160,11 +160,11 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 					hide()
 					if (exception is CancellationException) return@onFailure
 
-					SimpleInfoDialog("""
+					Dialogs.info("""
 						Failed to update.
 						
 						Reason: ${exception.userReadable()}
-					""".trimIndent()).show()
+					""".trimIndent())
 				}
 			}
 		}
@@ -260,18 +260,6 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 	}
 
 	enum class CheckResult { NO_UPDATE, UPDATE_FOUND, ERROR }
-
-	inner class SimpleInfoDialog(val text: String) : AbstractModalDialog() {
-		init {
-			header.addTable(Style.surfaceBackground) {
-				margin(Style.layoutMargin)
-
-				addLabel(text, wrap = true)
-					.fillX().pad(Style.layoutPad)
-					.minWidth(300f)
-			}.fillX()
-		}
-	}
 
 	inner class RestartPromptDialog : AbstractModalDialog() {
 		init {

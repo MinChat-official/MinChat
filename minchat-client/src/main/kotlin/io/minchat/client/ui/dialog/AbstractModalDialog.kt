@@ -21,7 +21,8 @@ abstract class AbstractModalDialog : Dialog() {
 	lateinit var actionsTable: Table
 	val actionRows = mutableListOf<Table>()
 
-	var closeButtonText = "Cancel"
+	open val addCloseAction get() = true
+	open val closeButtonText get() = "Cancel"
 	var minValueLabelWidth = 250f
 
 	init {
@@ -42,7 +43,7 @@ abstract class AbstractModalDialog : Dialog() {
 
 		cont.addTable {
 			actionsTable = this
-		}.fillX().pad(Style.layoutPad).row()
+		}.fillX().padTop(Style.layoutPad).row()
 
 		clearActionRows()
 	}
@@ -81,14 +82,19 @@ abstract class AbstractModalDialog : Dialog() {
 		actionsTable.clearChildren()
 		actionRows.clear()
 		nextActionRow()
-		action(closeButtonText, action = ::hide)
+
+		if (addCloseAction) {
+			action(closeButtonText, action = ::hide)
+		}
 	}
 
 	/** Adds an action to the specified action row. */
 	protected inline fun action(text: String, row: Int = 0, crossinline action: () -> Unit) =
 		actionRows[row].textButton(text, Style.ActionButton) { action() }
-			.uniformX().growX().fillY()
-			.pad(Style.layoutPad).margin(Style.buttonMargin)
+			.uniformX().growX()
+			.fill()
+			.pad(Style.layoutPad)
+			.margin(Style.buttonMargin)
 
 	/**
 	 * Adds a new action row to [actionRows], affecting where [action] adds buttons to by default.
@@ -98,7 +104,7 @@ abstract class AbstractModalDialog : Dialog() {
 		actionsTable.cells.reverse()
 
 		val cell = actionsTable.addTable()
-			.growX().pad(Style.layoutPad)
+			.growX()
 		actionsTable.row()
 		actionRows.add(0, cell.get())
 

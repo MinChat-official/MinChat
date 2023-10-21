@@ -31,13 +31,19 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 		header.row().addTable {
 			textButton({ if (user == null) "LOG IN" else "CHANGE ACCOUNT" }, Style.ActionButton) {
 				LoginDialog().show()
-			} //.disabled { user != null }
+			}
 				.pad(Style.layoutPad).margin(Style.buttonMargin)
 				.uniformX().growX()
 
-			textButton("REGISTER", Style.ActionButton) {
-				RegisterDialog().show()
-			}.disabled { user != null }
+			textButton(if (user == null) "REGISTER" else "LOG OUT", Style.ActionButton) {
+				if (user == null) {
+					RegisterDialog().show()
+				} else {
+					Dialogs.confirm("Are you sure?") {
+						Minchat.client.logout()
+					}
+				}
+			}
 				.pad(Style.layoutPad).margin(Style.buttonMargin)
 				.uniformX().growX()
 		}.growX()
