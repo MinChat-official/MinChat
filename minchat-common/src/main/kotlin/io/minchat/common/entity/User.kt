@@ -14,10 +14,6 @@ data class User(
 
 	val role: RoleBitSet = RoleBitSet.REGULAR_USER,
 
-	@Deprecated("Will be removed later. Callers instead should check `role.isAdmin`.", level = DeprecationLevel.ERROR)
-	val isAdmin: Boolean = role.isAdmin,
-	@Deprecated("Unused. To be removed in later versions of MinChat.", level = DeprecationLevel.ERROR)
-	val isBanned: Boolean = false,
 	/** If this user is muted, this property indicates the duration and reason. */
 	val mute: Punishment? = null,
 	/** If this user is banned, this property indicates the duration and reason. */
