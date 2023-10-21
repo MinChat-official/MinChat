@@ -15,7 +15,8 @@ import io.minchat.client.ui.MinchatStyle as Style
  * Its contents are created when it's shown for the first time.
  */
 abstract class AbstractGroupElement(
-	background: Drawable = Style.surfaceBackground
+	background: Drawable = Style.surfaceBackground,
+	val defaultShown: Boolean = true
 ) : Table(background) {
 	lateinit var toggleButton: ToggleButton
 	lateinit var collapser: Collapser
@@ -32,11 +33,11 @@ abstract class AbstractGroupElement(
 	 *
 	 * By default this function creates a toggle button with a single empty label in it.
 	 *
-	 * This button must call [toggle] in its onClick listener.
+	 * This button must call [toggleGroup] in its onClick listener.
 	 */
 	open fun createToggleButton(): Cell<ToggleButton> {
-		return textToggle("", Style.ActionToggleButton) {
-			toggle(it)
+		return textToggle("", Style.InnerActionToggleButton) {
+			toggleGroup(it)
 		}
 	}
 
@@ -61,22 +62,24 @@ abstract class AbstractGroupElement(
 
 		createToggleButton()
 			.growX()
-			.pad(Style.layoutPad)
-			.margin(Style.layoutMargin)
+			.margin(Style.buttonMargin)
+			.also { toggleButton = it.get() }
+			.row()
 
-		addCollapser(false, Style.surfaceInner) {
+		addCollapser(defaultShown, Style.surfaceInner) {
 			contents = this
 		}.also {
 			collapser = it.get()
-		}
+		}.growX()
 
 		contents.rebuildContentsInternal()
+
+		toggleButton.isEnabled = defaultShown
 	}
 
-	fun toggle(shown: Boolean = !toggleButton.isEnabled) {
-		toggleButton.isEnabled = shown
-
-		collapser.setCollapsed(shown)
+	/** Toggles the state of this group. Does NOT toggle [toggleButton] as that will lead to an infinite recursion. */
+	fun toggleGroup(shown: Boolean = toggleButton.isEnabled) {
+		collapser.setCollapsed(!shown)
 	}
 
 	override fun validate() {

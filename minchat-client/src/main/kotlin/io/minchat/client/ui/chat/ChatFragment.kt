@@ -147,17 +147,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 			channelsBar = this
 
-			addLabel("DMs", Style.Label)
-				.color(Style.purple)
-				.pad(Style.layoutPad)
-				.growX().row()
-
 			limitedScrollPane {
 				it.isScrollingDisabledX = true
 				dmsSubBar = DMGroupBar(this@ChatFragment, emptyMap())
 
 				add(dmsSubBar).grow()
-			}.grow()
+			}.growX().row()
 
 			addLabel("Channels", Style.Label)
 				.color(Style.purple)
@@ -403,10 +398,25 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		val notif = notification("Loading channels and DMs...", 10)
 		return launch {
 			runSafe {
-				val channels = Minchat.client.getAllChannelGroups()
+				val groups = Minchat.client.getAllChannelGroups()
 				val dms = Minchat.client.getAllDMChannels()
 
+				dmsSubBar.dmMap = dms
+
 				channelsContainer.clearChildren()
+				for (channel in groups) {
+					channelsContainer.add(ChannelGroupElement(this@ChatFragment, channel))
+						.growX()
+				}
+
+				if (currentChannel == null) {
+					// try to find and focus the #rules channel if none is selected
+					for (group in groups) {
+						group.channels.find { it.name.lowercase() == "rules" }?.let {
+							currentChannel = it
+						}
+					}
+				}
 			}
 		}.then { notif.cancel() }
 	}

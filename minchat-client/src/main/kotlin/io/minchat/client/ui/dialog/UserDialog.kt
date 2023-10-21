@@ -230,7 +230,7 @@ abstract class UserDialog(
 					row()
 				}
 
-				textButton("MODIFY", Style.InnerButton) { action() }
+				textButton("MODIFY", Style.InnerActionButton) { action() }
 					.fillX()
 					.pad(layoutPad).margin(buttonMargin)
 			}.margin(layoutMargin).pad(layoutPad).fillX().row()
