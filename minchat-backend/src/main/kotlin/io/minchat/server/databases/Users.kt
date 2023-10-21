@@ -59,14 +59,13 @@ object Users : AbstractMinchatEntityTable<User>() {
 			nickname = row[nickname],
 			discriminator = row[discriminator],
 			role = RoleBitSet(row[role]),
-			isAdmin = RoleBitSet(row[role]).isAdmin,
 
-			ban = if (row[bannedUntil] >= 0) User.Punishment(
+			ban = if (row[bannedUntil] >= System.currentTimeMillis()) User.Punishment(
 				expiresAt = row[bannedUntil],
 				reason = row[banReason]
 			) else null,
 
-			mute = if (row[mutedUntil] >= 0) User.Punishment(
+			mute = if (row[mutedUntil] >= System.currentTimeMillis()) User.Punishment(
 				expiresAt = row[mutedUntil],
 				reason = row[muteReason]
 			) else null,
