@@ -165,7 +165,13 @@ class MinchatRestClient(
 	 * For the caching approach, you can try `cache.channelCache.values`.
 	 */
 	suspend fun getAllChannels() =
-		channelService.getAllChannels()
+		channelService.getAllChannels(account?.token)
+			.onEach(cache::set)
+			.map { it.withClient(this) }
+
+	/** Fetches all DM channels registered on the server. */
+	suspend fun getAllDMChannels() =
+		channelService.getAllDMChannels(account().token)
 			.onEach(cache::set)
 			.map { it.withClient(this) }
 
@@ -258,6 +264,21 @@ class MinchatRestClient(
 			groupId = groupId,
 			token = account().token
 		).also(cache::set).withClient(this)
+
+	/** Creates a DM channel. Requires a logged-in account. */
+	suspend fun createDMChannel(
+		otherUserId: Long,
+		name: String,
+		description: String,
+		order: Int
+	) =
+		channelService.createDMChannel(
+			token = account().token,
+			otherUserId = otherUserId,
+			name = name,
+			description = description,
+			order = order
+		)
 	
 	// editX methods
 	/** 

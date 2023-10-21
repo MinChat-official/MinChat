@@ -14,6 +14,15 @@ data class ChannelCreateRequest(
 	val groupId: Long?
 )
 
+/** Request to create a DM channel with the provided user and the caller. */
+@Serializable
+data class DMChannelCreateRequest(
+	val otherUserId: Long,
+	val name: String,
+	val description: String,
+	val order: Int
+)
+
 /** 
  * Admin-only request to edit a channel.
  * Null values mean that the old value is to be preserved.

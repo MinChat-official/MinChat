@@ -29,7 +29,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 						if (token == null) accessDenied("You cannot view this channel unless you are logged in.")
 
 						val user = Users.getByToken(token)
-						if (!user.canViewChannel(channel)) accessDenied("Your role is too low to view this channel.")
+						if (!user.canViewChannel(channel)) accessDenied("You are not allowed to view this channel.")
 					}
 
 					call.respond(channel)
@@ -185,7 +185,10 @@ class ChannelModule : AbstractMinchatServerModule() {
 					val newChannel = Channels.getById(id)
 					Log.info { "${oldChannel.loggable()} was edited by ${invokingUser.loggable()}. Now: ${newChannel.loggable()}" }
 					call.respond(newChannel)
-					server.sendEvent(ChannelModifyEvent(newChannel))
+
+					if (newChannel.type != Channel.Type.DM) {
+						server.sendEvent(ChannelModifyEvent(newChannel))
+					}
 				}
 			}
 
@@ -216,7 +219,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 
 			get(Route.Channel.all) {
 				newSuspendedTransaction {
-					val list = Channels.select({ Channels.type eq Channel.Type.NORMAL })
+					val list = Channels.select { Channels.type eq Channel.Type.NORMAL }
 						.orderBy(
 							Channels.groupId to SortOrder.ASC,
 							Channels.order to SortOrder.ASC,
@@ -224,7 +227,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 						)
 						.toList()
 						.map { Channels.createEntity(it) }
-					
+
 					call.respond(list)
 				}
 			}

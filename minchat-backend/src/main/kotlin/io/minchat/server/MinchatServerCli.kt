@@ -27,6 +27,18 @@ import kotlin.random.Random
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
+/** All default MinChat backend modules. */
+val defaultModules = mutableListOf(
+	RootModule(),
+	UserModule(),
+	AuthModule(),
+	ChannelModule(),
+	ChannelGroupModule(),
+	DMChannelModule(),
+	MessageModule(),
+	GatewayModule()
+)
+
 fun main(vararg args: String) {
 	val exitCode = CommandLine(MainCommand()).execute(*args)
 	exitProcess(exitCode)
@@ -131,15 +143,7 @@ open class MinchatLauncher : Runnable {
 
 		Log.info { "Launching a MinChat server. Ports: http=$port, https=$sslPort." }
 
-		val modules = listOf(
-			RootModule(),
-			UserModule(),
-			AuthModule(),
-			ChannelModule(),
-			ChannelGroupModule(),
-			MessageModule(),
-			GatewayModule()
-		).filter { it.name !in excludedModules }
+		val modules = defaultModules.filter { it.name !in excludedModules }
 
 		val engine = embeddedServer(Netty, environment).apply {
 			with(application) {

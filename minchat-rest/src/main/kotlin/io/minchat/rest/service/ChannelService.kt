@@ -27,6 +27,13 @@ class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(
 		}.body<List<Channel>>()
 	}
 
+	/** Fetches all DM channels associated with the user of the provided token. */
+	suspend fun getAllDMChannels(token: String) = run {
+		client.get(makeRouteUrl(Route.DMChannel.all)) {
+			authorizeBearer(token)
+		}.body<List<Channel>>()
+	}
+
 	/** 
 	 * Fetches a limited number of messages from the specified channel.
 	 * See [Route.Channel.messages] for more info.
@@ -90,6 +97,26 @@ class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(
 		}.body<Channel>()
 	}
 
+	/** Creates a new DM channel using the provided token. */
+	suspend fun createDMChannel(
+		token: String,
+		otherUserId: Long,
+		name: String,
+		description: String,
+		order: Int
+	) = run {
+		client.post(makeRouteUrl(Route.DMChannel.create)) {
+			contentType(ContentType.Application.Json)
+			authorizeBearer(token)
+			setBody(DMChannelCreateRequest(
+				otherUserId = otherUserId,
+				name = name,
+				description = description,
+				order = order
+			))
+		}.body<Channel>()
+	}
+
 	/** Edits the channel with the specified ID using the providen token. */
 	suspend fun editChannel(
 		id: Long,
@@ -115,7 +142,7 @@ class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(
 		}.body<Channel>()
 	}
 
-	/** Permamently and irreversibly deletes the providen channel using the specified token. */
+	/** Permanently and irreversibly deletes the provided channel using the specified token. */
 	suspend fun deleteChannel(
 		id: Long,
 		token: String

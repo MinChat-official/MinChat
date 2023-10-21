@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="19" />
+    <bytecodeTargetLevel target="19">
+      <module name="minchat.buildSrc" target="1.8" />
+      <module name="minchat.buildSrc.main" target="1.8" />
+      <module name="minchat.buildSrc.test" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

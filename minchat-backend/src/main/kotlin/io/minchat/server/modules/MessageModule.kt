@@ -63,7 +63,7 @@ class MessageModule : AbstractMinchatServerModule() {
 					val user = Users.getByToken(call.token())
 					user.checkAndUpdateUserPunishments()
 
-					Messages.update(opWithAdminAccess(user.isAdmin,
+					Messages.update(opWithAdminAccess(user.role.isAdmin,
 						common = { Messages.id eq id },
 						userOnly = { Messages.author eq user.id }
 					)) {

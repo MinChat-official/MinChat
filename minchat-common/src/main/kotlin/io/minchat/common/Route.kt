@@ -139,6 +139,22 @@ object Route {
 		val delete = to("delete")
 	}
 
+	object DMChannel : MinchatRoute("dm-channel") {
+		/**
+		 * GET. Requires authorization.
+		 * Response: a list of DM [Channel] objects associated with the user.
+		 */
+		val all = to("all")
+
+		/**
+		 * POST. Requires authorization.
+		 *
+		 * Body: [DMChannelCreateRequest].
+		 * Response: a new [Channel] object of DM type.
+		 */
+		val create = to("create")
+	}
+
 	/** Accepts an {id} request parameter. */
 	object ChannelGroup : MinchatRoute("channel-group/{id}") {
 		/**

@@ -59,6 +59,9 @@ data class Channel(
 		val descriptionLength = 0..512
 		/** The maximum number of messages returned by the `channel/.../messages` route. */
 		val messagesPerFetch = 50
+
+		/** Maximum number of DM channels per a pair of individual users. */
+		val maxDMCount = 8
 	}
 
 	enum class Type {
