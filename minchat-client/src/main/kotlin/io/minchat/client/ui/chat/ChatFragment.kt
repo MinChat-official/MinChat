@@ -386,7 +386,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 		channelsContainer.clearChildren()
 
 		channels.forEach { channel ->
-			channelsContainer.add(ChannelButton(this, channel))
+			channelsContainer.add(ChannelElement(this, channel))
 				.pad(Style.layoutPad).growX().row()
 		}
 	}

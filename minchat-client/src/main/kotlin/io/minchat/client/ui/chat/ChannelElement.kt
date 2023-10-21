@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import mindustry.Vars
 import io.minchat.client.ui.MinchatStyle as Style
 
-class ChannelButton(
+class ChannelElement(
 	val chat: ChatFragment,
 	val channel: MinchatChannel
 ) : TextButton("#${channel.name}", Style.ChannelButton), CoroutineScope by chat {
