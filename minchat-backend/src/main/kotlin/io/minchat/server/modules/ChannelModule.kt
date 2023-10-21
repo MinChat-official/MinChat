@@ -175,7 +175,11 @@ class ChannelModule : AbstractMinchatServerModule() {
 							it[sendMode] = newSendMode
 						}
 						data.newGroupId?.let { newGroupId ->
-							it[groupId] = newGroupId
+							if (newGroupId != -1L) {
+								it[groupId] = newGroupId
+							} else {
+								it[groupId] = null
+							}
 						}
 						data.newOrder?.let { newOrder ->
 							it[order] = newOrder

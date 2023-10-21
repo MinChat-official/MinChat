@@ -1,6 +1,7 @@
 package io.minchat.client.misc
 
 import arc.scene.style.*
+import arc.scene.ui.*
 import arc.scene.ui.layout.*
 import io.minchat.common.entity.User.RoleBitSet.Masks
 import io.minchat.rest.entity.MinchatUser
@@ -49,5 +50,12 @@ fun MinchatUser.getIcon(): TextureRegionDrawable? {
 		role.get(Masks.admin) -> Style.adminIcon
 		role.get(Masks.moderator) -> Style.moderatorIcon
 		else -> null
+	}
+}
+
+/** Makes it so that the button only gets enabled when all of the specified fields are valid. */
+fun Button.enabledWhenValid(vararg fields: TextField) {
+	setDisabled {
+		fields.all { it.isValid }
 	}
 }

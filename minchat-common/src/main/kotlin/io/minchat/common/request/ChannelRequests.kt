@@ -26,6 +26,8 @@ data class DMChannelCreateRequest(
 /** 
  * Admin-only request to edit a channel.
  * Null values mean that the old value is to be preserved.
+ *
+ * [newGroupId] is special, the group is set to null if it's value is set to -1.
  */
 @Serializable
 data class ChannelModifyRequest(

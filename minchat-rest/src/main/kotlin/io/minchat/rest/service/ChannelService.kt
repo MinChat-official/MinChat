@@ -117,7 +117,11 @@ class ChannelService(baseUrl: String, client: HttpClient) : AbstractRestService(
 		}.body<Channel>()
 	}
 
-	/** Edits the channel with the specified ID using the providen token. */
+	/**
+	 * Edits the channel with the specified ID using the providen token.
+	 *
+	 * The channel's group id will be set to null if [newGroupId] is set to -1.
+	 */
 	suspend fun editChannel(
 		id: Long,
 		token: String,

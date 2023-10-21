@@ -146,6 +146,8 @@ class NormalMinchatChannel(
 	 * Edits this Channel. Requires admin rights. 
 	 *
 	 * This function returns a __new__ channel object.
+	 *
+	 * [groupId] will be set to null if [newGroupId] is set to -1.
 	 */
 	suspend fun edit(
 		newName: String? = null,

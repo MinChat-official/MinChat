@@ -4,6 +4,7 @@ import arc.scene.ui.Label
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
+import io.minchat.client.misc.enabledWhenValid
 import io.minchat.common.entity.Channel
 import io.minchat.rest.entity.*
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +71,7 @@ class ChannelDialog(
 			if (channel is NormalMinchatChannel) {
 				val groupIdField = inputField("Group ID", false) {
 					it.toLongOrNull() != null
-				}.also { it.content = channel.groupId.toString() }
+				}.also { it.content = channel.groupId?.toString() ?: "-1" }
 
 				val viewModeField = inputField("View mode", false) { mode ->
 					Channel.AccessMode.values().any { it.name == mode.uppercase() }
@@ -92,7 +93,7 @@ class ChannelDialog(
 							newSendMode = sendModeField.content.uppercase().let(Channel.AccessMode::valueOf)
 						)
 					}
-				}.disabled { !nameField.isValid || !descriptionField.isValid }
+				}.get().enabledWhenValid(nameField, descriptionField, orderField, groupIdField, viewModeField, sendModeField)
 			}
 
 			// DM-specific things
@@ -106,7 +107,7 @@ class ChannelDialog(
 							newOrder = orderField.content.toInt()
 						)
 					}
-				}
+				}.get().enabledWhenValid(nameField, descriptionField, orderField)
 			}
 		}
 	}

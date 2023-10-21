@@ -304,7 +304,11 @@ class MinchatRestClient(
 			account().user = it.data
 		}
 	
-	/** Edits the specified channel. Requires a logged-in admin account. */
+	/**
+	 * Edits the specified channel. Requires a logged-in admin account.
+	 *
+	 * The channel's group id will be set to null if [newGroupId] is set to -1.
+	 */
 	suspend fun editChannel(
 		id: Long,
 		newName: String? = null,
