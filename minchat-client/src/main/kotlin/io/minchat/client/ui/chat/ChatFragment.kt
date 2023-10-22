@@ -147,12 +147,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 			channelsBar = this
 
-			val dmCell = limitedScrollPane(limitH = false) {
-				it.isScrollingDisabledX = true
-				dmsSubBar = DMGroupBar(this@ChatFragment, emptyMap())
-
-				add(dmsSubBar).grow()
-			}.growX()
+			dmsSubBar = DMGroupBar(this@ChatFragment, emptyMap())
+			val dmCell = add(dmsSubBar).grow()
 			row()
 
 			addLabel("Channels", Style.Label)

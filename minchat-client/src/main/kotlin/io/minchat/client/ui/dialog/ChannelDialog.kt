@@ -114,7 +114,7 @@ class ChannelDialog(
 
 	inner class ChannelDeleteConfirmDialog : AbstractModalDialog() {
 		init {
-			val confirmString = Random.nextBytes(15).map {
+			val confirmString = Random.nextBytes(8).map {
 				abs(it % 27) + 'a'.code
 			}.joinToString("") { it.toChar().toString() }
 

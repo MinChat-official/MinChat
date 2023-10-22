@@ -80,7 +80,7 @@ abstract class AbstractGroupElement(
 	}
 
 	/** Toggles the state of this group. Does NOT toggle [toggleButton] as that will lead to an infinite recursion. */
-	fun toggleGroup(shown: Boolean = toggleButton.isEnabled) {
+	open fun toggleGroup(shown: Boolean = toggleButton.isEnabled) {
 		collapser.setCollapsed(!shown)
 	}
 

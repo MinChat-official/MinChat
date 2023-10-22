@@ -8,6 +8,7 @@ import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.addMinTable
+import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.*
 import io.minchat.client.ui.MinchatStyle as Style
@@ -15,45 +16,63 @@ import io.minchat.client.ui.MinchatStyle as Style
 class DMGroupBar(
 	val chat: ChatFragment,
 	dmMap: Map<Long, List<MinchatChannel>>
-) : AbstractGroupElement(), CoroutineScope by chat {
+) : AbstractGroupElement(false), CoroutineScope by chat {
 	var dmMap = dmMap
 		set(value) {
 			field = value
 			rebuildContents()
 		}
 
+	override fun toggleGroup(shown: Boolean) {
+		super.toggleGroup(shown)
+
+		if (shown) Tutorials.directMessages.trigger()
+	}
+
 	override fun Table.rebuildContentsInternal() {
 		toggleButton.child<Label>(0).content = "Direct channels"
 
-		for ((userId, channels) in dmMap) {
-			// DM group
-			addTable {
-				vsplitter(padLeft = 0f, padRight = Style.layoutPad)
+		limitedScrollPane(limitH = false) {
+			it.isScrollingDisabledX = true
 
+			for ((userId, channels) in dmMap) {
+				// DM group
 				addTable {
-					val nameLabel = addLabel("Loading user name...", Style.Label)
-						.growX().get()
+					left()
+					vsplitter(padLeft = 0f, padRight = Style.layoutPad, color = Style.comment)
 
-					// Channel list
-					addMinTable {
-						for (channel in channels) {
-							add(ChannelElement(chat, channel))
-								.growX()
-								.row()
+					addTable {
+						left()
+
+						val nameLabel = addLabel("Loading user name...", Style.Label)
+							.color(Style.comment)
+							.growX().get()
+						row()
+
+						// Channel list
+						addMinTable {
+							left()
+							for (channel in channels) {
+								add(ChannelElement(chat, channel))
+									.growX()
+									.row()
+							}
+						}.growX()
+
+						launch {
+							val user = Minchat.client.getUserOrNull(userId)
+
+							runUi {
+								nameLabel.content = user?.displayTag ?: "<unknown user>"
+							}
 						}
-					}.growX()
-
-					launch {
-						val user = Minchat.client.getUserOrNull(userId)
-
-						runUi {
-							nameLabel.content = user?.displayTag ?: "<unknown user>"
-						}
-					}
-				}
-			}.pad(Style.layoutPad).margin(Style.layoutMargin)
-				.growX()
-		}
+					}.grow()
+				}.pad(Style.layoutPad)
+					.margin(Style.layoutMargin)
+					.growX()
+					.row()
+			}
+		}.grow().row()
 
 		if (dmMap.isEmpty()) {
 			addLabel("<no DMs>", Style.Label)

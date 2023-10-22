@@ -296,7 +296,6 @@ abstract class UserDialog(
 					// Set the channel as active and reload ui
 					Minchat.chatFragment.apply {
 						currentChannel = channel
-						reloadChannels()
 						updateChatUi()
 					}
 				}
