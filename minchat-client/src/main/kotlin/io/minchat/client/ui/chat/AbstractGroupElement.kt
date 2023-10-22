@@ -1,6 +1,5 @@
 package io.minchat.client.ui.chat
 
-import arc.scene.style.Drawable
 import arc.scene.ui.layout.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.ui.element.ToggleButton
@@ -15,9 +14,8 @@ import io.minchat.client.ui.MinchatStyle as Style
  * Its contents are created when it's shown for the first time.
  */
 abstract class AbstractGroupElement(
-	background: Drawable = Style.surfaceBackground,
 	val defaultShown: Boolean = true
-) : Table(background) {
+) : Table() {
 	lateinit var toggleButton: ToggleButton
 	lateinit var collapser: Collapser
 	lateinit var contents: Table
@@ -52,7 +50,8 @@ abstract class AbstractGroupElement(
 	/** Rebuilds contents if possible (the group is already built). */
 	fun rebuildContents() {
 		if (isBuilt) {
-			rebuildContentsInternal()
+			contents.clearChildren()
+			contents.rebuildContentsInternal()
 		}
 	}
 
@@ -67,7 +66,10 @@ abstract class AbstractGroupElement(
 			.row()
 
 		addCollapser(defaultShown, Style.surfaceInner) {
-			contents = this
+			addTable {
+				margin(Style.layoutMargin)
+				contents = this
+			}.grow()
 		}.also {
 			collapser = it.get()
 		}.growX()

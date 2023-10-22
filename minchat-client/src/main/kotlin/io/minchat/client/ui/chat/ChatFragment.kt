@@ -151,7 +151,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				it.isScrollingDisabledX = true
 				dmsSubBar = DMGroupBar(this@ChatFragment, emptyMap())
 
-				add(dmsSubBar).minWidth(400f).grow()
+				add(dmsSubBar).grow()
 			}.growX()
 			row()
 

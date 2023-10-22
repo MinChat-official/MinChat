@@ -72,12 +72,16 @@ abstract class UserDialog(
 			self != null && user?.let { self.canDeleteUser(it) } != true
 		}
 
+		nextActionRow()
 		if (self != null && user?.let { self.canModifyUserPunishments(it) } == true) {
-			nextActionRow()
 			action("Punishments") {
 				AdminPunishmentsDialog().show()
 			}.disabled { user == null }
 		}
+
+		action("Message") {
+			DMCreationDialog().show()
+		}.disabled { user == null || self == null }
 	}
 
 	/**
