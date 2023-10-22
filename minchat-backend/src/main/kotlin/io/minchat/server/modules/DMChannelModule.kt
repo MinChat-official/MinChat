@@ -28,7 +28,7 @@ class DMChannelModule : AbstractMinchatServerModule() {
 						it.user1id != null && it.user2id != null // to avoid errors
 					}
 
-					val map = allDms.associateBy {
+					val map = allDms.groupBy {
 						// For channels where invokingUser is user1, associate with user 2, and vice versa.
 						// This results in a map where keys are ids of other users and values are conversations with them
 						if (it.user1id == invokingUser.id) {
