@@ -6,7 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.Route
-import io.minchat.common.entity.Message
+import io.minchat.common.entity.*
 import io.minchat.common.event.*
 import io.minchat.common.request.*
 import io.minchat.server.databases.*
@@ -50,8 +50,14 @@ class MessageModule : AbstractMinchatServerModule() {
 
 					val newMessage = Messages.getById(id)
 					Log.info { "${oldMessage.loggable()} was edited by ${user.loggable()}. Now: ${newMessage.loggable()}" }
-					server.sendEvent(MessageModifyEvent(newMessage))
 					call.respond(newMessage)
+
+					val event = MessageModifyEvent(newMessage)
+					if (newMessage.channel.type == Channel.Type.DM) {
+						val channel = newMessage.channel
+						event.withRecipients(channel.user1id!!, channel.user2id!!)
+					}
+					server.sendEvent(event)
 				}
 			}
 
@@ -62,6 +68,7 @@ class MessageModule : AbstractMinchatServerModule() {
 				transaction {
 					val user = Users.getByToken(call.token())
 					user.checkAndUpdateUserPunishments()
+					val oldMessage = Messages.getById(id)
 
 					Messages.update(opWithAdminAccess(user.role.isAdmin,
 						common = { Messages.id eq id },
@@ -75,12 +82,17 @@ class MessageModule : AbstractMinchatServerModule() {
 					Log.info { "Message $id was deleted." }
 
 					val deletedMessage = Messages.select { Messages.id eq id }.single()
-					server.sendEvent(MessageDeleteEvent(
+					val event = MessageDeleteEvent(
 						messageId = deletedMessage[Messages.id].value,
 						authorId = deletedMessage[Messages.author].value,
 						channelId = deletedMessage[Messages.channel].value,
 						byAuthor = deletedMessage[Messages.author].value == user.id
-					))
+					)
+					val channel = oldMessage.channel
+					if (channel.type == Channel.Type.DM) {
+						event.withRecipients(channel.user1id!!, channel.user2id!!)
+					}
+					server.sendEvent(event)
 				}
 
 				call.response.statusOk()

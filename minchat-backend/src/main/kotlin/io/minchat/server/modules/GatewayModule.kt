@@ -7,11 +7,14 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.minchat.common.*
 import io.minchat.common.Route
+import io.minchat.common.entity.User
 import io.minchat.common.event.Event
 import io.minchat.server.ServerContext
+import io.minchat.server.databases.Users
 import io.minchat.server.util.Log
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
@@ -37,8 +40,10 @@ class GatewayModule : AbstractMinchatServerModule() {
 			webSocket(Route.Gateway.websocket) {
 				val version = call.request.queryParameters["version"]
 					?.let(BuildVersion::fromStringOrNull)
-				val token = call.request.queryParameters["token"]
-				val connection = Connection(this, version, token)
+				val user = call.request.queryParameters["token"]?.let {
+					transaction { Users.getByToken(it) }
+				}
+				val connection = Connection(this, version, user)
 					.also(connections::add)
 
 				Log.lifecycle { "Incoming: $connection" }
@@ -63,9 +68,18 @@ class GatewayModule : AbstractMinchatServerModule() {
 					val event = pendingEvents.remove()
 					val frame = jsonConverter.serialize(event)
 
-					Log.lifecycle { "Sending $event to ${connections.size} connections" }
+					val recipents = event.recipients?.map { id ->
+						connections.find { it.user?.id == id }
+					}?.filterNotNull() ?: connections
 
-					connections.forEach {
+					if (recipents.isEmpty()) {
+						Log.lifecycle { "Skipping $event because there are no valid recipents." }
+						continue
+					}
+
+					Log.lifecycle { "Sending $event to ${recipents.size} connections" }
+
+					recipents.forEach {
 						try {
 							it.session.outgoing.send(frame)
 						} catch (e: Exception) {
@@ -93,13 +107,12 @@ class GatewayModule : AbstractMinchatServerModule() {
 	class Connection(
 		val session: WebSocketServerSession,
 		val clientVersion: BuildVersion?,
-		val token: String?
+		val user: User?
 	) {
 		val id = lastId.getAndIncrement()
-		val tokenHash = token?.hashCode()?.toString(16)
 
 		override fun toString() =
-			"Connection #$id (v${clientVersion ?: "unknown"}, $tokenHash)"
+			"Connection #$id (v${clientVersion ?: "unknown"}, ${user?.loggable()})"
 
 		companion object {
 			val lastId = AtomicLong(0L)

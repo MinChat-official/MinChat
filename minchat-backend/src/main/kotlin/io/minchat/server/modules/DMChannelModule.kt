@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.minchat.common.Route
 import io.minchat.common.entity.Channel
+import io.minchat.common.event.*
 import io.minchat.common.request.DMChannelCreateRequest
 import io.minchat.server.databases.*
 import io.minchat.server.util.*
@@ -72,6 +73,9 @@ class DMChannelModule : AbstractMinchatServerModule() {
 					}.resultedValues!!.first().let(Channels::createEntity)
 
 					call.respond(channel)
+
+					server.sendEvent(ChannelCreateEvent(channel)
+						.withRecipients(invokingUser.id, otherUser.id))
 				}
 			}
 		}

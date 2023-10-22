@@ -108,7 +108,12 @@ class ChannelModule : AbstractMinchatServerModule() {
 
 					Log.lifecycle { "A new message was sent by ${user.loggable()} in ${channel.loggable()}: ${message.loggable()}" }
 					call.respond(message)
-					server.sendEvent(MessageCreateEvent(message))
+
+					val event = MessageCreateEvent(message)
+					if (channel.type == Channel.Type.DM) {
+						event.withRecipients(channel.user1id!!, channel.user2id!!)
+					}
+					server.sendEvent(event)
 				}
 			}
 
@@ -190,9 +195,11 @@ class ChannelModule : AbstractMinchatServerModule() {
 					Log.info { "${oldChannel.loggable()} was edited by ${invokingUser.loggable()}. Now: ${newChannel.loggable()}" }
 					call.respond(newChannel)
 
-					if (newChannel.type != Channel.Type.DM) {
-						server.sendEvent(ChannelModifyEvent(newChannel))
+					val event = ChannelModifyEvent(newChannel)
+					if (newChannel.type == Channel.Type.DM) {
+						event.withRecipients(newChannel.user1id!!, newChannel.user2id!!)
 					}
+					server.sendEvent(event)
 				}
 			}
 
@@ -214,11 +221,15 @@ class ChannelModule : AbstractMinchatServerModule() {
 					Messages.deleteWhere { with(it) { channel eq channelId } }
 
 					Log.info { "${oldChannel.loggable()} was deleted by ${invokingUser.loggable()}" }
+
+					call.response.statusOk()
+
+					val event = ChannelDeleteEvent(channelId)
+					if (oldChannel.type == Channel.Type.DM) {
+						event.withRecipients(oldChannel.user1id!!, oldChannel.user2id!!)
+					}
+					server.sendEvent(event)
 				}
-
-				call.response.statusOk()
-
-				server.sendEvent(ChannelDeleteEvent(channelId))
 			}
 
 			get(Route.Channel.all) {
