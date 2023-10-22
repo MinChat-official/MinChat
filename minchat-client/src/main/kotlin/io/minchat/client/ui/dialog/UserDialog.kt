@@ -10,7 +10,7 @@ import io.minchat.client.misc.*
 import io.minchat.client.ui.MinchatStyle.buttonMargin
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
-import io.minchat.common.entity.User
+import io.minchat.common.entity.*
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
@@ -128,12 +128,10 @@ abstract class UserDialog(
 
 			action("Confirm") {
 				hide()
-				launchWithStatus("Editing user ${user.username}...") {
-					runSafe {
-						this@UserDialog.user = user.edit(
-							newNickname = usernameField.content
-						)
-					}
+				launchSafeWithStatus("Editing user ${user.username}...") {
+					this@UserDialog.user = user.edit(
+						newNickname = usernameField.content
+					)
 				}
 			}.disabled { !usernameField.isValid }
 		}
@@ -155,12 +153,10 @@ abstract class UserDialog(
 
 			action("Confirm") {
 				hide()
-				launchWithStatus("Deleting user ${user.tag}...") {
-					runSafe {
-						user.delete()
-						if (user.id == Minchat.client.account?.user?.id) {
-							Minchat.client.logout()
-						}
+				launchSafeWithStatus("Deleting user ${user.tag}...") {
+					user.delete()
+					if (user.id == Minchat.client.account?.user?.id) {
+						Minchat.client.logout()
 					}
 				}
 			}.disabled { !confirmField.isValid }
@@ -176,12 +172,10 @@ abstract class UserDialog(
 			update()
 
 			action("Save") {
-				launchWithStatus("Updating...") {
-					runSafe {
-						hide()
-						val newUser = Minchat.client.modifyUserPunishments(user, newMute, newBan)
-						this@UserDialog.user = newUser
-					}
+				launchSafeWithStatus("Updating...") {
+					hide()
+					val newUser = Minchat.client.modifyUserPunishments(user, newMute, newBan)
+					this@UserDialog.user = newUser
 				}
 			}.disabled { user.mute == newMute && user.ban == newBan}
 		}
@@ -266,6 +260,42 @@ abstract class UserDialog(
 						status("Error: $e")
 					}
 				}.disabled { !duration.isValid }
+			}
+		}
+	}
+
+	inner class DMCreationDialog : AbstractModalDialog() {
+		val user = this@UserDialog.user!!
+
+		init {
+			header.apply {
+				addLabel("Creating a DM channel").row()
+				addLabel("With ${user.displayName}").row()
+				addLabel("(${user.tag})").row()
+			}
+
+			val nameField = inputField("Channel name", false) {
+				it.length in Channel.nameLength
+			}
+			val descriptionField = inputField("Description", false) {
+				it.length in Channel.descriptionLength
+			}
+			val orderField = inputField("Order", false) {
+				it.toIntOrNull() != null
+			}.also { it.content = "1" }
+
+			action("Create") {
+				hide()
+				launchSafeWithStatus("Creating DM channel...") {
+					val channel = user.createDMChannel(nameField.content, descriptionField.content, orderField.content.toInt())
+
+					// Set the channel as active and reload ui
+					Minchat.chatFragment.apply {
+						currentChannel = channel
+						reloadChannels()
+						updateChatUi()
+					}
+				}
 			}
 		}
 	}

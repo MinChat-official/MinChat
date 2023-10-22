@@ -147,12 +147,13 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			margin(Style.layoutMargin)
 			channelsBar = this
 
-			limitedScrollPane {
+			val dmCell = limitedScrollPane(limitH = false) {
 				it.isScrollingDisabledX = true
 				dmsSubBar = DMGroupBar(this@ChatFragment, emptyMap())
 
-				add(dmsSubBar).grow()
-			}.growX().row()
+				add(dmsSubBar).minWidth(400f).grow()
+			}.growX()
+			row()
 
 			addLabel("Channels", Style.Label)
 				.color(Style.purple)
@@ -163,6 +164,17 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				it.isScrollingDisabledX = true
 				channelsContainer = this
 			}.grow().row()
+
+			// Make sure the DM pane does not take more than 50% space
+			var lastMaxH = 0f
+			updateLast {
+				val maxH = channelsBar.height - Style.layoutMargin * 2
+				if (lastMaxH != maxH) {
+					lastMaxH = maxH
+					dmCell.maxHeight(maxH)
+					dmCell.get()?.invalidateHierarchy()
+				}
+			}
 		}.growY().pad(Style.layoutPad).growY()
 
 		vsplitter()
@@ -412,9 +424,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				if (currentChannel == null) {
 					// try to find and focus the #rules channel if none is selected
 					for (group in groups) {
-						group.channels.find { it.name.lowercase() == "rules" }?.let {
+						group.channels.find { "rules" in it.name.lowercase() }?.let {
 							currentChannel = it
 						}
+					}
+					if (currentChannel != null) {
+						updateChatUi()
 					}
 				}
 			}

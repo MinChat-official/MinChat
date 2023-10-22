@@ -83,6 +83,13 @@ data class MinchatUser(
 	suspend fun getDMChannels() =
 		rest.getAllDMChannels()[id].orEmpty()
 
+	/** Creates a new DM channel between the logged-in account and this user. */
+	suspend fun createDMChannel(
+		name: String,
+		description: String,
+		order: Int = 0
+	) = rest.createDMChannel(id, name, description, order)
+
 	override fun toString() =
 		"MinchatUser(id=$id, tag=$tag, role=$role, ban=$ban, mute=$mute, messageCount=$messageCount)"
 

@@ -1,6 +1,7 @@
 #VERSION 0.7.0
 Implemented channel groups
 Implemented direct messages
+Added new tutorials
 Added an option to log out
 Improved the style and UX of modal dialogs
 Fixed a few crashes

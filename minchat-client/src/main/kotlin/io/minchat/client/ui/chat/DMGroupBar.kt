@@ -23,7 +23,7 @@ class DMGroupBar(
 		}
 
 	override fun Table.rebuildContentsInternal() {
-		toggleButton.child<Label>(0).content = "DM"
+		toggleButton.child<Label>(0).content = "Direct channels"
 
 		for ((userId, channels) in dmMap) {
 			// DM group
@@ -56,7 +56,7 @@ class DMGroupBar(
 		}
 
 		if (dmMap.isEmpty()) {
-			addLabel("<You have no DM chats>", Style.Label)
+			addLabel("<no DMs>", Style.Label)
 		}
 	}
 }

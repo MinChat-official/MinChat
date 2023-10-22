@@ -284,7 +284,7 @@ class MinchatRestClient(
 			name = name,
 			description = description,
 			order = order
-		)
+		).withClient(this)
 	
 	// editX methods
 	/** 

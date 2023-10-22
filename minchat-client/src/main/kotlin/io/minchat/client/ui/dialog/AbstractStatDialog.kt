@@ -81,7 +81,7 @@ abstract class AbstractStatDialog(
 		}
 	}
 
-	/** Shortcut for `launchWithStatus { runSafe {... } }`. */
+	/** Shortcut for `launchWithStatus { runSafe { ... } }`. */
 	protected inline fun launchSafeWithStatus(status: String, crossinline action: suspend () -> Unit) =
 		launchWithStatus(status) {
 			runSafe {

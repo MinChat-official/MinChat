@@ -31,7 +31,7 @@ class ChannelGroupElement(
 		}
 
 		if (group.channels.isEmpty()) {
-			addLabel("<No channels in this group>", Style.Label)
+			addLabel("<No channels>", Style.Label)
 		}
 	}
 }
