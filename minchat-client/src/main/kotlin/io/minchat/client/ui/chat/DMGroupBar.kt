@@ -2,6 +2,7 @@ package io.minchat.client.ui.chat
 
 import arc.scene.ui.Label
 import arc.scene.ui.layout.Table
+import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import com.github.mnemotechnician.mkui.extensions.groups.child
@@ -44,10 +45,14 @@ class DMGroupBar(
 					addTable {
 						left()
 
-						val nameLabel = addLabel("Loading user name...", Style.Label)
-							.color(Style.comment)
-							.growX().get()
-						row()
+						lateinit var nameLabel: Label
+						addMinTable {
+							addLabel("Loading...", Style.Label, align = Align.left)
+								.left()
+								.color(Style.comment)
+								.growX()
+								.also { nameLabel = it.get() }
+						}.growX().row()
 
 						// Channel list
 						addMinTable {
@@ -60,7 +65,7 @@ class DMGroupBar(
 						}.growX()
 
 						launch {
-							val user = Minchat.client.getUserOrNull(userId)
+							val user = Minchat.client.cache.getUser(userId)
 
 							runUi {
 								nameLabel.content = user?.displayTag ?: "<unknown user>"
