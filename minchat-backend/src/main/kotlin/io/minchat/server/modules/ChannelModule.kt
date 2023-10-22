@@ -12,6 +12,7 @@ import io.minchat.common.request.*
 import io.minchat.server.databases.*
 import io.minchat.server.util.*
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -215,10 +216,10 @@ class ChannelModule : AbstractMinchatServerModule() {
 						accessDenied("You cannot delete this channel.")
 					}
 
-					Channels.deleteWhere { with(it) { Channels.id eq channelId } }.throwIfNotFound { "no such channel." }
+					// First actually delete all associated messages
+					Messages.deleteWhere { channel eq channelId }
 
-					// also actually delete all associated messages
-					Messages.deleteWhere { with(it) { channel eq channelId } }
+					Channels.deleteWhere { with(it) { Channels.id eq channelId } }.throwIfNotFound { "no such channel." }
 
 					Log.info { "${oldChannel.loggable()} was deleted by ${invokingUser.loggable()}" }
 
