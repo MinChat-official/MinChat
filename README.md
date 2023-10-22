@@ -20,8 +20,8 @@ data, other than what's required to authenticate you.
 3. Do not abuse MinChat servers. This includes denial-of-service attacks, message spam, usage of any dangerous exploits, etc.
 4. Do not post unwanted advertisements. Nobody cares about your nsfw discord server with 69 people.
 5. Do not attempt to scam other users of MinChat.
-6. Do not post NSFW or gore content in public chats. Wait for DMs to be implemented. 
-7. Once DMs are implemented, do not send people unwanted content. E.g. do not send NSFW content to strangers.
+6. Do not post NSFW or gore content in public chats. Use DMs.
+7. Do not send people unwanted content. E.g. do not send NSFW content to strangers unless you know they want it. This applies to DMs.
 8. Use common sense. Just because something bad is not listed here does not mean you will not be punished for doing it.
 
 These rules vary in severity. Violation of rules 3 and 5 are likely to be met with a permanent ban.
