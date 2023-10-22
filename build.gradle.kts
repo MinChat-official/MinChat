@@ -15,6 +15,7 @@ allprojects {
 		mavenCentral()
 		mavenLocal()
 		maven("https://oss.sonatype.org/content/repositories/snapshots")
+		maven("https://raw.githubusercontent.com/Zelaux/MindustryRepo/master/repository")
 		maven("https://jitpack.io")
 	}
 

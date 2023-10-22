@@ -23,8 +23,8 @@ dependencies {
 	implementation("io.ktor", "ktor-client-content-negotiation", ktorVersion)
 	implementation("io.ktor", "ktor-serialization-kotlinx-json", ktorVersion)
 
-	compileOnly("com.github.Anuken.Arc", "arc-core", "v146")
-	compileOnly("com.github.Anuken", "Mindustry", "v146")
+	compileOnly("com.github.anuken.arc", "arc-core", "v146")
+	compileOnly("com.github.anuken", "mindustry", "v146")
 
 	// For the new-console integration
 	compileOnly("com.github.mnemotechnician", "new-console", "v1.9.0.2")
