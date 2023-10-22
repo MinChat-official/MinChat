@@ -39,4 +39,24 @@ object Tutorials {
 		+ ChangeDescriptionBundle("2-desc")
 		+ ChangeDescriptionBundle("3-desc")
 	}
+
+	val directMessages = newTutorial("dms") {
+		+ ChangeDescriptionBundle("1-desc")
+		+ ChangeDescriptionBundle("2-desc")
+		+ ChangeDescriptionBundle("3-desc")
+		+ ChangeDescriptionBundle("4-desc")
+		+ Parallel(
+			ChangeTitleBundle("5-title"),
+			ChangeDescriptionBundle("5-desc")
+		)
+		+ ChangeDescriptionBundle("6-desc")
+		+ Parallel(
+			ChangeTitleBundle("7-title"),
+			ChangeDescriptionBundle("7-desc")
+		)
+		+ Parallel(
+			ChangeTitleBundle("end-title"),
+			ChangeDescriptionBundle("end-desc")
+		)
+	}
 }
