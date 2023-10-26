@@ -1,4 +1,5 @@
 
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.*
@@ -11,6 +12,13 @@ plugins {
 val jarName = "minchat-client"
 val mindustryVersion: String by rootProject
 val ktorVersion: String by rootProject
+
+val spritesFolder = File("$projectDir/assets/sprites")
+val generatedCodeFolder = File("$buildDir/generated/")
+
+sourceSets.main {
+	kotlin.srcDir(generatedCodeFolder)
+}
 
 dependencies {
 	implementation(project(":minchat-common"))
@@ -198,9 +206,58 @@ task<Jar>("release") {
 	}
 }
 
+val generateResources by tasks.registering {
+	val outputFile = generatedCodeFolder.resolve("R.kt")
+
+	inputs.dir(spritesFolder)
+	outputs.file(outputFile)
+
+	doLast {
+		val sprites = spritesFolder.walkTopDown()
+			.filter { it.isFile }
+			.filter { it.extension == "png" }
+			.map { it.nameWithoutExtension }
+			.map { name ->
+				// Trasnform kebab-case and snake_case into camelCase
+				buildString {
+					var isCapital = false
+					name.forEach {
+						if (it == '-' || it == '_' || it == ' ') {
+							isCapital = true
+						} else {
+							append(if (isCapital) it.uppercase() else it.lowercase())
+							isCapital = false
+						}
+					}
+				} to "minchat-$name"
+			}
+
+		val result = """
+			|package io.minchat.client
+			|
+			|import arc.Core
+			|import arc.scene.style.TextureRegionDrawable
+			|
+			|object R {
+			|	${sprites.joinToString("\n|\t") {
+					"val ${it.first} by lazy { Core.atlas.find(\"${it.second}\", \"error\").let(::TextureRegionDrawable) }"
+				}}
+			|}
+		""".trimMargin()
+
+		outputFile.writeText(result)
+	}
+}
+
+tasks.withType<KotlinCompile> {
+	dependsOn(generateResources)
+}
+
 tasks.jar {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	archiveFileName.set("${jarName}.jar")
+
+	dependsOn(generateResources)
 
 	from(rootDir) {
 		include("mod.hjson")

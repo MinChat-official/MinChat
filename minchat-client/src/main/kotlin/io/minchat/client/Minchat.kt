@@ -1,5 +1,6 @@
 package io.minchat.client
 
+import arc.Core
 import arc.Events
 import arc.scene.ui.Label
 import com.github.mnemotechnician.mkui.delegates.setting
@@ -10,6 +11,7 @@ import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.config.*
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
+import io.minchat.client.ui.*
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.client.ui.managers.GuiChatButtonManager
 import io.minchat.common.MINCHAT_VERSION
@@ -23,6 +25,7 @@ import mindustry.mod.Mod
 import mindustry.ui.Styles
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import io.minchat.client.R
 
 private var minchatInstance: MinchatMod? = null
 /** The only instance of this mod. */
@@ -94,7 +97,7 @@ class MinchatMod : Mod(), CoroutineScope {
 		}
 
 		Events.on(EventType.ClientLoadEvent::class.java) {
-			Vars.ui.menufrag.addButton("MinChat", Icon.terminal) {
+			Vars.ui.menufrag.addButton("MinChat", R.chat) {
 				showChatDialog()
 			}
 
@@ -131,7 +134,7 @@ class MinchatMod : Mod(), CoroutineScope {
 				}.marginBottom(60f).row()
 
 				check("don't show again") {
-					dontShowInfoAgain = true
+					dontShowInfoAgain = it
 				}.row()
 			}.show()
 		}
