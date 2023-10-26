@@ -1,6 +1,5 @@
 package io.minchat.client
 
-import arc.Core
 import arc.Events
 import arc.scene.ui.Label
 import com.github.mnemotechnician.mkui.delegates.setting
@@ -13,19 +12,17 @@ import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.ui.*
 import io.minchat.client.ui.chat.ChatFragment
-import io.minchat.client.ui.managers.GuiChatButtonManager
+import io.minchat.client.ui.managers.*
 import io.minchat.common.MINCHAT_VERSION
 import io.minchat.rest.*
 import io.minchat.rest.gateway.MinchatGateway
 import kotlinx.coroutines.*
 import mindustry.Vars
 import mindustry.game.EventType
-import mindustry.gen.Icon
 import mindustry.mod.Mod
 import mindustry.ui.Styles
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import io.minchat.client.R
 
 private var minchatInstance: MinchatMod? = null
 /** The only instance of this mod. */
@@ -141,6 +138,7 @@ class MinchatMod : Mod(), CoroutineScope {
 
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
+		UnreadsManager.load()
 
 		launch {
 			delay(100L) // TODO: possible race condition

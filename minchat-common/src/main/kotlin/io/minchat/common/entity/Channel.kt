@@ -11,6 +11,7 @@ data class Channel(
 
 	val name: String,
 	val description: String,
+	val lastMessageTimestamp: Long = 0L,
 
  	/** Users who can view messages in this channel. Has no effect if [type] is [Type.DM]. */
 	val viewMode: AccessMode,

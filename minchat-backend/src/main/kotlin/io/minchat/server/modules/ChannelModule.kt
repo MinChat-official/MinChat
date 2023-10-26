@@ -107,6 +107,10 @@ class ChannelModule : AbstractMinchatServerModule() {
 						it[lastMessageTimestamp] = message.timestamp
 					}
 
+					Channels.update({ Channels.id eq channel.id }) {
+						it[lastMessageTimestamp] = message.timestamp
+					}
+
 					Log.lifecycle { "A new message was sent by ${user.loggable()} in ${channel.loggable()}: ${message.loggable()}" }
 					call.respond(message)
 

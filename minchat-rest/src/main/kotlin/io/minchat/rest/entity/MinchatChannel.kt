@@ -15,6 +15,7 @@ sealed class MinchatChannel(
 
 	val name by data::name
 	val description by data::description
+	val lastMessageTimestamp by data::lastMessageTimestamp
 
 	/** Users who can view this channel. */
 	val viewMode by data::viewMode
@@ -119,7 +120,8 @@ sealed class MinchatChannel(
 		sendMode: AccessMode = data.sendMode,
 		type: Channel.Type = data.type,
 		groupId: Long? = data.groupId,
-		order: Int = data.order
+		order: Int = data.order,
+		lastMessageTimestamp: Long = data.lastMessageTimestamp,
 	) =
 		data.copy(
 			name = name,
@@ -128,7 +130,8 @@ sealed class MinchatChannel(
 			sendMode = sendMode,
 			type = type,
 			groupId = groupId,
-			order = order
+			order = order,
+			lastMessageTimestamp = lastMessageTimestamp,
 		).withClient(rest)
 }
 

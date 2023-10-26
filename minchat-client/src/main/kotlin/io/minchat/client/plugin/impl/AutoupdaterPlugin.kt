@@ -68,7 +68,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		}
 
 		if (latestVersion <= MINCHAT_VERSION) {
-			io.minchat.client.misc.Log.info { "Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION" }
+			Log.info { "Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION" }
 			return CheckResult.NO_UPDATE
 		}
 

@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.ResultRow
 object Channels : AbstractMinchatEntityTable<Channel>() {
 	val name = varchar("name", Channel.nameLength.endInclusive)
 	val description = varchar("description", Channel.descriptionLength.endInclusive)
+	val lastMessageTimestamp = long("last-message").default(0L)
 
 	val viewMode = enumeration<AccessMode>("view-mode").default(AccessMode.EVERYONE)
 	val sendMode = enumeration<AccessMode>("send-mode").default(AccessMode.LOGGED_IN)
@@ -26,6 +27,7 @@ object Channels : AbstractMinchatEntityTable<Channel>() {
 			id = row[Channels.id].value,
 			name = row[name],
 			description = row[description],
+			lastMessageTimestamp = row[lastMessageTimestamp],
 
 			viewMode = row[viewMode],
 			sendMode = row[sendMode],

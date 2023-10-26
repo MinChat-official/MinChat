@@ -495,7 +495,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}
 		}.also {
 			lastChatUpdateJob = it
-		}.then { notif.cancel() }
+		}.then {
+			notif.cancel()
+		}
 	}
 
 	/** Loads more messages either before the oldest or after the newest message. */
