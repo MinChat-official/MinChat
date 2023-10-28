@@ -1,7 +1,7 @@
 package io.minchat.client.ui.managers
 
 import com.github.mnemotechnician.mkui.delegates.setting
-import io.minchat.client.Minchat
+import io.minchat.client.*
 import io.minchat.client.misc.Log
 import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.launch
@@ -17,9 +17,17 @@ object UnreadsManager {
 
 	/** Maps channel ids with last times they were visited at. */
 	val channelVisitCache = ConcurrentHashMap<Long, Long>()
+	private var lastSave = 0L
 
 	private var unreadsJson by setting("", "minchat")
 	private var cacheMaxSize by setting(50, "minchat")
+
+	init {
+		ClientEvents.subscribe<ChannelChangeEvent> {
+			// Mark the channel as "read now"
+			setForChannel(it.channel.id, System.currentTimeMillis())
+		}
+	}
 
 	/** Gets the last timestamp the channel was visited at. */
 	fun getForChannel(id: Long) = channelVisitCache[id] ?: 0L
@@ -50,6 +58,10 @@ object UnreadsManager {
 
 	/** Saves the unreads cache to the respective settings. Called when the cache changes. */
 	fun save() {
+		// Do not allow saving more than once per 5 seconds
+		if (System.currentTimeMillis() - lastSave < 5000L) return
+		lastSave = System.currentTimeMillis()
+
 		unreadsJson = json.encodeToString(CacheState(channelVisitCache))
 
 		if (channelVisitCache.size > cacheMaxSize) Minchat.chatFragment.apply {

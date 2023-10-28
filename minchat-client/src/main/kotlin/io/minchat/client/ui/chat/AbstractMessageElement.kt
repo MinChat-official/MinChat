@@ -131,6 +131,9 @@ abstract class AbstractMessageElement(
 			Actions.run {
 				tempDisableLayout = false
 				clip = clipWasEnabled
+
+				// Tell the minchat fragment to re-sort cells and thus remove the empty space
+				Minchat.chatFragment.sortMessageElements()
 			}
 		))
 	}

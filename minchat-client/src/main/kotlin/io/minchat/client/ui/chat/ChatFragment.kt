@@ -15,6 +15,7 @@ import io.minchat.client.*
 import io.minchat.client.misc.*
 import io.minchat.client.ui.Fragment
 import io.minchat.client.ui.dialog.*
+import io.minchat.client.ui.managers.UnreadsManager
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.Message
 import io.minchat.rest.entity.*
@@ -280,6 +281,11 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 						if (message.channelId == currentChannel?.id) {
 							val element = NormalMessageElement(this@ChatFragment, message)
 							addMessage(element, 0.5f)
+
+							// A message was received, so we update the last time the current channel was read
+							UnreadsManager.setForChannel(message.channelId, System.currentTimeMillis())
+						} else {
+							updateParticularChannel(message.channel)
 						}
 					}
 
@@ -302,6 +308,10 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 							}
 
 							chatContainer.invalidateHierarchy()
+							// See above
+							UnreadsManager.setForChannel(newMessage.channelId, System.currentTimeMillis())
+						} else {
+							updateParticularChannel(newMessage.channel)
 						}
 					}
 
@@ -317,10 +327,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 					}
 
 					is MinchatChannelCreate,
-					is MinchatChannelModify,
 					is MinchatChannelDelete -> {
-						// TODO properly handle this
 						reloadChannels()
+					}
+
+					is MinchatChannelModify -> {
+						updateParticularChannel(event.channel)
 					}
 
 					is MinchatUserModify -> {
@@ -430,6 +442,15 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				}
 			}
 		}.then { notif.cancel() }
+	}
+
+	/** Tries to find a [ChannelElement] corresponding to the given channel and update it. */
+	private fun updateParticularChannel(channel: MinchatChannel) {
+		channelsContainer.children.forEach {
+			if (it is ChannelElement && it.channel.id == channel.id) {
+				it.channel = channel
+			}
+		}
 	}
 
 	/**

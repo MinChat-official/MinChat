@@ -1,5 +1,6 @@
 #VERSION 0.7.1
 Changed the main menu icon
+Fixed random gateway failures
 
 #VERSION 0.7.0
 Implemented channel groups

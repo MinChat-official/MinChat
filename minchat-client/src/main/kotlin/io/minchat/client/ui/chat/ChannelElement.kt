@@ -18,8 +18,8 @@ import io.minchat.client.ui.MinchatStyle as Style
 
 class ChannelElement(
 	val chat: ChatFragment,
-	val channel: MinchatChannel
-) : TextButton("#${channel.name}", Style.ChannelButton), CoroutineScope by chat {
+	var channel: MinchatChannel
+) : TextButton("", Style.ChannelButton), CoroutineScope by chat {
 	val unreadsLabel: Label
 
 	init {
@@ -36,11 +36,7 @@ class ChannelElement(
 		cells.reverse() // to put the new label to the beginning.
 
 		clicked {
-			chat.apply {
-				currentChannel = channel
-				ClientEvents.fireAsync(ChannelChangeEvent(channel))
-				updateChatUi()
-			}
+			openChannel()
 		}
 
 		// On mobile, add a long click listener to show the channel dialog
@@ -62,6 +58,8 @@ class ChannelElement(
 				}
 			})
 		}
+
+		this.channel = channel // to trigger the setter
 	}
 
 	override fun act(delta: Float) {
@@ -72,6 +70,7 @@ class ChannelElement(
 			showDialog()
 		}
 
+		label.content = "#${channel.name}"
 		// If the channel has unread messages in it, change the unread and name labels respectively.
 		if (channel.hasUnreads()) {
 			unreadsLabel.content = ">"
@@ -84,5 +83,13 @@ class ChannelElement(
 
 	fun showDialog() {
 		ChannelDialog(channel).show()
+	}
+
+	fun openChannel() {
+		chat.apply {
+			currentChannel = channel
+			ClientEvents.fireAsync(ChannelChangeEvent(channel))
+			updateChatUi()
+		}
 	}
 }
