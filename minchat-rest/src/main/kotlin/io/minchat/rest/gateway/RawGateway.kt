@@ -90,6 +90,8 @@ class RawGateway(
 					val frame = thisSession.incoming.receive()
 					val converter = thisSession.converter!!
 
+					if (!frame.fin) continue
+
 					if (!converter.isApplicable(frame)) {
 						MinchatRestLogger.log("warn",
 							"Raw gateway received a frame of unapplicable type: ${frame.frameType.name}")
@@ -117,6 +119,9 @@ class RawGateway(
 					}
 
 					eventsMutable.emit(event)
+				} catch (e: CancellationException) {
+					MinchatRestLogger.log("warn", "Raw gateway session was cancelled: $e")
+					return@launch
 				} catch (e: Exception) {
 					MinchatRestLogger.log("warn", "Closing current raw gateway session due to exception: $e")
 					delay(100L)
