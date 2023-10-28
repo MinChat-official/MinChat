@@ -43,7 +43,7 @@ abstract class UserDialog(
 				.scaleFont(1.1f)
 		}.growX().pad(layoutPad)
 
-		stat("Username") { user?.username }
+		stat("Nickname") { user?.nickname }
 		stat("ID") { user?.id?.toString() }
 		stat("Role") { user?.role?.readableName }
 		stat("Banned") { user?.let { it.ban.toExplanation() } }

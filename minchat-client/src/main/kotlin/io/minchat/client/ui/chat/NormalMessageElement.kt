@@ -79,13 +79,16 @@ class NormalMessageElement(
 			left()
 
 			val discriminator = message.author.discriminator.toString().padStart(4, '0')
-			// Display name
-			addLabel(message.author.displayName, ellipsis = "...").color(when {
+			val nameColor = when {
 				message.author.id == Minchat.client.account?.id -> Style.green
 				message.author.role.isModerator -> Style.purple
 				message.author.role.isAdmin -> Style.pink // I just like pink~
 				else -> Style.purple
-			}).fillY()
+			}
+			val nameColorTag = "[#${nameColor.toString()}]"
+
+			// Display name
+			addLabel(nameColorTag + message.author.displayName, ellipsis = "...").fillY()
 				.get().clicked(::showUserDialog)
 			// Discriminator
 			addLabel("#$discriminator")
