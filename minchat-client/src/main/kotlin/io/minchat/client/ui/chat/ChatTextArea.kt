@@ -3,12 +3,22 @@ package io.minchat.client.ui.chat
 import arc.math.Mathf
 import arc.scene.ui.TextArea
 import arc.util.Time
+import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.ui.MinchatStyle
+import mindustry.ui.Fonts
 import kotlin.math.max
+
+/** Match :emoji_name: unless it's prefixed by \. */
+private val emojiRegex = "(?<!\\\\):([a-zA-Z_0-9-]{0,30}):".toRegex()
 
 class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 	private var lastPrefHeight = -1f
 	private var textHidden = false
+
+	init {
+		// Desktop-only emoji handler
+		typed { handleType(it) }
+	}
 
 	override fun act(delta: Float) {
 		super.act(delta)
@@ -43,6 +53,59 @@ class ChatTextArea : TextArea("", MinchatStyle.TextInput) {
 			style.background.minHeight
 		)
 		return rowsHeight + requiredHeight
+	}
+
+	override fun paste(content: String, fireChangeEvent: Boolean) {
+		super.paste(handleEmojiText(content), fireChangeEvent)
+	}
+
+	override fun setText(str: String) {
+		super.setText(handleEmojiText(str))
+	}
+
+	/** Transforms all emojis in the text into actual emojis. */
+	private fun handleEmojiText(str: String): String {
+		return if (emojiRegex in str) buildString {
+			var match = emojiRegex.find(str)
+			var lastMatchPos = -1
+			while (match != null) {
+				val (emojiName) = match.destructured
+
+				// Append everything between last match pos and the beginning of this match
+				append(str.substring((lastMatchPos + 1)..<match.range.start))
+
+				// Try to look up the emoji and append it
+				val uni = Fonts.getUnicodeStr(emojiName)
+				if (uni != null && uni.length > 0) {
+					append(uni)
+				}
+
+				lastMatchPos = match.range.endInclusive
+				match = match.next()
+			}
+
+			// Append everything after the last match
+			append(str.drop(lastMatchPos + 1))
+		} else {
+			str
+		}
+	}
+
+	/** Desktop-only emoji handler - borrowed from mindustry. */
+	private fun handleType(char: Char) {
+		val cursor = cursorPosition
+
+		if (char == ':') {
+			val startIndex = text.lastIndexOf(':', cursor - 2)
+			if (startIndex >= 0 && startIndex < cursor) {
+				val emojiText = text.substring(startIndex + 1, cursor - 1)
+				val uni = Fonts.getUnicodeStr(emojiText)
+				if (uni != null && uni.length > 0) {
+					content = text.substring(0, startIndex) + uni + text.substring(cursor)
+					setCursorPosition(startIndex + uni.length)
+				}
+			}
+		}
 	}
 
 	override fun change() {
