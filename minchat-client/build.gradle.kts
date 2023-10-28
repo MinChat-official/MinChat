@@ -1,4 +1,5 @@
 
+import org.gradle.internal.impldep.org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.OutputStream
 import java.security.MessageDigest
@@ -232,7 +233,7 @@ val generateResources by tasks.registering {
 				} to "minchat-$name"
 			}
 
-		//language=kotlin
+		@Language("kotlin")
 		val result = """
 			|package io.minchat.client
 			|
