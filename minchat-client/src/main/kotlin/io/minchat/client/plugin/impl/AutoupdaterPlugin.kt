@@ -23,6 +23,9 @@ import java.io.RandomAccessFile
 import io.minchat.client.ui.MinchatStyle as Style
 
 class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
+	/** The latest available version on GitHub. Set by [performCheck]. */
+	var latestVersion: BuildVersion? = null
+
 	val maxAttempts = 3
 	val httpClient = HttpClient(CIO) {
 		expectSuccess = true
@@ -42,7 +45,17 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		return performCheck().also {
 			when {
 				it == CheckResult.NO_UPDATE -> {
-					Dialogs.info("No update found.")
+					val serverVersion = runCatching {
+						Minchat.client.getServerVersion().toString()
+					}.getOrDefault("<an error has occurred>")
+
+					Dialogs.info("""
+						No update found.
+						
+						Local version: $MINCHAT_VERSION
+						GitHub version: $latestVersion
+						Sever version: $serverVersion
+					""".trimIndent())
 				}
 				it == CheckResult.ERROR -> {
 					Dialogs.info("An error has occurred. Check your internet connection or try again later.")
@@ -53,7 +66,6 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 	/** Runs an update check; Shows an update dialog if an update is found. */
 	suspend fun performCheck(): CheckResult {
-		lateinit var latestVersion: BuildVersion
 		var attempt = 1
 		while (true) {
 			try {
@@ -66,6 +78,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 				}
 			}
 		}
+		val latestVersion = latestVersion ?: return CheckResult.ERROR
 
 		if (latestVersion <= MINCHAT_VERSION) {
 			Log.info { "Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION" }
