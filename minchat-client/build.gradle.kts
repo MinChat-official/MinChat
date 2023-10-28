@@ -232,16 +232,24 @@ val generateResources by tasks.registering {
 				} to "minchat-$name"
 			}
 
+		//language=kotlin
 		val result = """
 			|package io.minchat.client
 			|
 			|import arc.Core
+			|import arc.graphics.g2d.TextureRegion
 			|import arc.scene.style.TextureRegionDrawable
+			|import arc.scene.ui.layout.Scl
 			|
 			|object R {
 			|	${sprites.joinToString("\n|\t") {
-					"val ${it.first} by lazy { Core.atlas.find(\"${it.second}\", \"error\").let(::TextureRegionDrawable) }"
+					"val ${it.first} by lazy { Core.atlas.find(\"${it.second}\", \"error\").let(::makeDrawable) }"
 				}}
+			|
+			|       private fun makeDrawable(region: TextureRegion) = object : TextureRegionDrawable(region) {
+			|               // With normal ui scaling sprites should be 40px, but I use 48px, hence 40/48
+			|               override fun imageSize() = super.imageSize() * Scl.scl(40f / 48f)
+			|       }
 			|}
 		""".trimMargin()
 
