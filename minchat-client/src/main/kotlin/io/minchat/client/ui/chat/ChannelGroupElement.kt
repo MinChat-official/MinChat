@@ -1,10 +1,12 @@
 package io.minchat.client.ui.chat
 
+import arc.graphics.Color
 import arc.scene.ui.Label
 import arc.scene.ui.layout.Table
 import com.github.mnemotechnician.mkui.extensions.dsl.addLabel
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import com.github.mnemotechnician.mkui.extensions.groups.child
+import io.minchat.client.ui.managers.hasUnreads
 import io.minchat.rest.entity.MinchatChannelGroup
 import io.minchat.client.ui.MinchatStyle as Style
 
@@ -33,5 +35,19 @@ class ChannelGroupElement(
 		if (group.channels.isEmpty()) {
 			addLabel("<No channels>", Style.Label)
 		}
+	}
+
+	override fun act(delta: Float) {
+		// If there are unread channels, the group itself should be marked as unread too.
+		if (isBuilt) {
+			val label = toggleButton.child<Label>(0)
+			if (children.any { it is ChannelElement && it.channel.hasUnreads() }) {
+				label.setColor(Color.white)
+			} else {
+				label.setColor(Color.lightGray)
+			}
+		}
+
+		super.act(delta)
 	}
 }

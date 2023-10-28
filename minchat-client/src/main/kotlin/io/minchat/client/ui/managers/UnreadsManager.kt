@@ -29,8 +29,12 @@ object UnreadsManager {
 		}
 	}
 
-	/** Gets the last timestamp the channel was visited at. */
-	fun getForChannel(id: Long) = channelVisitCache[id] ?: 0L
+	/**
+	 * Gets the last timestamp the channel was visited at.
+	 *
+	 * If it was never visited, returns -1 (so that new channels are marked unread).
+	 */
+	fun getForChannel(id: Long) = channelVisitCache[id] ?: -1L
 
 	/** Sets the last timestamp the channel was visited at. */
 	fun setForChannel(id: Long, timestamp: Long) {

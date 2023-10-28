@@ -1,5 +1,6 @@
 package io.minchat.client.ui.chat
 
+import arc.graphics.Color
 import arc.scene.ui.Label
 import arc.scene.ui.layout.Table
 import arc.util.Align
@@ -9,6 +10,7 @@ import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.addMinTable
+import io.minchat.client.ui.managers.hasUnreads
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.*
@@ -82,5 +84,19 @@ class DMGroupBar(
 		if (dmMap.isEmpty()) {
 			addLabel("<no DMs>", Style.Label)
 		}
+	}
+
+	override fun act(delta: Float) {
+		// Same as CGE - if there are unread channels, the DM bar itself should be marked as unread too.
+		if (isBuilt) {
+			val label = toggleButton.child<Label>(0)
+			if (children.any { it is ChannelElement && it.channel.hasUnreads() }) {
+				label.setColor(Color.white)
+			} else {
+				label.setColor(Color.lightGray)
+			}
+		}
+
+		super.act(delta)
 	}
 }

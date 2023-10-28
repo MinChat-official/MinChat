@@ -20,7 +20,8 @@ abstract class AbstractGroupElement(
 	lateinit var collapser: Collapser
 	lateinit var contents: Table
 
-	private var isBuilt = false
+	var isBuilt = false
+		private set
 
 	init {
 		margin(Style.layoutMargin)

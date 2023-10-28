@@ -1,6 +1,9 @@
 #VERSION 0.7.1
+Added unread message indicators - no need to check every channel now.
+Support for emojis! Type :alphaaaa: or :router: or something else!
 Changed the main menu icon
-Fixed random gateway failures
+Improved some parts of the ui
+Fixed random gateway failures (i.e. no more reloading chats)
 
 #VERSION 0.7.0
 Implemented channel groups

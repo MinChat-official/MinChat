@@ -13,7 +13,7 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.*
 import io.minchat.client.misc.*
-import io.minchat.client.ui.Fragment
+import io.minchat.client.ui.*
 import io.minchat.client.ui.dialog.*
 import io.minchat.client.ui.managers.UnreadsManager
 import io.minchat.client.ui.tutorial.Tutorials
@@ -191,67 +191,76 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				defaults().growX().pad(Style.layoutPad)
 			}).grow().pad(Style.layoutPad).row()
 
-			// Status bar above the chat
-			hider(hideVertical = { referencedMessage == null && editListener == null && chatField.content.isEmpty() }) {
-				background = Style.black(2)
-				left()
+			// Chatbox itself (at the bottom)
+			val overlayGroup = OverlayGroup(createTable {
+				addTable {
+					margin(Style.layoutMargin)
 
-				// Edit status
-				hider(hideHorizontal = { editListener == null }) {
-					textButton("[lightgray]Cancel", Styles.nonet) {
-						setEditMessage(null)
-					}.pad(Style.layoutPad).fillY()
+					add(ChatTextArea()).with {
+						chatField = it
 
-					addLabel("Editing a message...")
-						.pad(Style.layoutPad)
-
-					addSpace(width = 50f)
-				}
-
-				// Reply status
-				hider(hideHorizontal = { referencedMessage == null }) {
-					textButton("[lightgray]Cancel", Styles.nonet) {
-						setReplyMessage(null)
-					}.pad(Style.layoutPad).fillY()
-
-					addLabel({ "Replying to ${referencedMessage?.author?.displayName}" })
-						.pad(Style.layoutPad)
-
-					addSpace(width = 50f)
-				}
-
-				val exp40 = Interp.ExpIn(2f, 40f)
-				addLabel({ "${chatField.content.length}/${Message.contentLength.endInclusive}" })
-					.pad(Style.layoutPad)
-					.updateLast {
-						val colorRatio = chatField.content.length.toFloat() / Message.contentLength.endInclusive
-						val interpolated = exp40.apply(colorRatio)
-						it.setColor(Color.lightGray.cpy().lerp(Color.crimson, interpolated))
-					}
-			}.growX().row()
-
-			// chatbox
-			addTable {
-				margin(Style.layoutMargin)
-
-				add(ChatTextArea()).with {
-					chatField = it
-
-					// Send the current message when the user presses shift+enter
-					it.keyDown(KeyCode.enter) {
-						if (it.content.isEmpty()) return@keyDown
-						if (sendButton.isDisabled) return@keyDown
-						if (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight)) {
-							confirmCurrentMessage()
+						// Send the current message when the user presses shift+enter
+						it.keyDown(KeyCode.enter) {
+							if (it.content.isEmpty()) return@keyDown
+							if (sendButton.isDisabled) return@keyDown
+							if (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight)) {
+								confirmCurrentMessage()
+							}
 						}
-					}
-				}.growX()
+					}.growX()
 
-				textButton(">", Style.ActionButton) { confirmCurrentMessage() }
-					.with { sendButton = it }
-					.padLeft(8f).fill().width(80f)
-				updateChatbox()
-			}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
+					textButton(">", Style.ActionButton) { confirmCurrentMessage() }
+						.with { sendButton = it }
+						.padLeft(8f).fill().width(80f)
+					updateChatbox()
+				}.growX().padTop(Style.layoutPad).padLeft(10f).padRight(10f)
+			})
+
+			// Overlay
+			overlayGroup.addChild(createTable {
+				touchable = Touchable.enabled
+				hider(hideVertical = { referencedMessage == null && editListener == null && chatField.content.isEmpty() }) {
+					background = Style.black(9)
+					left()
+
+					// Character counter
+					val exp40 = Interp.ExpIn(2f, 40f)
+					addLabel({ "${chatField.content.length}/${Message.contentLength.endInclusive}" })
+						.pad(Style.layoutPad)
+						.minHeight(30f)
+						.updateLast {
+							val colorRatio = chatField.content.length.toFloat() / Message.contentLength.endInclusive
+							val interpolated = exp40.apply(colorRatio)
+							it.setColor(Color.lightGray.cpy().lerp(Color.crimson, interpolated))
+						}
+
+					// Reply status
+					hider(hideHorizontal = { referencedMessage == null }) {
+						textButton("[lightgray]Cancel", Styles.nonet) {
+							setReplyMessage(null)
+						}.pad(Style.layoutPad).fillY()
+
+						addLabel({ "Replying to ${referencedMessage?.author?.displayName}" })
+							.pad(Style.layoutPad)
+
+						addSpace(width = 50f)
+					}
+
+					// Edit status
+					hider(hideHorizontal = { editListener == null }) {
+						textButton("[lightgray]Cancel", Styles.nonet) {
+							setEditMessage(null)
+						}.pad(Style.layoutPad).fillY()
+
+						addLabel("Editing a message...")
+							.pad(Style.layoutPad)
+
+						addSpace(width = 50f)
+					}
+				}.growX().row()
+			})
+
+			add(overlayGroup).growX()
 		}.grow()
 
 		val connectionListener = {
@@ -446,7 +455,9 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 	/** Tries to find a [ChannelElement] corresponding to the given channel and update it. */
 	private fun updateParticularChannel(channel: MinchatChannel) {
-		channelsContainer.children.forEach {
+		val all = channelsContainer.children + dmsSubBar.children
+
+		all.forEach {
 			if (it is ChannelElement && it.channel.id == channel.id) {
 				it.channel = channel
 			}
