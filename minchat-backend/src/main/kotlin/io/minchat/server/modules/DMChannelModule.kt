@@ -8,12 +8,15 @@ import io.minchat.common.Route
 import io.minchat.common.entity.Channel
 import io.minchat.common.event.*
 import io.minchat.common.request.DMChannelCreateRequest
+import io.minchat.server.ServerContext
 import io.minchat.server.databases.*
-import io.minchat.server.util.*
+import io.minchat.server.util.token
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 class DMChannelModule : AbstractMinchatServerModule() {
+	lateinit var channelModule: ChannelModule
+
 	override fun Application.onLoad() {
 		routing {
 			get(Route.DMChannel.all) {
@@ -47,25 +50,19 @@ class DMChannelModule : AbstractMinchatServerModule() {
 				val token = call.token()
 				val data = call.receive<DMChannelCreateRequest>()
 
+				val name = data.name.nameConvention()
+				val description = data.description.nameConvention()
+
 				newSuspendedTransaction {
 					val invokingUser = Users.getByToken(token)
 					val otherUser = Users.getById(data.otherUserId)
 
 					invokingUser.checkAndUpdateUserPunishments(checkMute = false)
-					if (invokingUser.id == otherUser.id) {
-						illegalInput("You cannot create a DM channel with yourself.")
-					}
-
-					if (Channels.select {
-						(Channels.user1 eq invokingUser.id) and (Channels.user2 eq otherUser.id) or
-						(Channels.user1 eq otherUser.id) and (Channels.user2 eq invokingUser.id)
-					}.count() > Channel.maxDMCount) {
-						illegalInput("You cannot create more than ${Channel.maxDMCount} DM channels with one user.")
-					}
+					channelModule.validateDM(name, description, invokingUser.id, otherUser.id, forEdit = false)
 
 					val channel = Channels.insert {
-						it[name] = data.name
-						it[description] = data.description
+						it[this.name] = name
+						it[this.description] = description
 						it[order] = data.order
 						it[type] = Channel.Type.DM
 						it[user1] = invokingUser.id
@@ -79,6 +76,11 @@ class DMChannelModule : AbstractMinchatServerModule() {
 				}
 			}
 		}
+	}
+
+	override suspend fun ServerContext.afterLoad() {
+		channelModule = module<ChannelModule>()
+	                ?: error("Channel module not loaded.")
 	}
 
 	override fun createServiceName(): String {

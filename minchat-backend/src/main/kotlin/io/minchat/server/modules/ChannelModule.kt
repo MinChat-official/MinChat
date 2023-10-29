@@ -129,7 +129,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 
 				newSuspendedTransaction {
 					call.requireAdmin()
-					validate(channelName, data.description, forEdit = false)
+					validateNormal(channelName, data.description, forEdit = false)
 
 					val channelRow = Channels.insert {
 						it[name] = channelName
@@ -169,7 +169,11 @@ class ChannelModule : AbstractMinchatServerModule() {
 						}
 					}
 
-					validate(newName, data.newDescription, forEdit = true)
+					if (oldChannel.type == Channel.Type.NORMAL) {
+						validateNormal(newName, data.newDescription, forEdit = true)
+					} else {
+						validateDM(newName, data.newDescription, oldChannel.user1id!!, oldChannel.user2id!!, forEdit = true)
+					}
 
 					Channels.update({ Channels.id eq id }) {
 						newName?.let { newName ->
@@ -254,7 +258,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 		}
 	}
 
-	fun validate(name: String?, description: String?, forEdit: Boolean) {
+	fun validateNormal(name: String?, description: String?, forEdit: Boolean) {
 		name?.requireLength(Channel.nameLength) {
 			"Name length must be in range of Channels.nameLength"
 		}
@@ -265,6 +269,26 @@ class ChannelModule : AbstractMinchatServerModule() {
 		val maxCount = if (forEdit) 1 else 0
 		if (name != null && Channels.select { Channels.name eq name }.count() > maxCount) {
 			illegalInput("A channel with this name already exists.")
+		}
+	}
+
+	fun validateDM(name: String?, description: String?, user1: Long, user2: Long, forEdit: Boolean) {
+		name?.requireLength(Channel.nameLength) {
+			"Name length must be in range of Channels.nameLength"
+		}
+		description?.requireLength(Channel.descriptionLength) {
+			"Description length must be shorter than 512"
+		}
+
+		if (!forEdit && user1 == user2) {
+			illegalInput("You cannot create a DM channel with yourself.")
+		}
+
+		if (!forEdit && Channels.select {
+			(Channels.user1 eq user1) and (Channels.user2 eq user2) or
+			(Channels.user1 eq user2) and (Channels.user2 eq user1)
+		}.count() > Channel.maxDMCount) {
+			illegalInput("You cannot create more than ${Channel.maxDMCount} DM channels with one user.")
 		}
 	}
 }

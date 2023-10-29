@@ -188,7 +188,7 @@ task("jarAndroid") {
 	}
 }
 
-/** Merges the dektop and android jar files into a multiplatform jar file */
+/** Merges the desktop and android jar files into a multiplatform jar file */
 task<Jar>("release") {
 	dependsOn("jarAndroid")
 	

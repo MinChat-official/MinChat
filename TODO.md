@@ -10,10 +10,12 @@ Before MinChat can undergo the first public release, the following features must
 | 2        | Done           | Chat replies                                                                                                                 |
 | 2        | Not done       | Chat notifications                                                                                                           |
 | 3        | Done           | Client-side checks for user account ban/mute                                                                                 |
-| 3        | Not done       | Overlay style for some parts of the chat ui (e.g. the field above the chat box)                                              |
+| 3        | Done           | Overlay style for some parts of the chat ui (e.g. the field above the chat box)                                              |
 | 3        | Done           | System messages and channels only specific users/user groups can speak in; rule, news, overview channels                     |
-| 4        | Not done       | Channel groups and ability to order channels                                                                                 |
+| 4        | Done           | Channel groups and ability to order channels                                                                                 |
 | 4        | Done           | Automatic gateway reconnect when a failure happens; Failure detection (websocket api should already have a heartbeat system) |
 | 5        | Done           | Direct messages (?)                                                                                                          |
+| 5        | Not done       | Text formatting (will require a custom Label implementation)                                                                 |
 | 6        | Not done       | Map and scheme sharing inside MinChat (with previews) - may require to expand the server.                                    |
 | 6        | Not done       | Windowed chat mode (MKUI already has windows)                                                                                |                                                                                                         |
+| 7        | Not done       | Arbitrary file uploading (???)                                                                                               |
