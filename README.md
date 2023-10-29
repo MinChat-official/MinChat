@@ -1,9 +1,3 @@
-# Disclaimer
-What's stated below may not be fully implemented yet.
-This project is still in development, but this description is written in advance
-to cover most features.
-By the end of the development, every claim below will be true.
-
 # MinChat
 MinChat is a Mindustry mod that adds an innovative global online chat feature.
 
