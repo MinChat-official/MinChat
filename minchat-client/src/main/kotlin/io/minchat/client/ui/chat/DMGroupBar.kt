@@ -90,7 +90,7 @@ class DMGroupBar(
 		// Same as CGE - if there are unread channels, the DM bar itself should be marked as unread too.
 		if (isBuilt) {
 			val label = toggleButton.child<Label>(0)
-			if (children.any { it is ChannelElement && it.channel.hasUnreads() }) {
+			if (dmMap.values.any { dm -> dm.any { it.hasUnreads() } }) {
 				label.setColor(Color.white)
 			} else {
 				label.setColor(Color.lightGray)

@@ -41,7 +41,7 @@ class ChannelGroupElement(
 		// If there are unread channels, the group itself should be marked as unread too.
 		if (isBuilt) {
 			val label = toggleButton.child<Label>(0)
-			if (children.any { it is ChannelElement && it.channel.hasUnreads() }) {
+			if (group.channels.any { it.hasUnreads() }) {
 				label.setColor(Color.white)
 			} else {
 				label.setColor(Color.lightGray)
