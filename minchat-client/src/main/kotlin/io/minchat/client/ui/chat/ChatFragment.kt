@@ -163,7 +163,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 			}.grow().row()
 
 			// At the very bottom, if the user is an admin, add a button to open the admin panel.
-			if (Minchat.client.selfOrNull()?.role?.isAdmin == true) {
+			hider(hideVertical = { Minchat.client.selfOrNull()?.role?.isAdmin != true }) {
 				margin(Style.layoutMargin)
 				textButton("Admin panel", Style.ActionButton) {
 					AdminPanelDialog().show()
