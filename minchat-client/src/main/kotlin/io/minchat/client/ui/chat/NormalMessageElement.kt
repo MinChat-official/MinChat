@@ -81,8 +81,8 @@ class NormalMessageElement(
 			val discriminator = message.author.discriminator.toString().padStart(4, '0')
 			val nameColor = when {
 				message.author.id == Minchat.client.account?.id -> Style.green
-				message.author.role.isModerator -> Style.purple
 				message.author.role.isAdmin -> Style.pink // I just like pink~
+				message.author.role.isModerator -> Style.cyan
 				else -> Style.purple
 			}
 			val nameColorTag = "[#${nameColor.toString()}]"
