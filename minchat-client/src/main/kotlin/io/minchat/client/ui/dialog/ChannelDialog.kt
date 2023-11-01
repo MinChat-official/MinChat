@@ -4,8 +4,8 @@ import arc.scene.ui.Label
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.Minchat
-import io.minchat.client.misc.enabledWhenValid
-import io.minchat.common.entity.Channel
+import io.minchat.client.misc.*
+import io.minchat.common.entity.*
 import io.minchat.rest.entity.*
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.abs
@@ -69,9 +69,10 @@ class ChannelDialog(
 
 			// Normal channel-specific things
 			if (channel is NormalMinchatChannel) {
-				val groupIdField = inputField("Group ID", false) {
-					it.toLongOrNull() != null
-				}.also { it.content = channel.groupId?.toString() ?: "-1" }
+				val default = "<keep>"
+				val groupNameField = inputField("Group", false) {
+					it == default || it.length in ChannelGroup.nameLength
+				}.also { it.content = default }
 
 				val viewModeField = inputField("View mode", false) { mode ->
 					Channel.AccessMode.values().any { it.name == mode.uppercase() }
@@ -84,16 +85,24 @@ class ChannelDialog(
 				action("Confirm") {
 					hide()
 					launchSafeWithStatus("Editing channel #${channel.name}...") {
+						val group = when {
+							groupNameField.content == default -> null
+							else -> {
+								val groups = Minchat.client.getAllChannelGroups()
+								groups.firstOrNull { it.name.equals(groupNameField.content, true) }
+							}
+						}
+
 						this@ChannelDialog.channel = channel.edit(
 							newName = nameField.content,
 							newDescription = descriptionField.content,
 							newOrder = orderField.content.toInt(),
-							newGroupId = groupIdField.content.toLong(),
+							newGroupId = group?.id,
 							newViewMode = viewModeField.content.uppercase().let(Channel.AccessMode::valueOf),
 							newSendMode = sendModeField.content.uppercase().let(Channel.AccessMode::valueOf)
 						)
 					}
-				}.get().enabledWhenValid(nameField, descriptionField, orderField, groupIdField, viewModeField, sendModeField)
+				}.get().enabledWhenValid(nameField, descriptionField, orderField, groupNameField, viewModeField, sendModeField)
 			}
 
 			// DM-specific things
@@ -139,6 +148,62 @@ class ChannelDialog(
 				}
 			}.disabled { !confirmField.isValid }
 		}
+	}
+}
+
+class ChannelCreateDialog : AbstractModalDialog() {
+	init {
+		header.addLabel("Create a new channel")
+
+		val nameField = inputField("Name", false) {
+			it.length in Channel.nameLength
+		}
+
+		val descriptionField = inputField("Description", false) {
+			it.length in Channel.descriptionLength
+		}
+
+		val groupField = inputField("Group", false) {
+			it.isEmpty() || it.length in ChannelGroup.nameLength
+		}
+
+		val orderField = inputField("Order", false) {
+			it.toIntOrNull() != null
+		}.apply { content = "0" }
+
+		val viewModeField = inputField("View mode", false) { mode ->
+			Channel.AccessMode.values().any { it.name == mode.uppercase() }
+		}.apply { content = Channel.AccessMode.EVERYONE.toString() }
+
+		val sendModeField = inputField("Send mode", false) { mode ->
+			Channel.AccessMode.values().any { it.name == mode.uppercase() }
+		}.apply { content = Channel.AccessMode.LOGGED_IN.toString() }
+
+		action("Create") {
+			hide()
+			Dialogs.await("Creating channel #${nameField.content}...") {
+				val group = when {
+					groupField.content.isEmpty() -> null
+					else -> Minchat.client.getAllChannelGroups()
+						        .firstOrNull { it.name.equals(groupField.content, true) }
+					        ?: run {
+						        Dialogs.info("Channel group not found: ${groupField.content}")
+						        return@await
+					        }
+				}
+
+				Minchat.client.createChannel(
+					name = nameField.content,
+					description = descriptionField.content,
+					groupId = group?.id,
+					order = orderField.content.toInt(),
+					viewMode = viewModeField.content.uppercase().let(Channel.AccessMode::valueOf),
+					sendMode = sendModeField.content.uppercase().let(Channel.AccessMode::valueOf)
+				)
+			}.then {
+				if (it != null) show() // Re-show dialog on exception
+			}
+		}.get().enabledWhenValid(nameField, descriptionField, orderField, groupField, viewModeField, sendModeField)
 	}
 }
 

@@ -162,6 +162,14 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				channelsContainer = this
 			}.grow().row()
 
+			// At the very bottom, if the user is an admin, add a button to open the admin panel.
+			if (Minchat.client.selfOrNull()?.role?.isAdmin == true) {
+				margin(Style.layoutMargin)
+				textButton("Admin panel", Style.ActionButton) {
+					AdminPanelDialog().show()
+				}.growX().margin(Style.buttonMargin).pad(Style.layoutPad)
+			}
+
 			// Make sure the DM pane does not take more than 50% space
 			var lastMaxH = 0f
 			updateLast {

@@ -6,6 +6,8 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.*
 import io.minchat.client.misc.then
+import io.minchat.client.plugin.MinchatPluginHandler
+import io.minchat.client.plugin.impl.AccountSaverPlugin
 import io.minchat.client.ui.tutorial.Tutorials
 import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatUser
@@ -41,6 +43,8 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				} else {
 					Dialogs.confirm("Are you sure?") {
 						Minchat.client.logout()
+						ClientEvents.fireAsync(AuthorizationEvent(Minchat.client, true))
+						MinchatPluginHandler.get<AccountSaverPlugin>()?.forgetAccount()
 					}
 				}
 			}
