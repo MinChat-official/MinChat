@@ -8,6 +8,7 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.misc.Log
+import io.minchat.client.ui.MinchatStyle.layoutMargin
 import kotlinx.coroutines.*
 import io.minchat.client.ui.MinchatStyle as Style
 
@@ -77,7 +78,7 @@ object Dialogs {
 
 		init {
 			body.addTable(Style.surfaceBackground) {
-				margin(Style.layoutMargin)
+				margin(layoutMargin)
 
 				addLabel(text, wrap = true)
 					.fillX().pad(Style.layoutPad)
@@ -123,7 +124,7 @@ object Dialogs {
 			}
 
 			body.addTable(Style.surfaceBackground) {
-				margin(Style.layoutMargin)
+				margin(layoutMargin)
 
 				addLabel(message, wrap = true)
 					.growX()
@@ -141,7 +142,7 @@ object Dialogs {
 
 		init {
 			body.addTable(Style.surfaceBackground) {
-				margin(Style.layoutMargin)
+				margin(layoutMargin)
 
 				addLabel(message, wrap = true)
 					.growX()
@@ -151,26 +152,29 @@ object Dialogs {
 				val start = System.currentTimeMillis()
 				add(object : Element() {
 					override fun draw() {
-						val progress = (System.currentTimeMillis() - start) / 1800f
-						val progWidth = (width - 2 * Style.layoutMargin) * progress
+						val progress = ((System.currentTimeMillis() - start) / 1800f) % 1f
+						val progWidth = (width - 2 * layoutMargin) * progress * 2
 						val offset = when {
 							progress < 0.5 -> 0f
-							else -> (width - 2 * Style.layoutMargin) * (progress - 0.5f)
+							else -> (width - 2 * layoutMargin) * (progress - 0.5f) * 2
 						}
 
 						val midX = getX(Align.center)
 						val midY = getY(Align.center)
 
 						Draw.color(Color.white)
-						Style.surfaceInner.draw(midX, midY, width, height)
+						Style.surfaceInner.draw(x, y, width, height) // this draws at (0, 0, width, height)
 
 						Draw.color(Style.comment)
-						Fill.rect(
-							x + offset + Style.layoutMargin + progWidth / 2,
-							midY,
-							progWidth,
-							height - 2 * Style.layoutMargin
-						)
+						if (clipBegin(x + layoutMargin, y + layoutMargin, width - 2 * layoutMargin, height - 2 * layoutMargin)) {
+							Fill.rect( // ... but this draws at (-width/2, -height/2, width/2, height/2) ?!
+								x + offset + layoutMargin + progWidth / 2,
+								midY,
+								progWidth,
+								height - 2 * layoutMargin
+							)
+							clipEnd()
+						}
 					}
 				}).growX().minHeight(50f).pad(Style.layoutPad)
 

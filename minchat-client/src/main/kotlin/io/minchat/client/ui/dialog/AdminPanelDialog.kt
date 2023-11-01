@@ -2,6 +2,7 @@ package io.minchat.client.ui.dialog
 
 import arc.scene.ui.layout.Table
 import com.github.mnemotechnician.mkui.extensions.dsl.*
+import kotlinx.coroutines.delay
 import io.minchat.client.ui.MinchatStyle as Style
 
 class AdminPanelDialog : AbstractModalDialog() {
@@ -23,6 +24,14 @@ class AdminPanelDialog : AbstractModalDialog() {
 			// Row 2
 			actionButton("View users") {
 				Dialogs.TODO()
+			}
+
+			actionButton("Test loading") {
+				Dialogs.await("testing") {
+					delay(5000L)
+
+					error("a")
+				}
 			}
 		}.grow()
 	}

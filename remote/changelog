@@ -1,6 +1,7 @@
 #VERSION 0.7.2
 Fixed not-logged-in users not being able to view channels
 Fixed the "log out" action not having any effect after restart
+Fixed name coloring of moderators/admins (of which I'm the only one)
 Minor changes
 
 #VERSION 0.7.1
