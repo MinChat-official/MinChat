@@ -6,11 +6,11 @@ import io.minchat.client.config.MinchatSettings
 import io.minchat.client.misc.Log
 import io.minchat.client.plugin.MinchatPlugin
 import io.minchat.rest.MinchatAccount
-import kotlinx.serialization.*
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class AccountSaverPlugin : MinchatPlugin("account-saver") {
-	private var minchatAccountJson by setting<String?>(null, MinchatSettings.prefix)
+	private var minchatAccountJson by setting<String>("", MinchatSettings.prefix)
 
 	override fun onInit() {
 		subscribe<AuthorizationEvent> {
@@ -44,14 +44,22 @@ class AccountSaverPlugin : MinchatPlugin("account-saver") {
 		}
 	}
 
+	fun forgetAccount() {
+		minchatAccountJson = ""
+	}
+
 	fun saveUserAccount() {
-		val account = Minchat.client.account ?: return
-		val surrogate = MinchatAccount.Surrogate(account.user, account.token)
-		minchatAccountJson = Json.encodeToString(surrogate)
+		val account = Minchat.client.account
+		if (account == null) {
+			minchatAccountJson = ""
+		} else {
+			val surrogate = MinchatAccount.Surrogate(account.user, account.token)
+			minchatAccountJson = Json.encodeToString(surrogate)
+		}
 	}
 
 	fun loadUserAccount(): MinchatAccount? {
-		val json = minchatAccountJson ?: return null
+		val json = minchatAccountJson.takeIf { it.isNotBlank() } ?: return null
 		val surrogate = Json.decodeFromString<MinchatAccount.Surrogate>(json)
 		return MinchatAccount(surrogate.user, surrogate.token)
 	}
