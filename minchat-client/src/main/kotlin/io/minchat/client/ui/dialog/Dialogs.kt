@@ -41,7 +41,7 @@ object Dialogs {
 		showError: Boolean = true,
 		cancellable: Boolean = true,
 		crossinline action: suspend () -> Unit
-	) {
+	): Job {
 		val job = Minchat.launch {
 			try {
 				action()
@@ -63,6 +63,8 @@ object Dialogs {
 				AwaitActionDialog(message, cancellable, job).show()
 			}
 		}
+
+		return job
 	}
 
 	/** Equivalent to calling `info("This action is not implemented yet.")`. */
