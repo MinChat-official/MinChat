@@ -12,17 +12,18 @@ import io.minchat.common.event.Event
 import io.minchat.server.ServerContext
 import io.minchat.server.databases.Users
 import io.minchat.server.util.Log
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 
 class GatewayModule : AbstractMinchatServerModule() {
 	val connections = Collections.synchronizedSet<Connection>(LinkedHashSet())
 	/** Events to send to the clients. */
-	val pendingEvents = ConcurrentLinkedQueue<Event>()
+	val pendingEvents = Channel<Event>(capacity = Channel.BUFFERED, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
 	val jsonConverter = KotlinxWebsocketSerializationConverter(Json)
 
@@ -61,37 +62,35 @@ class GatewayModule : AbstractMinchatServerModule() {
 	}
 	
 	override suspend fun ServerContext.afterLoad() {
+		val server = this
+
 		// A coroutine that sends events
-		launch {
-			while (true) {
-				if (pendingEvents.isNotEmpty()) try {
-					val event = pendingEvents.remove()
-					val frame = jsonConverter.serialize(event)
+		pendingEvents.consumeAsFlow().onEach { event ->
+			try {
+				val frame = jsonConverter.serialize(event)
 
-					val recipents = event.recipients?.map { id ->
-						connections.find { it.user?.id == id }
-					}?.filterNotNull() ?: connections
+				val recipients = event.recipients?.map { id ->
+					connections.find { it.user?.id == id }
+				}?.filterNotNull() ?: connections
 
-					if (recipents.isEmpty()) {
-						Log.lifecycle { "Skipping $event because there are no valid recipents." }
-						continue
-					}
-
-					Log.lifecycle { "Sending $event to ${recipents.size} connections" }
-
-					recipents.forEach {
-						try {
-							it.session.outgoing.send(frame)
-						} catch (e: Exception) {
-							Log.error { "Failed to send $event to $it! Message: ${e.message}" }
-						}
-					}
-				} catch (e: Exception) {
-					Log.error { "Failed to send an event! $e" }
+				if (recipients.isEmpty()) {
+					Log.lifecycle { "Skipping $event because there are no valid recipients." }
+					return@onEach
 				}
-				delay(20L)
+
+				Log.lifecycle { "Sending $event to ${recipients.size} connections" }
+
+				recipients.forEach {
+					try {
+						it.session.outgoing.send(frame)
+					} catch (e: Exception) {
+						Log.error { "Failed to send $event to $it! Message: ${e.message}" }
+					}
+				}
+			} catch (e: Exception) {
+				Log.error { "Failed to send an event! $e" }
 			}
-		}
+		}.launchIn(server)
 	}
 
 	suspend fun handleConnection(connection: Connection) {
@@ -101,7 +100,10 @@ class GatewayModule : AbstractMinchatServerModule() {
 
 	/** Requests to send the event to all connections. */
 	fun send(event: Event) {
-		pendingEvents += event
+		val result = pendingEvents.trySend(event)
+		if (result.isSuccess.not()) {
+			Log.error { "Count not send $event: buffer overflow! Is the coroutine dead?!" }
+		}
 	}
 
 	class Connection(
