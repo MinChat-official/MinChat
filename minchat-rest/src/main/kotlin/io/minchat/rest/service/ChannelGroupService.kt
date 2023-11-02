@@ -9,17 +9,19 @@ import io.minchat.common.entity.ChannelGroup
 import io.minchat.common.request.*
 
 class ChannelGroupService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
-	suspend fun getGroup(id: Long) = run {
-		client.get(makeRouteUrl(Route.ChannelGroup.fetch, id))
-			.body<ChannelGroup>()
+	suspend fun getGroup(id: Long, token: String? = null) = run {
+		client.get(makeRouteUrl(Route.ChannelGroup.fetch, id)) {
+			token?.let { authorizeBearer(it) }
+		}.body<ChannelGroup>()
 	}
 
 	/**
 	 * Fetches all groups registered on the server.
 	 */
-	suspend fun getAllGroups() = run {
-		client.get(makeRouteUrl(Route.ChannelGroup.all))
-			.body<List<ChannelGroup>>()
+	suspend fun getAllGroups(token: String? = null) = run {
+		client.get(makeRouteUrl(Route.ChannelGroup.all)) {
+			token?.let { authorizeBearer(it) }
+		}.body<List<ChannelGroup>>()
 	}
 
 	suspend fun createGroup(

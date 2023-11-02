@@ -189,7 +189,7 @@ class MinchatRestClient(
 	 * For the caching approach, try `cache.channelgroupCache.values`
 	 */
 	suspend fun getAllChannelGroups() =
-		channelGroupService.getAllGroups()
+		channelGroupService.getAllGroups(account?.token)
 			.onEach(cache::set)
 			.map { it.withClient(this) }
 
@@ -229,7 +229,7 @@ class MinchatRestClient(
 	 * For the caching version of this method, see [cache].
 	 */
 	suspend fun getChannelGroup(id: Long) =
-		channelGroupService.getGroup(id)
+		channelGroupService.getGroup(id, account?.token)
 			.also(cache::set)
 			.withClient(this)
 
