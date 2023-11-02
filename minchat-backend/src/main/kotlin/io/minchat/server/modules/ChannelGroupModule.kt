@@ -62,6 +62,10 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 					call.requireAdmin()
 					validate(name, data.description)
 
+					if (ChannelGroups.select { ChannelGroups.name eq name }.any()) {
+						illegalInput("A group with this name already exists.")
+					}
+
 					val group = ChannelGroups.insert {
 						it[ChannelGroups.name] = name
 						it[description] = data.description
@@ -84,7 +88,8 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 					call.requireAdmin()
 					validate(newName, newDescription)
 
-					if (newName != null && ChannelGroups.select { ChannelGroups.name eq newName }.any()) {
+					val oldGroup = ChannelGroups.getById(id)
+					if (newName != null && newName != oldGroup.name && ChannelGroups.select { ChannelGroups.name eq newName }.any()) {
 						illegalInput("A group with this name already exists.")
 					}
 
@@ -99,6 +104,8 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 							it[order] = newOrder
 						}
 					}
+
+					Log.info { "Channel group was edited: #${id}." }
 				}
 			}
 
@@ -108,7 +115,16 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 				newSuspendedTransaction {
 					call.requireAdmin()
 
+					val group = ChannelGroups.getById(id)
+
+					// Move all channels from deleted group to the global one
+					Channels.update({ Channels.groupId eq id }) {
+						it[groupId] = null
+					}
+
 					ChannelGroups.deleteWhere { ChannelGroups.id eq id }.throwIfNotFound { "no such group." }
+
+					Log.info { "Channel group was deleted: ${group.loggable()}." }
 				}
 			}
 		}
