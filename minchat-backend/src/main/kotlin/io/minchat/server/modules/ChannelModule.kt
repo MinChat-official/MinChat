@@ -242,7 +242,11 @@ class ChannelModule : AbstractMinchatServerModule() {
 			}
 
 			get(Route.Channel.all) {
+				val token = call.tokenOrNull()
+
 				newSuspendedTransaction {
+					val user = token?.let { Users.getByToken(it) }
+
 					val list = Channels.select { Channels.type eq Channel.Type.NORMAL }
 						.orderBy(
 							Channels.groupId to SortOrder.ASC,
@@ -251,6 +255,10 @@ class ChannelModule : AbstractMinchatServerModule() {
 						)
 						.toList()
 						.map { Channels.createEntity(it) }
+						.filter {
+							it.viewMode == Channel.AccessMode.EVERYONE
+							|| (user != null && user.canViewChannel(it))
+						}
 
 					call.respond(list)
 				}

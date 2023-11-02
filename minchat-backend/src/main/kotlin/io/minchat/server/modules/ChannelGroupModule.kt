@@ -26,7 +26,12 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 			}
 
 			get(Route.ChannelGroup.all) {
+				val token = call.tokenOrNull()
+
 				newSuspendedTransaction {
+					// Get the user if possible
+					val user = token?.let { Users.getByToken(it) }
+
 					// Get all available groups in the raw form (without creating entities yet)
 					val rawGroups = ChannelGroups.selectAll()
 						.orderBy(ChannelGroups.order to SortOrder.ASC, ChannelGroups.id to SortOrder.ASC)
@@ -37,6 +42,10 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 						.orderBy(Channels.order to SortOrder.ASC, Channels.id to SortOrder.ASC)
 						.toList()
 						.map { Channels.createEntity(it) }
+						.filter {
+							it.viewMode == Channel.AccessMode.EVERYONE
+							|| (user != null && user.canViewChannel(it))
+						}
 						.groupBy { it.groupId }
 						.map { (groupId, channels) ->
 							if (groupId == null) {
