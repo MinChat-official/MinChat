@@ -83,7 +83,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 						try {
 							it.session.outgoing.send(frame)
 						} catch (e: Exception) {
-							Log.error { "Failed to send $event to $it!" }
+							Log.error { "Failed to send $event to $it! Message: ${e.message}" }
 						}
 					}
 				} catch (e: Exception) {

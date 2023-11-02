@@ -64,6 +64,7 @@ object Log : AbstractLogger() {
 			"info" -> info { message }
 			"warn" -> warn { message }
 			"error" -> error { message }
+			else -> error { "Logger tried to log an invalid level: $levelString. Message: $message" }
 		}
 	}
 

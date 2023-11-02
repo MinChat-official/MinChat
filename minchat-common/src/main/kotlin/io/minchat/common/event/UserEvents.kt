@@ -1,6 +1,6 @@
 package io.minchat.common.event
 
-import io.minchat.common.entity.*
+import io.minchat.common.entity.User
 import kotlinx.serialization.*
 
 /**
@@ -12,4 +12,7 @@ import kotlinx.serialization.*
 @SerialName("UserModify")
 data class UserModifyEvent(
 	val newUser: User
-) : Event()
+) : Event() {
+	override fun toString() =
+		"UserModifyEvent(${newUser.loggable()})"
+}
