@@ -287,6 +287,19 @@ class MinchatRestClient(
 			description = description,
 			order = order
 		).withClient(this)
+
+	/** Creates a group. Requires a logged-in admin account. */
+	suspend fun createChannelGroup(
+		name: String,
+		description: String,
+		order: Int
+	) =
+		channelGroupService.createGroup(
+			token = account().token,
+			name = name,
+			description = description,
+			order = order
+		).also(cache::set).withClient(this)
 	
 	// editX methods
 	/** 

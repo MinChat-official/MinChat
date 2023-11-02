@@ -22,6 +22,25 @@ class ChannelGroupService(baseUrl: String, client: HttpClient) : AbstractRestSer
 			.body<List<ChannelGroup>>()
 	}
 
+	suspend fun createGroup(
+		token: String,
+		name: String,
+		description: String,
+		order: Int
+	) = run {
+		client.post(makeRouteUrl(Route.ChannelGroup.create)) {
+			contentType(ContentType.Application.Json)
+			authorizeBearer(token)
+			setBody(
+				ChannelGroupCreateRequest(
+					name = name,
+					description = description,
+					order = order
+				)
+			)
+		}.body<ChannelGroup>()
+	}
+
 	/** Edits the group with the specified ID using the provided token. */
 	suspend fun editGroup(
 		id: Long,
@@ -37,7 +56,7 @@ class ChannelGroupService(baseUrl: String, client: HttpClient) : AbstractRestSer
 				ChannelGroupModifyRequest(
 					newName = newName,
 					newDescription = newDescription,
-						newOrder = newOrder
+					newOrder = newOrder
 				)
 			)
 		}.body<ChannelGroup>()

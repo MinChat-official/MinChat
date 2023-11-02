@@ -6,6 +6,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.*
 import io.ktor.util.reflect.*
+import io.ktor.utils.io.core.*
 import io.ktor.websocket.*
 import io.minchat.common.*
 import io.minchat.common.event.Event
@@ -74,6 +75,8 @@ class RawGateway(
 
 		// launched in the gateway coroutine
 		sessionReader = this@RawGateway.launch {
+			var packetBuilder: BytePacketBuilder? = null
+
 			while (true) {
 				var thisSession: DefaultClientWebSocketSession? = null
 
@@ -87,10 +90,26 @@ class RawGateway(
 					}
 					thisSession = session!!
 
-					val frame = thisSession.incoming.receive()
+					val rawFrame = thisSession.incoming.receive()
 					val converter = thisSession.converter!!
+					val frame: Frame
 
-					if (!frame.fin) continue
+					if (!rawFrame.fin) {
+						// Non-final frame, write to the builder and proceed to the next one
+						if (packetBuilder == null) {
+							packetBuilder = BytePacketBuilder()
+						}
+						packetBuilder.writeFully(rawFrame.buffer)
+						continue
+					} else {
+						// Final frame, combine with the builder (if any) and pass it downstream, reset the builder afterward
+						frame = packetBuilder?.let {
+							it.writeFully(rawFrame.buffer)
+							Frame.byType(true, rawFrame.frameType, it.build().readBytes(),
+								rawFrame.rsv1, rawFrame.rsv2, rawFrame.rsv3)
+						} ?: rawFrame
+					}
+					packetBuilder = null
 
 					if (!converter.isApplicable(frame)) {
 						MinchatRestLogger.log("warn",
