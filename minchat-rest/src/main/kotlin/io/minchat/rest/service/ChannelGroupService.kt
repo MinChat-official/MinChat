@@ -5,7 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.minchat.common.Route
-import io.minchat.common.entity.*
+import io.minchat.common.entity.ChannelGroup
 import io.minchat.common.request.*
 
 class ChannelGroupService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
@@ -40,7 +40,7 @@ class ChannelGroupService(baseUrl: String, client: HttpClient) : AbstractRestSer
 						newOrder = newOrder
 				)
 			)
-		}.body<Channel>()
+		}.body<ChannelGroup>()
 	}
 
 	/** Permamently and irreversibly deletes the provided group using the specified token. */
