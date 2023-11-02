@@ -55,32 +55,32 @@ class ChannelDialog(
 			header.addLabel("Editing channel #${channel.name}").row()
 
 			// Common things
-			val nameField = inputField("Name", false) {
+			val nameField = inputField("Name", default = channel.name) {
 				it.length in Channel.nameLength
-			}.also { it.content = channel.name }
+			}
 
-			val descriptionField = inputField("Description", false) {
+			val descriptionField = inputField("Description", default = channel.description) {
 				it.length in Channel.descriptionLength
-			}.also { it.content = channel.description }
+			}
 
-			val orderField = inputField("Order", false) {
+			val orderField = inputField("Order", default = channel.order.toString()) {
 				it.toIntOrNull() != null
-			}.also { it.content = channel.order.toString() }
+			}
 
 			// Normal channel-specific things
 			if (channel is NormalMinchatChannel) {
 				val default = "<keep>"
-				val groupNameField = inputField("Group", false) {
+				val groupNameField = inputField("Group", default = default) {
 					it == default || it.length in ChannelGroup.nameLength
-				}.also { it.content = default }
+				}
 
-				val viewModeField = inputField("View mode", false) { mode ->
+				val viewModeField = inputField("View mode", default = channel.viewMode.toString()) { mode ->
 					Channel.AccessMode.values().any { it.name == mode.uppercase() }
-				}.also { it.content = channel.viewMode.toString() }
+				}
 
-				val sendModeField = inputField("Send mode", false) { mode ->
+				val sendModeField = inputField("Send mode", default = channel.sendMode.toString()) { mode ->
 					Channel.AccessMode.values().any { it.name == mode.uppercase() }
-				}.also { it.content = channel.sendMode.toString() }
+				}
 
 				action("Confirm") {
 					hide()

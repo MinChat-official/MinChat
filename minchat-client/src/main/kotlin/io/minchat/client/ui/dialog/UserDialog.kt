@@ -124,10 +124,8 @@ abstract class UserDialog(
 			header.addLabel("Editing user ${user.tag} (${user.displayName}).", align = Align.left, wrap = true)
 				.fillX().row()
 
-			val usernameField = inputField("New nickname", false) {
+			val usernameField = inputField("New nickname", default = user.nickname ?: user.username) {
 				it.length in 3..40
-			}.also {
-				it.content = user.nickname ?: user.username
 			}
 
 			action("Confirm") {

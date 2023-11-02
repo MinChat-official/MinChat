@@ -5,7 +5,7 @@ import arc.scene.ui.*
 import arc.scene.ui.layout.Table
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import com.github.mnemotechnician.mkui.extensions.elements.hint
+import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.minchat.client.ui.MinchatStyle as Style
 
 /**
@@ -48,7 +48,12 @@ abstract class AbstractModalDialog : Dialog() {
 		clearActionRows()
 	}
 
-	protected fun inputField(hint: String, isPassword: Boolean, validator: TextField.TextFieldValidator) = run {
+	protected fun inputField(
+		hint: String,
+		isPassword: Boolean = false,
+		default: String = "",
+		validator: TextField.TextFieldValidator
+	) = run {
 		body.row()
 
 		body.addTable(Style.surfaceBackground) {
@@ -75,6 +80,7 @@ abstract class AbstractModalDialog : Dialog() {
 			}
 			.also { it.row() }
 			.get()
+			.also { it.content = default }
 	}
 
 	/** Removes all action rows and adds a default one. */
