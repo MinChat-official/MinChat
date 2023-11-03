@@ -11,7 +11,7 @@ sealed class MinchatChannel(
 ) : AbstractMinchatEntity<MinchatChannel>() {
 	override val id by data::id
 	/** ID of the [MinchatChannelGroup] this channel belongs to. May be null, which means this channel belongs to a global group. */
-	val groupId by data::groupId
+	open val groupId by data::groupId
 
 	val name by data::name
 	val description by data::description
@@ -139,6 +139,8 @@ class NormalMinchatChannel(
 	data: Channel,
 	rest: MinchatRestClient
 ) : MinchatChannel(data, rest) {
+	override val groupId get() = super.groupId!!
+
 	init {
 		require(data.type == Channel.Type.NORMAL) {
 			"Channel of type ${data.type} is not a normal channel."
@@ -161,12 +163,18 @@ class NormalMinchatChannel(
 		newOrder: Int? = null
 	) =
 		rest.editChannel(id, newName, newDescription, newViewMode, newSendMode, newGroupId, newOrder)
+
+	/** Gets the channel group this channel belogns to. Uses the cache. */
+	suspend fun getGroup() =
+		rest.cache.getChannelGroup(groupId!!)
 }
 
 class MinchatDMChannel(
 	data: Channel,
 	rest: MinchatRestClient
 ) : MinchatChannel(data, rest) {
+	override val groupId get() = null
+
 	val user1id get() = data.user1id!!
 	val user2id get() = data.user2id!!
 
