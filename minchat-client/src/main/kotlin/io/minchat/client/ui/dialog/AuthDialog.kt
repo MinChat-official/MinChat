@@ -5,7 +5,7 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import io.minchat.client.*
-import io.minchat.client.misc.then
+import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.plugin.impl.AccountSaverPlugin
 import io.minchat.client.ui.tutorial.Tutorials
@@ -74,16 +74,14 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 			action("Login") {
 				val username = usernameField.content
 				val password = passwordField.content
-				hide()
 
-				launchWithStatus("Logging in as $username...") {
-					runSafe {
-						Minchat.client.login(username, password)
-						ClientEvents.fire(AuthorizationEvent(Minchat.client, true))
-					}
+				Dialogs.await("Logging in as $username...") {
+					Minchat.client.login(username, password)
+					ClientEvents.fire(AuthorizationEvent(Minchat.client, true))
+
 					// Update AuthDialog
 					createActions()
-				}
+				}.onSuccess(::hide)
 			}.disabled { !usernameField.isValid || !passwordField.isValid }.with {
 				usernameField.then(passwordField)
 				passwordField.then(it)
@@ -121,13 +119,12 @@ class AuthDialog(parentScope: CoroutineScope) : UserDialog(parentScope) {
 				val password = passwordField.content
 				hide()
 
-				launchWithStatus("Registering as $username...") {
-					runSafe {
-						Minchat.client.register(username, nickname, password)
-						ClientEvents.fire(AuthorizationEvent(Minchat.client, true))
-					}
+				Dialogs.await("Registering as $username...") {
+					Minchat.client.register(username, nickname, password)
+					ClientEvents.fire(AuthorizationEvent(Minchat.client, true))
+
 					createActions()
-				}
+				}.onSuccess(::hide)
 			}.disabled {
 				!usernameField.isValid || !passwordField.isValid
 					|| passwordField.content != passwordConfirmField.content

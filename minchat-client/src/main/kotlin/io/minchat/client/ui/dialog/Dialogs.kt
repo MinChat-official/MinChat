@@ -6,8 +6,8 @@ import arc.scene.Element
 import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.runUi
-import io.minchat.client.Minchat
-import io.minchat.client.misc.Log
+import io.minchat.client.MinchatDispatcher
+import io.minchat.client.misc.*
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import kotlinx.coroutines.*
 import io.minchat.client.ui.MinchatStyle as Style
@@ -17,10 +17,23 @@ import io.minchat.client.ui.MinchatStyle as Style
  *
  * Methods in this class can be called from any thread.
  */
-object Dialogs {
+object Dialogs : CoroutineScope {
+	override val coroutineContext = SupervisorJob() + MinchatDispatcher
+
 	fun info(message: String, onClose: () -> Unit = {}) {
 		runUi {
 			SimpleInfoDialog(message, onClose).show()
+		}
+	}
+
+	fun error(exception: Exception, message: String? = null, onClose: () -> Unit = {}) {
+		runUi {
+			SimpleInfoDialog("""
+				${message ?: "An error has occurred!"}
+				
+				[red]${exception.userReadable()}[]
+				[lightgray]Type: ${exception.javaClass.simpleName}
+			""".trimIndent(), onClose).show()
 		}
 	}
 
@@ -43,19 +56,17 @@ object Dialogs {
 		cancellable: Boolean = true,
 		crossinline action: suspend () -> Unit
 	): Job {
-		val job = Minchat.launch {
+		val job = launch {
 			try {
 				action()
 			} catch (e: CancellationException) {
-				// nothing
+				throw e
 			} catch (e: Exception) {
 				Log.error(e) { "Exception in AwaitActionDialog's action" }
 				if (showError) {
-					info("""
-						An error has occurred while processing the action.
-						Check the logs for more detail.
-					""".trimIndent())
+					error(e, "An error has occurred.".trimIndent())
 				}
+				throw e // for the job to be marked as failed
 			}
 		}
 
