@@ -343,9 +343,12 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 						}
 					}
 
+					is MinchatChannelGroupCreate,
+					is MinchatChannelGroupModify,
+					is MinchatChannelGroupDelete,
 					is MinchatChannelCreate,
 					is MinchatChannelDelete -> {
-						reloadChannels()
+						reloadChannels() // not much I can do here
 					}
 
 					is MinchatChannelModify -> {
