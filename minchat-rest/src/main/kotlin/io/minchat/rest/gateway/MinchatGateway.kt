@@ -87,7 +87,10 @@ class MinchatGateway(
 				UserModifyEvent::class,
 				ChannelCreateEvent::class,
 				ChannelModifyEvent::class,
-				ChannelDeleteEvent::class
+				ChannelDeleteEvent::class,
+				ChannelGroupCreateEvent::class,
+				ChannelGroupModifyEvent::class,
+				ChannelGroupDeleteEvent::class
 			)
 
 			@Suppress("UNCHECKED_CAST")

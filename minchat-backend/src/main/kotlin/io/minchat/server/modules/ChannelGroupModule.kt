@@ -7,6 +7,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.minchat.common.Route
 import io.minchat.common.entity.*
+import io.minchat.common.event.*
 import io.minchat.common.request.*
 import io.minchat.server.databases.*
 import io.minchat.server.util.*
@@ -91,6 +92,7 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 					Log.info { "Channel group was created: #${group.name}." }
 
 					call.respond(group)
+					server.sendEvent(ChannelGroupCreateEvent(group))
 				}
 			}
 
@@ -122,6 +124,10 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 					}
 
 					Log.info { "Channel group was edited: #${id}." }
+
+					val newGroup = ChannelGroups.getById(id)
+					call.respond(newGroup)
+					server.sendEvent(ChannelGroupModifyEvent(newGroup))
 				}
 			}
 
@@ -141,7 +147,11 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 					ChannelGroups.deleteWhere { ChannelGroups.id eq id }.throwIfNotFound { "no such group." }
 
 					Log.info { "Channel group was deleted: ${group.loggable()}." }
+
+					server.sendEvent(ChannelGroupDeleteEvent(id))
 				}
+
+				call.response.statusOk()
 			}
 		}
 	}
