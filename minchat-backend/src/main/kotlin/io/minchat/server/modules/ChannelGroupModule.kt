@@ -56,6 +56,13 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 									?.let { ChannelGroups.createEntity(it, channels) }
 								?: ChannelGroup.GLOBAL.copy(channels = channels)
 							}
+						}.let { groups ->
+							// Add all missing channel groups, but as empty
+							groups + rawGroups.filter { row ->
+								groups.none { it.id == row[ChannelGroups.id].value }
+							}.map {
+								ChannelGroups.createEntity(it, listOf())
+							}
 						}
 
 					call.respond(groups)
