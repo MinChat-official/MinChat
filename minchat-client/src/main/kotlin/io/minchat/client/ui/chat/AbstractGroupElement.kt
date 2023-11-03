@@ -1,8 +1,12 @@
 package io.minchat.client.ui.chat
 
+import arc.Core
+import arc.input.KeyCode
+import arc.scene.event.*
 import arc.scene.ui.layout.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.ui.element.ToggleButton
+import mindustry.Vars
 import io.minchat.client.ui.MinchatStyle as Style
 
 /**
@@ -77,6 +81,26 @@ abstract class AbstractGroupElement(
 
 		contents.rebuildContentsInternal()
 
+		// On mobile, add a long click listener
+		if (Vars.mobile || Vars.android || Vars.ios) {
+			addListener(object : InputListener() {
+				var touchBegin = -1L
+
+				override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?): Boolean {
+					touchBegin = System.currentTimeMillis()
+					return true
+				}
+
+				override fun touchUp(event: InputEvent?, x: Float, y: Float, pointer: Int, button: KeyCode?) {
+					// Show the dialog if the button was pressed for 400 ms or more
+					if (touchBegin > 0L && System.currentTimeMillis() - touchBegin > 400) {
+						onAltClick()
+					}
+					touchBegin = -1L
+				}
+			})
+		}
+
 		toggleButton.isEnabled = defaultShown
 	}
 
@@ -92,5 +116,19 @@ abstract class AbstractGroupElement(
 		}
 
 		super.validate()
+	}
+
+	override fun act(delta: Float) {
+		super.act(delta)
+
+		// On any platform, check for a right click on this element
+		if (hasMouse() && Core.input.keyTap(KeyCode.mouseRight)) {
+			onAltClick()
+		}
+	}
+
+	/** Called when the alternative action (long click on mobile or right click on desktop) is used. */
+	open fun onAltClick() {
+		// Do nothing by default.
 	}
 }

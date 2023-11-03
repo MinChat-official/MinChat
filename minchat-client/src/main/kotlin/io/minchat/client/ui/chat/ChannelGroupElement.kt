@@ -6,6 +6,8 @@ import arc.scene.ui.layout.Table
 import com.github.mnemotechnician.mkui.extensions.dsl.addLabel
 import com.github.mnemotechnician.mkui.extensions.elements.content
 import com.github.mnemotechnician.mkui.extensions.groups.child
+import io.minchat.client.Minchat
+import io.minchat.client.ui.dialog.ChannelGroupDialog
 import io.minchat.client.ui.managers.hasUnreads
 import io.minchat.rest.entity.MinchatChannelGroup
 import io.minchat.client.ui.MinchatStyle as Style
@@ -35,6 +37,10 @@ class ChannelGroupElement(
 		if (group.channels.isEmpty()) {
 			addLabel("<No channels>", Style.Label)
 		}
+	}
+
+	override fun onAltClick() {
+		ChannelGroupDialog(group, Minchat).show()
 	}
 
 	override fun act(delta: Float) {

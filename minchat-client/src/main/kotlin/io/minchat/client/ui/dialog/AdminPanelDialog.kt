@@ -17,7 +17,7 @@ class AdminPanelDialog : AbstractModalDialog() {
 			}
 
 			actionButton("Create group") {
-				Dialogs.TODO()
+				ChannelGroupCreateDialog().show()
 			}
 			row()
 
@@ -33,6 +33,7 @@ class AdminPanelDialog : AbstractModalDialog() {
 					error("a")
 				}
 			}
+			row()
 		}.grow()
 	}
 
