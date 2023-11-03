@@ -444,6 +444,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				for (channel in groups) {
 					channelsContainer.add(ChannelGroupElement(this@ChatFragment, channel))
 						.growX()
+						.row()
 				}
 
 				if (currentChannel == null) {
