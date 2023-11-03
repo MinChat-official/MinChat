@@ -7,7 +7,7 @@ import io.minchat.client.Minchat
 import io.minchat.client.misc.*
 import io.minchat.common.entity.*
 import io.minchat.rest.entity.*
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlin.math.abs
 import kotlin.random.Random
 import io.minchat.client.ui.MinchatStyle as Style
@@ -21,6 +21,9 @@ class ChannelDialog(
 ) : AbstractStatDialog(parentScope) {
 	lateinit var channelLabel: Label
 
+	/** Either the name of the group the channel belongs to, or the name of the other participant if this is a DM channel. */
+	private var groupName: String? = null
+
 	init {
 		header.addTable(Style.surfaceBackground) {
 			margin(Style.buttonMargin)
@@ -32,6 +35,7 @@ class ChannelDialog(
 
 		stat("Name") { channel.name }
 		stat("ID") { channel.id.toString() }
+		stat("Group") { groupName ?: "<resolving...>" }
 		stat("Description") { channel.description }
 		stat("View mode") { channel.viewMode.readableName }
 		stat("Send mode") { channel.sendMode.readableName }
@@ -44,6 +48,26 @@ class ChannelDialog(
 		if (Minchat.client.selfOrNull()?.canDeleteChannel(channel) == true) {
 			action("Delete") {
 				ChannelDeleteConfirmDialog().show()
+			}
+		}
+
+		// Resolve the channel group.
+		launch {
+			runSafe {
+				when (val channel = channel) {
+					is NormalMinchatChannel -> {
+						groupName = when {
+							channel.groupId == null -> "<global>"
+							else -> channel.getGroup()?.name ?: "<invalid>"
+						}
+					}
+					is MinchatDMChannel -> {
+						if (!Minchat.client.isLoggedIn) return@launch
+
+						val otherUser = if (channel.user1id == Minchat.client.self().id) channel.user2id else channel.user1id
+						groupName = Minchat.client.cache.getUser(otherUser)?.tag ?: "<invalid>"
+					}
+				}
 			}
 		}
 	}
@@ -69,9 +93,9 @@ class ChannelDialog(
 
 			// Normal channel-specific things
 			if (channel is NormalMinchatChannel) {
-				val default = "<keep>"
-				val groupNameField = inputField("Group", default = default) {
-					it == default || it.length in ChannelGroup.nameLength
+				val defaultGroup = groupName ?: "<keep same>"
+				val groupNameField = inputField("Group, or null", default = defaultGroup) {
+					it == defaultGroup || it.length in ChannelGroup.nameLength
 				}
 
 				val viewModeField = inputField("View mode", default = channel.viewMode.toString()) { mode ->
@@ -83,13 +107,15 @@ class ChannelDialog(
 				}
 
 				action("Confirm") {
-					hide()
-					launchSafeWithStatus("Editing channel #${channel.name}...") {
-						val group = when {
-							groupNameField.content == default -> null
+					Dialogs.await("Editing channel #${channel.name}...") {
+						val groupId = when {
+							groupNameField.content == defaultGroup -> null
+							groupNameField.content.lowercase() == "null" -> -1L
 							else -> {
 								val groups = Minchat.client.getAllChannelGroups()
 								groups.firstOrNull { it.name.equals(groupNameField.content, true) }
+									?.id
+									?: error("No group with such name.")
 							}
 						}
 
@@ -97,11 +123,11 @@ class ChannelDialog(
 							newName = nameField.content,
 							newDescription = descriptionField.content,
 							newOrder = orderField.content.toInt(),
-							newGroupId = group?.id,
+							newGroupId = groupId,
 							newViewMode = viewModeField.content.uppercase().let(Channel.AccessMode::valueOf),
 							newSendMode = sendModeField.content.uppercase().let(Channel.AccessMode::valueOf)
 						)
-					}
+					}.onSuccess(::hide)
 				}.get().enabledWhenValid(nameField, descriptionField, orderField, groupNameField, viewModeField, sendModeField)
 			}
 

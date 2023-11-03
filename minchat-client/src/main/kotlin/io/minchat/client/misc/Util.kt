@@ -78,6 +78,11 @@ fun Job.then(handler: CompletionHandler) = this.also {
 	invokeOnCompletion(handler)
 }
 
+/** Same as [Job.invokeOnCompletion], but returns [this] and doesn't invoke [handler] if an exception occurs. */
+inline fun Job.onSuccess(crossinline handler: () -> Unit) = then {
+	if (it == null) handler()
+}
+
 /**
  * When the user presses enter while typing in this field,
  * provided element is clicked and the text is trimmed.
