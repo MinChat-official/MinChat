@@ -16,9 +16,11 @@ import io.minchat.client.ui.MinchatStyle as Style
  * A collection of utility methods to quickly show dialogs and not worry about any possible exceptions.
  *
  * Methods in this class can be called from any thread.
+ *
+ * The CoroutineScope of this class totally ignores any failed jobs within itself.
  */
 object Dialogs : CoroutineScope {
-	override val coroutineContext = SupervisorJob() + MinchatDispatcher
+	override val coroutineContext = SupervisorJob() + MinchatDispatcher + CoroutineExceptionHandler { _, _ -> }
 
 	fun info(message: String, onClose: () -> Unit = {}) {
 		runUi {
