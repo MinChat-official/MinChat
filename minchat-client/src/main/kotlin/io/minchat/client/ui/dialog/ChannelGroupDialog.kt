@@ -77,7 +77,7 @@ class ChannelGroupCreateDialog : AbstractModalDialog() {
 		val descriptionField = inputField("Description") {
 			it.length in ChannelGroup.descriptionLength
 		}
-		val orderField = inputField("Order") {
+		val orderField = inputField("Order", default = "0") {
 			it.toIntOrNull() != null
 		}
 
@@ -85,7 +85,7 @@ class ChannelGroupCreateDialog : AbstractModalDialog() {
 			Dialogs.await("Creating the group...") {
 				Minchat.client.createChannelGroup(nameField.text, descriptionField.text, orderField.text.toInt())
 			}.then { hide() }
-		}
+		}.get().enabledWhenValid(nameField, descriptionField, orderField)
 	}
 }
 
