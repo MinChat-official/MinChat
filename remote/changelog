@@ -1,3 +1,6 @@
+#VERSION 0.7.4
+Hotfix for 0.7.3
+
 #VERSION 0.7.3
 A critical channel ui fix (old versions cannot display more than 1 group)
 Improved the authorization dialog
