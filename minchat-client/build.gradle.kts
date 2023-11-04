@@ -248,8 +248,8 @@ val generateResources by tasks.registering {
 				}}
 			|
 			|       private fun makeDrawable(region: TextureRegion) = object : TextureRegionDrawable(region) {
-			|               // With normal ui scaling sprites should be 40px, but I use 48px, hence 40/48
-			|               override fun imageSize() = super.imageSize() * Scl.scl(40f / 48f)
+			|               // With normal ui scaling sprites should be 32px, but I use 48px, hence 32/48
+			|               override fun imageSize() = super.imageSize() * Scl.scl(32f / 48f)
 			|       }
 			|}
 		""".trimMargin()
