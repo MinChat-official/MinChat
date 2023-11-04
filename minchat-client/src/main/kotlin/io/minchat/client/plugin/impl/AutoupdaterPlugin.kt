@@ -87,6 +87,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 
 		Log.info { "Autoupdater: downloading the changelog..." }
 		val changelog = runCatching { Minchat.githubClient.getChangelog() }
+			.onFailure { Log.error { "Autoupdater: failed to get changelog: $it" } }
 			.getOrNull()
 			?.filter { it.version > MINCHAT_VERSION }
 
@@ -229,11 +230,11 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 						hider(hideVertical = { !showChangelog }, hideHorizontal = { !showChangelog }) {
 							margin(Style.layoutMargin)
 
-							limitedScrollPane(limitW = false, limitH = true) {
+							limitedScrollPane(limitW = false, limitH = false) {
 								addChangelog()
-							}.grow()
+							}.grow().maxWidth(800f)
 						}.grow()
-					}.maxHeight(500f)
+					}.maxHeight(500f).growX()
 				}.fillX().pad(Style.layoutPad).row()
 
 				addTable(Style.surfaceBackground) {
