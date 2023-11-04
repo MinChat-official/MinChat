@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.cancellation.CancellationException
 
 class GatewayModule : AbstractMinchatServerModule() {
 	val connections = Collections.synchronizedSet<Connection>(LinkedHashSet())
@@ -88,6 +89,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 					}
 				}
 			} catch (e: Exception) {
+				if (e is CancellationException) throw e
 				Log.error { "Failed to send an event! $e" }
 			}
 		}.launchIn(server)

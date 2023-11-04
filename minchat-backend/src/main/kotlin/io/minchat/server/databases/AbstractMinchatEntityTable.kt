@@ -5,9 +5,11 @@ import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
 
 abstract class AbstractMinchatEntityTable<T> : LongIdTable() {
+	open val entityName by lazy { this::class.simpleName!!.removeSuffix("s") }
+
 	/** Returns a raw entity roq with the specified id, or throws an exception if it doesn't exist. */
 	fun getRawById(id: Long): ResultRow =
-		getRawByIdOrNull(id) ?: notFound("Entity with id $id was not found.")
+		getRawByIdOrNull(id) ?: notFound("$entityName with id $id was not found.")
 
 	/** Returns a raw entity roq with the specified id, or null if it doesn't exist. */
 	open fun getRawByIdOrNull(id: Long): ResultRow? = run {

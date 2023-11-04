@@ -23,6 +23,7 @@ import picocli.CommandLine
 import picocli.CommandLine.*
 import java.io.File
 import java.security.KeyStore
+import kotlin.concurrent.thread
 import kotlin.random.Random
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -79,9 +80,12 @@ open class MinchatLauncher : Runnable {
 	override fun run() = runBlocking {
 		val context = launchServer()
 
+		Runtime.getRuntime().addShutdownHook(thread(start = false) {
+			Log.info { "Good night." }
+		})
+
 		Log.info { "MinChat server is running. Awaiting termination." }
 		context.engine.stopServerOnCancellation().join()
-		Log.info { "Good night." }
 	}
 
 	suspend fun launchServer(): ServerContext {
@@ -159,16 +163,16 @@ open class MinchatLauncher : Runnable {
 								text = "400$message", status = HttpStatusCode.BadRequest)
 
 							is IllegalInputException -> call.respondText(
-								text = "Illegal input (400)$message", status = HttpStatusCode.BadRequest)
+								text = "Illegal input$message", status = HttpStatusCode.BadRequest)
 
 							is AccessDeniedException -> call.respondText(
-								text = "Access denied (403)$message", status = HttpStatusCode.Forbidden)
+								text = "Access denied$message", status = HttpStatusCode.Forbidden)
 
 							is EntityNotFoundException -> call.respondText(
-								text = "Entity not found (404)$message", status = HttpStatusCode.NotFound)
+								text = "Entity not found$message", status = HttpStatusCode.NotFound)
 
 							is TooManyRequestsException -> call.respondText(
-								text = "Too many requests (429)$message", status = HttpStatusCode.NotFound)
+								text = "Too many requests$message", status = HttpStatusCode.NotFound)
 
 							else -> {
 								Log.error(cause) { "Exception thrown when processing $call" }
