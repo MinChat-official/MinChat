@@ -27,6 +27,10 @@ object UnreadsManager {
 			// Mark the channel as "read now"
 			setForChannel(it.channel.id, System.currentTimeMillis())
 		}
+
+		ClientEvents.subscribe<ClientMessageSendEvent> {
+			setForChannel(it.message.channelId, System.currentTimeMillis())
+		}
 	}
 
 	/**
