@@ -9,9 +9,10 @@ import io.minchat.common.entity.Message
 import io.minchat.common.request.*
 
 class MessageService(baseUrl: String, client: HttpClient) : AbstractRestService(baseUrl, client) {
-	suspend fun getMessage(id: Long) = run {
-		client.get(makeRouteUrl(Route.Message.fetch, id))
-			.body<Message>()
+	suspend fun getMessage(id: Long, token: String? = null) = run {
+		client.get(makeRouteUrl(Route.Message.fetch, id)) {
+			token?.let { authorizeBearer(it) }
+		}.body<Message>()
 	}
 
 	/** Edits the message with the specified ID using the providen token. */

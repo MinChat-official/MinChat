@@ -199,7 +199,7 @@ class MinchatRestClient(
 	 * For the caching version of this method, see [cache].
 	 */
 	suspend fun getMessage(id: Long) =
-		messageService.getMessage(id).also {
+		messageService.getMessage(id, account?.token).also {
 			cache.set(it)
 		}.withClient(this)
 

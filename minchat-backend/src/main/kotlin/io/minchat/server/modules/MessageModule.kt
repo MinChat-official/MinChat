@@ -22,7 +22,19 @@ class MessageModule : AbstractMinchatServerModule() {
 				val id = call.parameters.getOrFail<Long>("id")
 
 				newSuspendedTransaction {
-					call.respond(Messages.getById(id))
+					val message = Messages.getById(id)
+
+					if (message.channel.viewMode != Channel.AccessMode.EVERYONE) {
+						val token = call.tokenOrNull()
+						            ?: accessDenied("This message is in a restricted channel. You must be logged-in to see it.")
+						val user = Users.getByToken(token)
+
+						if (!user.canViewChannel(message.channel)) {
+							accessDenied("You cannot view the channel this message was sent in.")
+						}
+					}
+
+					call.respond(message)
 				}
 			}
 			
