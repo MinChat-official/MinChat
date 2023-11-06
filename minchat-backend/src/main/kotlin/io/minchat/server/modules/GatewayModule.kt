@@ -12,12 +12,13 @@ import io.minchat.common.event.Event
 import io.minchat.server.ServerContext
 import io.minchat.server.databases.Users
 import io.minchat.server.util.Log
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -55,6 +56,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 					Log.lifecycle { "$connection has closed." }
 				} catch (e: Exception) {
 					Log.error(e) { "$connection has been terminated" }
+					if (e is CancellationException) throw e
 				} finally {
 					connections -= connection
 				}
@@ -68,10 +70,9 @@ class GatewayModule : AbstractMinchatServerModule() {
 		// A coroutine that sends events
 		pendingEvents.consumeAsFlow().onEach { event ->
 			try {
-				val frame = jsonConverter.serialize(event)
-
-				val recipients = event.recipients?.map { id ->
-					connections.find { it.user?.id == id }
+				// Using flatMap and filter because one user can have multiple connections.
+				val recipients = event.recipients?.flatMap { id ->
+					connections.filter { it.user?.id == id }
 				}?.filterNotNull() ?: connections
 
 				if (recipients.isEmpty()) {
@@ -82,11 +83,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 				Log.lifecycle { "Sending $event to ${recipients.size} connections" }
 
 				recipients.forEach {
-					try {
-						it.session.outgoing.send(frame)
-					} catch (e: Exception) {
-						Log.error { "Failed to send $event to $it! Message: ${e.message}" }
-					}
+					it.frameQueue.add(event)
 				}
 			} catch (e: Exception) {
 				if (e is CancellationException) throw e
@@ -97,14 +94,28 @@ class GatewayModule : AbstractMinchatServerModule() {
 
 	suspend fun handleConnection(connection: Connection) {
 		// suspend until this connection terminates
-		connection.session.coroutineContext[Job]?.join()
+		while (connection.session.isActive) {
+			if (connection.frameQueue.isEmpty()) {
+				delay(20L)
+				continue
+			}
+
+			val event = connection.frameQueue.poll()
+			try {
+				val frame = jsonConverter.serialize(event)
+				connection.session.outgoing.send(frame)
+			} catch (e: Exception) {
+				Log.error { "Failed to send $event to $connection! Message: ${e.message}" }
+				throw e // close the session
+			}
+		}
 	}
 
 	/** Requests to send the event to all connections. */
 	fun send(event: Event) {
 		val result = pendingEvents.trySend(event)
 		if (result.isSuccess.not()) {
-			Log.error { "Count not send $event: buffer overflow! Is the coroutine dead?!" }
+			Log.error { "Count not send $event: buffer overflow! Is the event coroutine dead?!" }
 		}
 	}
 
@@ -114,6 +125,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 		val user: User?
 	) {
 		val id = lastId.getAndIncrement()
+		val frameQueue = ConcurrentLinkedQueue<Event>()
 
 		override fun toString() =
 			"Connection #$id (v${clientVersion ?: "unknown"}, ${user?.loggable()})"
