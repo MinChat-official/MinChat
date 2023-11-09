@@ -92,7 +92,7 @@ object MinchatSettings {
 			try {
 				Vars.ui.loadfrag.show("Please wait...")
 
-				val client = MinchatRestClient(customUrl)
+				val client = MinchatRestClient(customUrl, "")
 				val version = client.getServerVersion()
 
 				runUi {

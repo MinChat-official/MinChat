@@ -142,12 +142,12 @@ class MinchatMod : Mod(), CoroutineScope {
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
 		UnreadsManager.load()
-		client.fileCache.loadFromDrive()
-//
-//		launch {
-//			delay(100L) // TODO: possible race condition
-//			connectToDefault()
-//		}
+
+		launch {
+			delay(100L) // TODO: possible race condition
+			connectToDefault()
+			client.fileCache.loadFromDrive()
+		}
 	}
 
 	/**
