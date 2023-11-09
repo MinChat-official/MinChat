@@ -139,11 +139,12 @@ class MinchatMod : Mod(), CoroutineScope {
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
 		UnreadsManager.load()
-
-		launch {
-			delay(100L) // TODO: possible race condition
-			connectToDefault()
-		}
+		client.fileCache.loadFromDrive()
+//
+//		launch {
+//			delay(100L) // TODO: possible race condition
+//			connectToDefault()
+//		}
 	}
 
 	/**
@@ -206,6 +207,7 @@ class MinchatMod : Mod(), CoroutineScope {
 		}
 
 		this@MinchatMod.client = client
+		MinchatPluginHandler.get<AccountSaverPlugin>()?.restoreAccount()
 		gateway = MinchatGateway(client).also { it.connectIfNecessary() }
 
 		ClientEvents.fire(ConnectEvent(url))

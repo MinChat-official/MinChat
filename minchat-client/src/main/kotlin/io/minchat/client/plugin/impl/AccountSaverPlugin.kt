@@ -18,9 +18,14 @@ class AccountSaverPlugin : MinchatPlugin("account-saver") {
 				saveUserAccount()
 			}
 		}
+		subscribe<ConnectEvent> {
+			if (Minchat.client.account == null) {
+				restoreAccount()
+			}
+		}
 	}
 
-	override suspend fun onConnect() {
+	suspend fun restoreAccount() {
 		val client = Minchat.client
 
 		try {
