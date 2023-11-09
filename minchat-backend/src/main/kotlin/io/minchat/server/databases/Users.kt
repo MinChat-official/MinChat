@@ -13,6 +13,17 @@ object Users : AbstractMinchatEntityTable<User>() {
 	val username = varchar("name", User.nameLength.endInclusive)
 	val nickname = varchar("nickname", User.nameLength.endInclusive).nullable().default(null)
 
+	/** Type of the user's avatar. Null if the user has none. */
+	val avatarType = enumeration<User.Avatar.Type>("avatar-type").nullable()
+	/** Name of the user's icon avatar, if it's a [User.Avatar.IconAvatar]. */
+	val avatarIconName = varchar("avatar-icon-name", 64).nullable()
+	/** Width of the user's avatar, if it's a [User.Avatar.ImageAvatar]. */
+	val avatarWidth = integer("avatar-width").nullable()
+	/** Height of the user's avatar, if it's a [User.Avatar.ImageAvatar]. */
+	val avatarHeight = integer("avatar-height").nullable()
+	/** Hash of the user's avatar, if it's a [User.Avatar.ImageAvatar]. */
+	val avatarHash = varchar("avatar-hash", 50).nullable()
+
 	val passwordHash = varchar("password", 80)
 	val token = varchar("token", 64)
 	/** The [RoleBitSet] of the user. */
@@ -59,6 +70,18 @@ object Users : AbstractMinchatEntityTable<User>() {
 			nickname = row[nickname],
 			discriminator = row[discriminator],
 			role = RoleBitSet(row[role]),
+
+			avatar = when (row[avatarType]) {
+				null -> null
+				User.Avatar.Type.ICON -> User.Avatar.IconAvatar(
+					row[avatarIconName] ?: User.Avatar.invalid
+				)
+				User.Avatar.Type.IMAGE -> User.Avatar.ImageAvatar(
+					hash = row[avatarHash] ?: User.Avatar.invalid,
+					width = row[avatarWidth] ?: -1,
+					height = row[avatarHeight] ?: -1
+				)
+			},
 
 			ban = if (row[bannedUntil] >= System.currentTimeMillis()) User.Punishment(
 				expiresAt = row[bannedUntil],

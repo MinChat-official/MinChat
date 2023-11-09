@@ -6,6 +6,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.utils.io.*
 import io.minchat.common.*
 import io.minchat.common.entity.*
 import io.minchat.common.util.Observable
@@ -141,6 +142,27 @@ class MinchatRestClient(
 	 */
 	suspend fun getUserOrNull(id: Long) = runCatching {
 		getUser(id)
+	}.getOrNull()
+
+	/**
+	 * Fetches the image avatar of the user with the specified ID.
+	 *
+	 * Throws an exception if the user does not have an image avatar.
+	 *
+	 * Does not use caching - use [MinchatUser.getImageAvatar] instead.
+	 */
+	suspend fun getImageAvatar(id: Long, full: Boolean, progressHandler: (Float) -> Unit = {}) =
+		userService.getImageAvatar(id, full, progressHandler)
+
+	/**
+	 * Fetches the image avatar of the user with the specified ID.
+	 *
+	 * Return null if the user does not have an image avatar.
+	 *
+	 * Does not use caching - use [MinchatUser.getImageAvatar] instead.
+	 */
+	suspend fun getAvatarOrNull(id: Long, full: Boolean, progressHandler: (Float) -> Unit = {}) = runCatching {
+		getImageAvatar(id, full, progressHandler)
 	}.getOrNull()
 
 	/**
@@ -394,6 +416,13 @@ class MinchatRestClient(
 		account ?: return false
 		return rootService.validateToken(account!!.user.username, account!!.token)
 	}
+
+	/**
+	 * Uploads an image avatar to the server.
+	 * Requires a logged-in account.
+	 */
+	suspend fun uploadImageAvatar(id: Long, image: ByteReadChannel, progressHandler: (Float) -> Unit) =
+		userService.uploadImageAvatar(id, account().token, image, progressHandler)
 
 	// Admin-only
 	/** Modifies the punishments of the user with the specified id. Returns the updated user. Requires admin rights. */

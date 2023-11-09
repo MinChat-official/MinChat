@@ -2,8 +2,10 @@ package io.minchat.rest.service
 
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.utils.io.*
 import io.minchat.common.*
 import io.minchat.common.entity.User
 import io.minchat.common.request.*
@@ -39,6 +41,30 @@ class UserService(baseUrl: String, client: HttpClient) : AbstractRestService(bas
 			contentType(ContentType.Application.Json)
 			authorizeBearer(token)
 			setBody(UserDeleteRequest())
+		}
+	}
+
+	suspend fun getImageAvatar(id: Long, full: Boolean, progressHandler: (Float) -> Unit) =
+		client.get(makeRouteUrl(Route.User.getImageAvatar, id)) {
+			parameter("full", full)
+			onDownload { bytesSentTotal, contentLength ->
+				progressHandler.invoke(bytesSentTotal.toFloat() / contentLength)
+			}
+		}.body<ByteArray>()
+
+	suspend fun uploadImageAvatar(
+		id: Long,
+		token: String,
+		image: ByteReadChannel,
+		progressHandler: (Float) -> Unit
+	) {
+		client.post(makeRouteUrl(Route.User.uploadImageAvatar, id)) {
+			contentType(ContentType.Image.Any)
+			authorizeBearer(token)
+			setBody(image)
+			onUpload { bytesSentTotal, contentLength ->
+				progressHandler.invoke(bytesSentTotal.toFloat() / contentLength)
+			}
 		}
 	}
 

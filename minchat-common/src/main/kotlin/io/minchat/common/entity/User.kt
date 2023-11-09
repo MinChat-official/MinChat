@@ -11,6 +11,7 @@ data class User(
 	val nickname: String?,
 	/** A unique discriminator used to distinguish users with the same display names. */
 	val discriminator: Int,
+	val avatar: Avatar? = null,
 
 	val role: RoleBitSet = RoleBitSet.REGULAR_USER,
 
@@ -76,7 +77,7 @@ data class User(
 			"<this user was deleted>",
 			"<deleted_user>",
 			0,
-			RoleBitSet.REGULAR_USER,
+			role = RoleBitSet.REGULAR_USER,
 			messageCount = 0,
 			lastMessageTimestamp = 0L,
 			creationTimestamp = 0L
@@ -152,6 +153,62 @@ data class User(
 
 		companion object {
 			val reasonLength = 0..128
+		}
+	}
+
+	/**
+	 * An avatar of a user.
+	 * Can be an in-game icon or a custom image.
+	 */
+	@Serializable
+	sealed class Avatar {
+		abstract val type: Type
+
+		abstract fun isValid(): Boolean
+
+		/** An avatar that corresponds to a mindustry icon, coming either from the game or from the mod. */
+		data class IconAvatar(
+			val iconName: String
+		) : Avatar() {
+			override val type get() = Type.ICON
+
+			override fun isValid(): Boolean {
+				return iconName != invalid
+			}
+		}
+
+		/**
+		 * An avatar that corresponds to an image hosted on MinChat. Currently not supported.
+		 *
+		 * @param hash A unique hash of this avatar. If the hash changes on the server, the avatar is no longer up-to-date.
+		 */
+		data class ImageAvatar(
+			val hash: String,
+			val width: Int,
+			val height: Int
+		) : Avatar() {
+			override val type get() = Type.IMAGE
+
+			override fun isValid(): Boolean {
+				return hash != invalid
+			}
+		}
+
+		enum class Type {
+			ICON, IMAGE
+		}
+
+		companion object {
+			/** Maximum size during upload, 4 megabytes. */
+			val maxUploadSize = 4 * 1024 * 1024
+			/** Maximum server-side image width all bigger images will be downscaled to. */
+			val maxWidth = 128
+			/** Maximum server-side image height all bigger images will be downscaled to. */
+			val maxHeight = 128
+			/** Supported image file formats. */
+			val supportedFormats = setOf("png", "jpg", "jpeg")
+			/** The value of [ImageAvatar.hash] and [IconAvatar.iconName] used for invalid avatars. */
+			val invalid = "<INVALID>"
 		}
 	}
 }

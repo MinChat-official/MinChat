@@ -1,5 +1,6 @@
 package io.minchat.rest.entity
 
+import io.ktor.utils.io.*
 import io.minchat.common.entity.*
 import io.minchat.rest.MinchatRestClient
 
@@ -22,6 +23,8 @@ data class MinchatUser(
 	val tag by data::tag
 	/** The display name of this user in the form of displayName#discriminator. */
 	val displayTag by data::displayTag
+
+	val avatar get() = data.avatar
 
 	val role by data::role
 	/** If this user is muted, this property indicates the duration and reason. */
@@ -78,6 +81,33 @@ data class MinchatUser(
 	/** Deletes this user. Unless this user is same as [rest.account.user], requires admin rights. */
 	suspend fun delete() =
 		rest.deleteUser(id)
+
+	/** Fetches the image avatar of the user, or returns null if it's not present or is not an image. */
+	suspend fun getImageAvatar(
+		full: Boolean,
+		progressHandler: (Float) -> Unit = {}
+	): ByteArray? = when (val avatar = avatar) {
+		null -> null
+		is User.Avatar.IconAvatar -> null
+		is User.Avatar.ImageAvatar -> {
+			progressHandler(0f)
+			val result = rest.fileCache.getData(avatar.hash, "avatar") ?: run {
+				rest.getImageAvatar(id, full, progressHandler).also {
+					rest.fileCache.setData(avatar.hash, "avatar", it)
+				}
+			}
+
+			result
+		}
+	}
+
+	/** Uploads the provided image avatar to the server. */
+	suspend fun uploadAvatar(image: ByteReadChannel, progressHandler: (Float) -> Unit = {}) =
+		rest.uploadImageAvatar(id, image, progressHandler)
+
+	/** Uploads the provided image avatar to the server. */
+	suspend fun uploadAvatar(image: ByteArray, progressHandler: (Float) -> Unit = {}): Unit =
+		uploadAvatar(ByteReadChannel(image), progressHandler)
 
 	/** Fetches all DM channels associated with this user. */
 	suspend fun getDMChannels() =

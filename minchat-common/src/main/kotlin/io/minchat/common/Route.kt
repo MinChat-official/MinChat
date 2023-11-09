@@ -63,6 +63,18 @@ object Route {
 		 * Response: an updated [User] object.
 		 */
 		val modifyPunishments = to("modify-punishments")
+		/**
+		 * GET.
+		 * Query params: full (boolean, whether to return the full image or the scaled version).
+		 * Response: a raw file containing the avatar of the user.
+		 */
+		val getImageAvatar = to("image-avatar")
+		/**
+		 * POST. Requires authorization.
+		 * Body: a raw file containing the avatar of the user.
+		 * Response: an updated [User] object.
+		 */
+		val uploadImageAvatar = to("upload-avatar")
 	}
 	/** Accepts an {id} request parameter. */
 	object Message : MinchatRoute("message/{id}") {

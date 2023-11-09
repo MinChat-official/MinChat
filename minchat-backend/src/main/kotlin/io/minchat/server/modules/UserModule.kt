@@ -1,23 +1,35 @@
 package io.minchat.server.modules
 
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
+import io.ktor.utils.io.*
 import io.minchat.common.*
 import io.minchat.common.Route
+import io.minchat.common.entity.User
 import io.minchat.common.event.UserModifyEvent
 import io.minchat.common.request.*
 import io.minchat.server.ServerContext
 import io.minchat.server.databases.Users
 import io.minchat.server.util.*
+import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.security.MessageDigest
+import javax.imageio.ImageIO
+import kotlin.io.encoding.*
+import kotlin.math.min
 
 class UserModule : AbstractMinchatServerModule() {
 	lateinit var authModule: AuthModule
+
+	val avatarDir by lazy { server.dataDir.resolve("avatars").also { it.mkdir() } }
 
 	override fun Application.onLoad() {
 		routing {
@@ -124,10 +136,122 @@ class UserModule : AbstractMinchatServerModule() {
 					server.sendEvent(UserModifyEvent(newUser))
 				}
 			}
+
+			get(Route.User.getImageAvatar) {
+				val userId = call.parameters.getOrFail<Long>("id")
+				val full = call.request.queryParameters.get("full")?.toBoolean() ?: false
+
+				val targetFile = getUserAvatarFile(userId, full).takeIf { it.exists() && it.isFile } ?: run {
+					notFound("Provided user either has no avatar or has an icon avatar.")
+				}
+
+				if (targetFile.length() > User.Avatar.maxUploadSize) {
+					call.response.status(HttpStatusCode(500, "User avatar too large (did file size limit decrease?)"))
+				}
+
+				call.respondFile(targetFile)
+			}
+
+			post(Route.User.uploadImageAvatar) {
+				val userId = call.parameters.getOrFail<Long>("id")
+				val contentLength = call.request.contentLength()
+				                    ?: illegalInput("Must specify content length.")
+
+				if (contentLength > User.Avatar.maxUploadSize) {
+					illegalInput("User avatar too large. Limit: ${User.Avatar.maxUploadSize / 1024} kb.")
+				}
+
+				// Permission validation
+				lateinit var invokingUser: User
+				lateinit var targetUser: User
+				transaction {
+					invokingUser = Users.getByToken(call.token())
+					invokingUser.checkAndUpdateUserPunishments(checkMute = false)
+
+					if (invokingUser.id == userId) {
+						targetUser = invokingUser
+					} else {
+						targetUser = Users.getById(userId)
+						if (!invokingUser.canEditUser(targetUser)) {
+							accessDenied("You are not allowed to edit this user.")
+						}
+					}
+				}
+
+				// Upload
+				val readChannel = call.receive<ByteReadChannel>()
+				val buffer = ByteArray(contentLength.toInt())
+
+				Log.lifecycle { "Avatar upload began for user ${targetUser.loggable()}." }
+
+				withContext(Dispatchers.IO) {
+					readChannel.readFully(buffer)
+					getUserAvatarFile(userId, true).writeBytes(buffer)
+				}
+
+				// Scaling
+				val image = ImageIO.read(ByteArrayInputStream(buffer))
+				val width = image.width
+				val height = image.height
+
+				val scaledImage = if (width > User.Avatar.maxWidth || height > User.Avatar.maxHeight) {
+					val scaleX = User.Avatar.maxWidth / width.toFloat()
+					val scaleY = User.Avatar.maxHeight / height.toFloat()
+					val scale = min(scaleX, scaleY)
+
+					val scaled = BufferedImage((width * scale).toInt(), (height * scale).toInt(), BufferedImage.TYPE_INT_ARGB)
+					val graphics = scaled.createGraphics()
+
+					graphics.drawImage(image.getScaledInstance(
+						(width * scale).toInt(),
+						(height * scale).toInt(),
+						BufferedImage.SCALE_SMOOTH
+					), 0, 0, null)
+
+					scaled
+				} else {
+					image // no scaling
+				}
+
+				withContext(Dispatchers.IO) {
+					ImageIO.write(scaledImage, "png", getUserAvatarFile(userId, false))
+				}
+
+				@OptIn(ExperimentalEncodingApi::class)
+				val hash = MessageDigest.getInstance("sha-256")
+					.digest(buffer)
+					.let { Base64.encode(it) }
+
+				transaction {
+					Users.update({ Users.id eq userId }) {
+						it[avatarHash] = hash
+						it[avatarWidth] = width
+						it[avatarHeight] = height
+						it[avatarType] = User.Avatar.Type.IMAGE
+					}
+				}
+
+				Log.info { "Avatar update performed for user ${targetUser.loggable()} by ${invokingUser.loggable()}." }
+
+				call.response.statusOk()
+				server.sendEvent(UserModifyEvent(Users.getById(userId)))
+			}
 		}
 	}
 
 	override suspend fun ServerContext.afterLoad() {
 		authModule = module<AuthModule>() ?: error("User module requires auth module to be loaded.")
+	}
+
+	fun getUserAvatarFile(id: Long, fullSize: Boolean = false) = run {
+		val suffix = when {
+			fullSize -> "full"
+			else -> "scaled"
+		}
+
+		avatarDir.resolve("avatar-$id-$suffix.png")
+			.also {
+				if (it.isDirectory) it.deleteRecursively()
+			}
 	}
 }
