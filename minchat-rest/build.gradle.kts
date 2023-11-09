@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.util.suffixIfNot
 
 plugins {
-	kotlin("jvm") version "1.8.22"
-	kotlin("plugin.serialization") version "1.8.22"
+	kotlin("jvm") version "1.9.20"
+	kotlin("plugin.serialization") version "1.9.20"
 }
 
 val ktorVersion: String by rootProject

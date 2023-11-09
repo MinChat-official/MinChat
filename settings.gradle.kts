@@ -13,5 +13,5 @@ include(
 	"minchat-backend",
 	"minchat-common",
 	"minchat-rest",
-	"minchat-cli"
+//	"minchat-cli"
 )
