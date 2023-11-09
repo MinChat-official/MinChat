@@ -10,6 +10,7 @@ import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.config.*
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
+import io.minchat.client.plugin.impl.AccountSaverPlugin
 import io.minchat.client.ui.*
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.client.ui.managers.*
@@ -45,6 +46,8 @@ class MinchatMod : Mod(), CoroutineScope {
 
 	val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	val timezone: ZoneId = ZoneId.systemDefault()
+
+	var cacheDir = Vars.dataDirectory.file().resolve("cache/minchat/")
 
 	/**
 	 * The main Minchat client used across the mod.
@@ -190,7 +193,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	 * @throws VersionMismatchException if the server's version is not compatible with the client's.
 	 */
 	suspend fun connectToServer(url: String) {
-		val client = MinchatRestClient(url)
+		val client = MinchatRestClient(url, cacheDir.absolutePath)
 
 		val serverVersion = client.getServerVersion()
 		if (!serverVersion.isCompatibleWith(MINCHAT_VERSION)) {

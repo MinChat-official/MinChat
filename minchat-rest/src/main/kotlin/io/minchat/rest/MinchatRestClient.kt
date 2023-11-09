@@ -20,6 +20,7 @@ lateinit var MinchatRestLogger: AbstractLogger
 
 class MinchatRestClient(
 	val baseUrl: String,
+	val cacheDirectoryPath: String,
 	dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CoroutineScope {
 	override val coroutineContext = SupervisorJob() + dispatcher
@@ -51,6 +52,7 @@ class MinchatRestClient(
 	val messageService = MessageService(baseUrl, httpClient)
 
 	var cache = CacheService(baseUrl, this)
+	val fileCache = FileCache(cacheDirectoryPath, this)
 
 	/** 
 	 * Attempts to log into the provided Minchat account.
