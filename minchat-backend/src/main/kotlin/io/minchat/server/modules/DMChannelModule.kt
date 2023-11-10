@@ -25,7 +25,7 @@ class DMChannelModule : AbstractMinchatServerModule() {
 				newSuspendedTransaction {
 					val invokingUser = Users.getByToken(token)
 
-					val allDms = Channels.select {
+					val allDms = Channels.safeSelect {
 						(Channels.type eq Channel.Type.DM) and
 						((Channels.user1 eq invokingUser.id) or (Channels.user2 eq invokingUser.id))
 					}.map(Channels::createEntity).filter {

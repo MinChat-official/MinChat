@@ -13,11 +13,6 @@ object Messages : AbstractMinchatEntityTable<Message>() {
 
 	val referencedMessage = reference("reference", Messages).nullable().default(null)
 
-	val isDeleted = bool("deleted").default(false)
-
-	override fun getRawByIdOrNull(id: Long) =
-		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
-
 	/** 
 	 * Creates an entity from the specified result row,
 	 * QUERYING the channel and author objects from the corresponding tables.

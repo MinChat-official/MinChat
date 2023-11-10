@@ -39,8 +39,6 @@ object Users : AbstractMinchatEntityTable<User>() {
 	val mutedUntil = long("muted-until").default(-1)
 	val muteReason = varchar("mute-reason", User.Punishment.reasonLength.last).nullable().default(null)
 
-	val isDeleted = bool("deleted").default(false)
-
 	/**
 	 * Unused: unreliable and hard to manage.
 	 * Will (or will not) be used in the future to prevent users from creating too many accounts.
@@ -55,9 +53,6 @@ object Users : AbstractMinchatEntityTable<User>() {
 
 	val creationTimestamp = long("created-at")
 	val lastLoginTimestamp = long("last-login")
-
-	override fun getRawByIdOrNull(id: Long) =
-		super.getRawByIdOrNull(id)?.takeIf { !it[isDeleted] }
 
 	/** Gets a user by id or returns a placeholder value. */
 	fun getByIdOrPlaceholder(id: Long) =

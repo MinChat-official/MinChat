@@ -23,7 +23,7 @@ class AuthModule : AbstractMinchatServerModule() {
 
 				val response = transaction {
 					val userRow = Users
-						.select { Users.username.lowerCase() eq data.username.lowercase() }
+						.safeSelect { Users.username.lowerCase() eq data.username.lowercase() }
 						.find {
 							// There should be only 1 matching user... Normally.
 							BCrypt.checkpw(data.passwordHash, it[Users.passwordHash])
@@ -80,7 +80,7 @@ class AuthModule : AbstractMinchatServerModule() {
 			"Nickname length must be in the range of ${User.nameLength} characters!"
 		}
 
-		if (username != null && Users.select { Users.username.lowerCase() eq username.lowercase() }.empty().not()) {
+		if (username != null && Users.safeSelect { Users.username.lowerCase() eq username.lowercase() }.empty().not()) {
 			illegalInput("This username is already taken. Create a unique username; you will use it to log in later.")
 		}
 	}

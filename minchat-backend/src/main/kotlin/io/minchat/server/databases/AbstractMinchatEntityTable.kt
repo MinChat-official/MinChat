@@ -7,14 +7,22 @@ import org.jetbrains.exposed.sql.*
 abstract class AbstractMinchatEntityTable<T> : LongIdTable() {
 	open val entityName by lazy { this::class.simpleName!!.removeSuffix("s") }
 
+	val isDeleted = bool("deleted").default(false)
+
+	/** Select statement that ignores deleted entities. Should be used instead of select in most cases. */
+	inline fun safeSelect(builder: SqlExpressionBuilder.() -> Op<Boolean>) =
+		select {
+			builder() and (isDeleted eq false)
+		}
+
 	/** Returns a raw entity roq with the specified id, or throws an exception if it doesn't exist. */
 	fun getRawById(id: Long): ResultRow =
 		getRawByIdOrNull(id) ?: notFound("$entityName with id $id was not found.")
 
-	/** Returns a raw entity roq with the specified id, or null if it doesn't exist. */
+	/** Returns a raw entity row with the specified id, or null if it doesn't exist. */
 	open fun getRawByIdOrNull(id: Long): ResultRow? = run {
 		val idColumnn = this.id
-		select { idColumnn eq id }.firstOrNull()
+		safeSelect { idColumnn eq id }.firstOrNull()
 	}
 
 	/**

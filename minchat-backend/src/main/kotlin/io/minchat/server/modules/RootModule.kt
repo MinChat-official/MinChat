@@ -24,8 +24,12 @@ class RootModule : AbstractMinchatServerModule() {
 
 				val valid = transaction {
 					Users
-						.slice(Users.username, Users.token)
-						.select({ (Users.username eq data.username) and (Users.token eq data.token) })
+						.slice(Users.username, Users.token, Users.isDeleted)
+						.select({
+							(Users.username eq data.username) and
+							(Users.token eq data.token) and
+							(Users.isDeleted eq false)
+						})
 						.empty().not()
 				}
 

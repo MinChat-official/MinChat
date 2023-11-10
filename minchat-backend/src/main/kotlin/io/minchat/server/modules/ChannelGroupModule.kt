@@ -164,7 +164,7 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 			"Description length must be in range of ${ChannelGroup.descriptionLength} characters!"
 		}
 
-		if (name != null && ChannelGroups.select { ChannelGroups.name eq name }.any()) {
+		if (name != null && ChannelGroups.safeSelect { ChannelGroups.name eq name }.any()) {
 			illegalInput("A group with this name already exists.")
 		}
 	}

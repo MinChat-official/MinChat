@@ -12,7 +12,6 @@ import io.minchat.common.request.*
 import io.minchat.server.databases.*
 import io.minchat.server.util.*
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -224,10 +223,10 @@ class ChannelModule : AbstractMinchatServerModule() {
 						accessDenied("You cannot delete this channel.")
 					}
 
-					// First actually delete all associated messages
-					Messages.deleteWhere { channel eq channelId }
-
-					Channels.deleteWhere { with(it) { Channels.id eq channelId } }.throwIfNotFound { "no such channel." }
+					// Deleting softly. Hard deletion has proven itself too hard to maintain.
+					Channels.update({ Channels.id eq channelId }) {
+						it[isDeleted] = true
+					}
 
 					Log.info { "${oldChannel.loggable()} was deleted by ${invokingUser.loggable()}" }
 
@@ -247,7 +246,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 				newSuspendedTransaction {
 					val user = token?.let { Users.getByToken(it) }
 
-					val list = Channels.select { Channels.type eq Channel.Type.NORMAL }
+					val list = Channels.safeSelect { Channels.type eq Channel.Type.NORMAL }
 						.orderBy(
 							Channels.groupId to SortOrder.ASC,
 							Channels.order to SortOrder.ASC,
@@ -275,7 +274,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 		}
 
 		val maxCount = if (forEdit) 1 else 0
-		if (name != null && Channels.select { Channels.name eq name }.count() > maxCount) {
+		if (name != null && Channels.safeSelect { Channels.name eq name }.count() > maxCount) {
 			illegalInput("A channel with this name already exists.")
 		}
 	}
@@ -292,7 +291,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 			illegalInput("You cannot create a DM channel with yourself.")
 		}
 
-		if (!forEdit && Channels.select {
+		if (!forEdit && Channels.safeSelect {
 			(Channels.user1 eq user1) and (Channels.user2 eq user2) or
 			(Channels.user1 eq user2) and (Channels.user2 eq user1)
 		}.count() > Channel.maxDMCount) {
