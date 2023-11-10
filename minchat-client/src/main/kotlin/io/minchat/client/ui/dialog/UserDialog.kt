@@ -63,13 +63,13 @@ abstract class UserDialog(
 		action("Edit") {
 			UserEditDialog().show()
 		}.disabled {
-			self != null && user?.let { self.canEditUser(it) } != true
+			self == null || user?.let { self.canEditUser(it) } != true
 		}
 
 		action("Delete") {
 			UserDeleteConfirmDialog().show()
 		}.disabled {
-			self != null && user?.let { self.canDeleteUser(it) } != true
+			self == null || user?.let { self.canDeleteUser(it) } != true
 		}
 
 		nextActionRow()
