@@ -3,9 +3,11 @@ package io.minchat.client
 import arc.Core
 import arc.scene.Element
 import io.minchat.client.config.MinchatKeybinds
+import java.util.concurrent.ConcurrentLinkedDeque
 
 object MinchatBackgroundHandler {
 	val dummyElement = Element()
+	val customListeners = ConcurrentLinkedDeque<() -> Unit>()
 
 	init {
 		dummyElement.update {
@@ -16,6 +18,10 @@ object MinchatBackgroundHandler {
 					it.action()
 				}
 			}
+
+			customListeners.forEach {
+				it()
+			}
 		}
 	}
 
@@ -25,5 +31,13 @@ object MinchatBackgroundHandler {
 
 	fun stop() {
 		dummyElement.remove()
+	}
+
+	fun subscribeUpdate(listener: () -> Unit) {
+		customListeners.add(listener)
+	}
+
+	fun unsubscribeUpdate(listener: () -> Unit) {
+		customListeners.remove(listener)
 	}
 }
