@@ -7,7 +7,7 @@ import arc.scene.ui.layout.Table
 import arc.util.Scaling
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.*
-import io.minchat.client.misc.Log
+import io.minchat.client.misc.*
 import io.minchat.client.ui.chat.*
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
@@ -22,7 +22,7 @@ class MessageContextMenu(
 	val chat: ChatFragment,
 	val message: MinchatMessage,
 	parentScope: CoroutineScope
-) : Dialog(), CoroutineScope by parentScope {
+) : Dialog(), CoroutineScope by parentScope.fork() {
 	val messageElement = NormalMessageElement(chat, message, false)
 	lateinit var actionTable: Table
 

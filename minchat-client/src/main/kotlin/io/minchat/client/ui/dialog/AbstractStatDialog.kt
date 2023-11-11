@@ -5,12 +5,10 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.misc.*
 import io.minchat.client.ui.MinchatStyle
 import kotlinx.coroutines.*
-import kotlin.coroutines.EmptyCoroutineContext
 
 abstract class AbstractStatDialog(
 	parentScope: CoroutineScope
-) : AbstractModalDialog(), CoroutineScope {
-	override val coroutineContext = parentScope.newCoroutineContext(EmptyCoroutineContext)
+) : AbstractModalDialog(), CoroutineScope by parentScope.fork() {
 	/** A status string shown at the top. */
 	@Volatile var status: String? = null
 

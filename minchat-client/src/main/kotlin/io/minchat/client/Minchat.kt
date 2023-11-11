@@ -24,6 +24,7 @@ import mindustry.mod.Mod
 import mindustry.ui.Styles
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.concurrent.thread
 
 private var minchatInstance: MinchatMod? = null
 /** The only instance of this mod. */
@@ -91,6 +92,8 @@ class MinchatMod : Mod(), CoroutineScope {
 		minchatInstance = this
 
 		MinchatRestLogger = Log
+
+		Runtime.getRuntime().addShutdownHook(thread(start = false, block = ::onShutdown))
 
 		runUi {
 			MinchatPluginHandler.onInit()
@@ -239,6 +242,12 @@ class MinchatMod : Mod(), CoroutineScope {
 	suspend fun awaitConnection() {
 		while (!isConnected) {
 			delay(50)
+		}
+	}
+
+	private fun onShutdown() {
+		if (isConnected) {
+			client.fileCache.saveToDrive()
 		}
 	}
 }
