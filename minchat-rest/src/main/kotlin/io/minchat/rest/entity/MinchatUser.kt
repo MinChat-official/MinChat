@@ -91,10 +91,8 @@ data class MinchatUser(
 		is User.Avatar.IconAvatar -> null
 		is User.Avatar.ImageAvatar -> {
 			progressHandler(0f)
-			val result = rest.fileCache.getData(avatar.hash, "avatar") ?: run {
-				rest.getImageAvatar(id, full, progressHandler).also {
-					rest.fileCache.setData(avatar.hash, "avatar", it)
-				}
+			val result = rest.fileCache.getDataOrPut(avatar.hash, "avatar") {
+				rest.getImageAvatar(id, full, progressHandler)
 			}
 
 			result

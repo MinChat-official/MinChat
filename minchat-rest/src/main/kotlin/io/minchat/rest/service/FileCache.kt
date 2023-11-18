@@ -2,16 +2,19 @@ package io.minchat.rest.service
 
 import io.minchat.rest.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.*
 import kotlinx.serialization.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.*
+import java.util.*
 
 class FileCache(
 	val cacheDirectoryPath: String,
 	val rest: MinchatRestClient
 ) {
-	val entries = mutableMapOf<Key, Entry>()
+	val lock = Mutex()
+	val entries = Collections.synchronizedMap<Key, Entry>(mapOf())
 
 	private val listingFileName = "listing.json"
 	private val json = Json {
@@ -20,91 +23,96 @@ class FileCache(
 		allowStructuredMapKeys = true
 	}
 
-	fun getFile(hash: String, format: String): File? {
+	suspend fun getFile(hash: String, format: String): File? = lock.withLock {
 		val key = Key(hash, format)
-		return entries[key]?.file
+		entries[key]?.awaitFile()
 	}
 
-	suspend fun getData(hash: String, format: String) =
-		withContext(Dispatchers.IO) { getDataBlocking(hash, format) }
+	suspend fun getData(hash: String, format: String) {
+		val entry = lock.withLock { entries[Key(hash, format)] }
+		entry?.awaitData()
+	}
 
 	/** Sets the contents of the entry for the given hash-format pair, using the default expiration time. */
 	suspend fun setData(hash: String, format: String, data: InputStream) =
-		withContext(Dispatchers.IO) { setDataBlocking(hash, format, data) }
+		withContext(Dispatchers.IO) {
+			val entry = lock.withLock {
+				val key = Key(hash, format)
+				val entry = entries[key]
+
+				if (entry == null) {
+					Entry(
+						"$cacheDirectoryPath/$hash.$format",
+						System.currentTimeMillis() + FileCache.expirationTime
+					).also {
+						entries[key] = it
+					}
+				} else {
+					entry
+				}
+			}
+
+			entry.writeData(data)
+		}
 
 	/** Sets the contents of the entry for the given hash-format pair, using the default expiration time. */
 	suspend fun setData(hash: String, format: String, data: ByteArray) =
-		withContext(Dispatchers.IO) { setDataBlocking(hash, format, data) }
+		setData(hash, format, ByteArrayInputStream(data))
 
 	/** Overrides the entry for the given hash-format pair with the provided file, with the provided expiration time. */
-	fun overrideFile(
+	suspend fun overrideFile(
 		hash: String,
 		format: String,
 		file: File,
 		expirationTime: Long = FileCache.expirationTime
 	) {
-		entries[Key(hash, format)] = Entry(file.absolutePath, System.currentTimeMillis() + expirationTime)
-	}
-
-	fun getDataBlocking(hash: String, format: String): ByteArray? {
-		val key = Key(hash, format)
-		val entry = entries[key]
-
-		return entry?.file?.readBytes()
-	}
-
-	fun setDataBlocking(hash: String, format: String, data: InputStream) {
-		val key = Key(hash, format)
-		val name = "${hash}.${format}"
-		val file = File(cacheDirectoryPath, name)
-
-		try {
-			if (file.exists() && file.isDirectory) {
-				file.delete()
-			}
-			file.parentFile.mkdirs()
-
-			data.copyTo(file.outputStream())
-
-			entries[key] = Entry(file.absolutePath, System.currentTimeMillis() + expirationTime)
-		} catch (e: Exception) {
-			file.delete()
-
-			MinchatRestLogger.log("warn", "Failed to save file $name due to exception: $e")
+		lock.withLock {
+			entries[Key(hash, format)] = Entry(file.absolutePath, System.currentTimeMillis() + expirationTime)
 		}
 	}
 
-	fun setDataBlocking(hash: String, format: String, data: ByteArray) {
-		setDataBlocking(hash, format, ByteArrayInputStream(data))
-	}
+	/** Creates a new not-loaded entry or returns an existing one. The left element indicates whether a new entry was created. */
+	suspend fun getEntryOrCreate(key: Key): Pair<Boolean, Entry> =
+		lock.withLock {
+			val entry = entries[key]
+
+			return if (entry == null) {
+				true to Entry(
+					"$cacheDirectoryPath/${key.hash}.${key.format}",
+					System.currentTimeMillis() + FileCache.expirationTime
+				)
+			} else {
+				false to entry
+			}
+		}
 
 	inline suspend fun getDataOrPut(hash: String, format: String, crossinline block: suspend () -> ByteArray): ByteArray {
 		val key = Key(hash, format)
-		val entry = entries[key]
+		val (newEntry, entry) = getEntryOrCreate(key)
 
-		if (entry != null) {
-			return entry.file.readBytes()
+		return if (!newEntry) {
+			entry.awaitData()
 		} else {
-			return withContext(Dispatchers.IO) {
-				val data = block()
-				setDataBlocking(hash, format, data)
-				return@withContext data
+			val data = withContext(Dispatchers.IO) {
+				block()
 			}
+			entry.writeData(data)
+			data
 		}
 	}
 
 	inline suspend fun getFileOrPut(hash: String, format: String, crossinline block: suspend () -> ByteArray): File {
 		val key = Key(hash, format)
-		val entry = entries[key]
+		val (newEntry, entry) = getEntryOrCreate(key)
 
-		if (entry != null) {
-			return entry.file
+		return if (!newEntry) {
+			entry.awaitFile()
 		} else {
-			return withContext(Dispatchers.IO) {
-				val data = block()
-				setDataBlocking(hash, format, data)
-				File(cacheDirectoryPath, "${hash}.${format}")
+			val data = withContext(Dispatchers.IO) {
+				block()
 			}
+			entry.writeData(data)
+			entry.file
 		}
 	}
 
@@ -113,7 +121,7 @@ class FileCache(
 		if (listingFile.exists()) {
 			try {
 				val listing = json.decodeFromString<Map<Key, Entry>>(listingFile.readText())
-					.filter { (k, v) -> v.file.exists() && !v.hasExpired() }
+					.filter { (_, v) -> v.file.exists() && !v.hasExpired() && v.isFullyCreated }
 
 				entries += listing
 
@@ -147,15 +155,65 @@ class FileCache(
 	@Serializable
 	data class Entry(
 		val filepath: String,
-		val expiresAt: Long? = null
+		val expiresAt: Long? = null,
+		@Volatile
+		var isFullyCreated: Boolean = false
 	) {
 		val file get() = File(filepath)
+		val localLock = Mutex()
 
 		/** True if this entry can be safely removed. */
 		fun hasExpired(): Boolean {
 			if (expiresAt == null) return false
 			return expiresAt < System.currentTimeMillis()
 		}
+
+		suspend fun awaitData(): ByteArray {
+			val file = awaitFile()
+			return withContext(Dispatchers.IO) {
+				file.readBytes()
+			}
+		}
+
+		suspend fun awaitFile(): File {
+			while (!isFullyCreated) {
+				delay(50L)
+			}
+			return localLock.withLock {
+				file.takeIf { it.exists() }
+			} ?: run {
+				MinchatRestLogger.log("error", "Failed to load file $filepath due to missing data after awaiting.")
+				error("File $filepath is missing data after awaiting.")
+			}
+		}
+
+		fun getDataBlocking(): ByteArray? {
+			return file.takeIf { it.exists() }?.readBytes()
+		}
+
+		suspend fun writeData(data: InputStream) {
+			localLock.withLock {
+				try {
+					if (file.exists() && file.isDirectory) {
+						file.delete()
+					}
+					file.parentFile.mkdirs()
+
+					data.copyTo(file.outputStream())
+
+					isFullyCreated = true
+				} catch (e: Exception) {
+					file.delete()
+
+					MinchatRestLogger.log("warn", "Failed to save file $file due to exception: $e")
+
+					isFullyCreated = false
+				}
+			}
+		}
+
+		suspend fun writeData(data: ByteArray) =
+			writeData(ByteArrayInputStream(data))
 	}
 
 	companion object {
