@@ -3,6 +3,7 @@ package io.minchat.rest.entity
 import io.ktor.utils.io.*
 import io.minchat.common.entity.*
 import io.minchat.rest.MinchatRestClient
+import java.io.File
 
 data class MinchatUser(
 	val data: User,
@@ -86,12 +87,12 @@ data class MinchatUser(
 	suspend fun getImageAvatar(
 		full: Boolean,
 		progressHandler: (Float) -> Unit = {}
-	): ByteArray? = when (val avatar = avatar) {
+	): File? = when (val avatar = avatar) {
 		null -> null
 		is User.Avatar.IconAvatar -> null
 		is User.Avatar.ImageAvatar -> {
 			progressHandler(0f)
-			val result = rest.fileCache.getDataOrPut(avatar.hash, "avatar") {
+			val result = rest.fileCache.getFileOrPut(avatar.hash, "avatar") {
 				rest.getImageAvatar(id, full, progressHandler)
 			}
 
