@@ -1,6 +1,7 @@
 package io.minchat.common.entity
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import java.io.File
 
 @Serializable
 data class User(
@@ -167,6 +168,8 @@ data class User(
 		abstract fun isValid(): Boolean
 
 		/** An avatar that corresponds to a mindustry icon, coming either from the game or from the mod. */
+		@Serializable
+		@SerialName("icon")
 		data class IconAvatar(
 			val iconName: String
 		) : Avatar() {
@@ -182,6 +185,8 @@ data class User(
 		 *
 		 * @param hash A unique hash of this avatar. If the hash changes on the server, the avatar is no longer up-to-date.
 		 */
+		@Serializable
+		@SerialName("image")
 		data class ImageAvatar(
 			val hash: String,
 			val width: Int,
@@ -191,6 +196,21 @@ data class User(
 
 			override fun isValid(): Boolean {
 				return hash != invalid
+			}
+		}
+
+		/**
+		 * A local image avatar that has not yet been uploaded to the MinChat server.
+		 *
+		 * Must never be returned by a server. Not serializable for the same reason.
+		 */
+		data class LocalAvatar(
+			val file: File
+		) : Avatar() {
+			override val type get() = Type.IMAGE
+
+			override fun isValid(): Boolean {
+				return file.exists()
 			}
 		}
 
