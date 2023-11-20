@@ -81,6 +81,27 @@ object Dialogs : CoroutineScope {
 		return job
 	}
 
+	fun choices(
+		message: String,
+		vararg choiceList: String,
+		cancellable: Boolean = true,
+		onSelect: (Int) -> Unit
+	) {
+		runUi {
+			ChoiceDialog(message, choiceList, cancellable, onSelect).show()
+		}
+	}
+
+	fun choices(
+		message: String,
+		vararg choiceList: Pair<String, (Int) -> Unit>,
+		cancellable: Boolean = true
+	) {
+		choices(message, *choiceList.map { it.first }.toTypedArray(), cancellable = cancellable) {
+			choiceList[it].second(it)
+		}
+	}
+
 	/** Equivalent to calling `info("This action is not implemented yet.")`. */
 	fun TODO() {
 		info("This action is not implemented yet.")
@@ -206,6 +227,33 @@ object Dialogs : CoroutineScope {
 			}
 
 			super.act(delta)
+		}
+	}
+
+	class ChoiceDialog(
+		val message: String,
+		val choices: Array<out String>,
+		val cancellable: Boolean,
+		val onSelect: (Int) -> Unit
+	) : AbstractModalDialog() {
+		override val addCloseAction get() = cancellable
+		override val closeButtonText get() = "Cancel"
+
+		init {
+			if (message.isNotBlank()) header.addTable(Style.surfaceBackground) {
+				margin(layoutMargin)
+
+				addLabel(message, wrap = true)
+					.fillX().pad(Style.layoutPad)
+					.minWidth(300f)
+			}
+
+			for (i in choices.indices) {
+				nextActionRow()
+				action(choices[i]) {
+					onSelect(i)
+				}
+			}
 		}
 	}
 }
