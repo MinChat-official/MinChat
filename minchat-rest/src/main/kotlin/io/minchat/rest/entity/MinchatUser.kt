@@ -87,18 +87,7 @@ data class MinchatUser(
 	suspend fun getImageAvatar(
 		full: Boolean,
 		progressHandler: (Float) -> Unit = {}
-	): File? = when (val avatar = avatar) {
-		null -> null
-		is User.Avatar.IconAvatar -> null
-		is User.Avatar.ImageAvatar -> {
-			progressHandler(0f)
-			val result = rest.fileCache.getFileOrPut(avatar.hash, "avatar") {
-				rest.getImageAvatar(id, full, progressHandler)
-			}
-
-			result
-		}
-	}
+	): File? = avatar?.let { rest.getCacheableAvatar(id, it, full, progressHandler) }
 
 	/** Uploads the provided image avatar to the server. */
 	suspend fun uploadAvatar(image: ByteReadChannel, progressHandler: (Float) -> Unit = {}) =

@@ -149,7 +149,7 @@ class MinchatRestClient(
 	 *
 	 * Throws an exception if the user does not have an image avatar.
 	 *
-	 * Does not use caching - use [MinchatUser.getImageAvatar] instead.
+	 * Does not use caching - use [getCacheableAvatar] instead.
 	 */
 	suspend fun getImageAvatar(id: Long, full: Boolean, progressHandler: (Float) -> Unit = {}) =
 		userService.getImageAvatar(id, full, progressHandler)
@@ -164,6 +164,23 @@ class MinchatRestClient(
 	suspend fun getAvatarOrNull(id: Long, full: Boolean, progressHandler: (Float) -> Unit = {}) = runCatching {
 		getImageAvatar(id, full, progressHandler)
 	}.getOrNull()
+
+	/** Fetches the given image avatar of the user as a file, or returns null if it's not present or is not an image. */
+	suspend fun getCacheableAvatar(userId: Long, avatar: User.Avatar, full: Boolean, progressHandler: (Float) -> Unit) =
+		when (avatar) {
+			is User.Avatar.IconAvatar -> null
+			is User.Avatar.ImageAvatar -> {
+				progressHandler(0f)
+				val result = fileCache.getFileOrPut(avatar.hash, "avatar") {
+					getImageAvatar(userId, full, progressHandler)
+				}
+
+				result
+			}
+			is User.Avatar.LocalAvatar -> {
+				avatar.file
+			}
+		}
 
 	/**
 	 * Fetches the channel with the specified ID and updates the cache.
