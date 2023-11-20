@@ -209,6 +209,8 @@ data class User(
 			val supportedFormats = setOf("png", "jpg", "jpeg")
 			/** The value of [ImageAvatar.hash] and [IconAvatar.iconName] used for invalid avatars. */
 			val invalid = "<INVALID>"
+
+			val defaultAvatar = IconAvatar("unit-alpha-full")
 		}
 	}
 }
