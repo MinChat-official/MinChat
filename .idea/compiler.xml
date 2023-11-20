@@ -5,6 +5,8 @@
       <module name="minchat.buildSrc" target="1.8" />
       <module name="minchat.buildSrc.main" target="1.8" />
       <module name="minchat.buildSrc.test" target="1.8" />
+      <module name="minchat.minchat-cli.main" target="1.8" />
+      <module name="minchat.minchat-cli.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
