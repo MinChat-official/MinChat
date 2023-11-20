@@ -1,18 +1,21 @@
 package io.minchat.client.ui.chat
 
+import arc.Core
 import arc.graphics.Color
 import arc.scene.event.Touchable
 import arc.scene.ui.Label
 import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
-import com.github.mnemotechnician.mkui.extensions.elements.content
+import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatSettings
 import io.minchat.client.misc.*
+import io.minchat.client.ui.AsyncImage
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.ui.dialog.*
+import io.minchat.common.entity.User
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
 import io.minchat.client.ui.MinchatStyle as Style
@@ -24,7 +27,7 @@ class NormalMessageElement(
 	val chat: ChatFragment,
 	val message: MinchatMessage,
 	addContextActions: Boolean = true
-) : AbstractMessageElement(addContextActions), CoroutineScope by chat {
+) : AbstractMessageElement(addContextActions), CoroutineScope by chat.fork() {
 	override val timestamp get() = message.timestamp
 
 	@Volatile
@@ -74,7 +77,7 @@ class NormalMessageElement(
 			}
 		}
 
-		// Middle row: author tag + timestamp
+		// Middle row: author avatar + tag + timestamp
 		addTable {
 			left()
 
@@ -85,7 +88,21 @@ class NormalMessageElement(
 				message.author.role.isModerator -> Style.cyan
 				else -> Style.purple
 			}
-			val nameColorTag = "[#${nameColor.toString()}]"
+			val nameColorTag = "[#$nameColor]"
+
+			val avatar = message.author.avatar ?: User.Avatar.defaultAvatar
+			if (avatar is User.Avatar.IconAvatar) {
+				addImage(Core.atlas.find(avatar.iconName), scaling = Scaling.fill)
+					.size(48f)
+			} else {
+				add(AsyncImage(this@NormalMessageElement).apply {
+					setFileAsync {
+						message.author.getImageAvatar(false)!!
+					}
+				}).size(48f).scaleImage(Scaling.fill)
+			}
+
+			addSpace(width = 5f)
 
 			// Display name
 			addLabel(nameColorTag + message.author.displayName, ellipsis = "...").fillY()

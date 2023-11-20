@@ -1,18 +1,22 @@
 package io.minchat.client
 
 import arc.Events
+import arc.math.Mathf
 import arc.scene.ui.Label
 import com.github.mnemotechnician.mkui.delegates.setting
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.groups.child
 import com.github.mnemotechnician.mkui.extensions.runUi
+import io.ktor.client.call.*
+import io.ktor.client.request.*
 import io.minchat.client.config.*
 import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.plugin.impl.AccountSaverPlugin
 import io.minchat.client.ui.*
 import io.minchat.client.ui.chat.ChatFragment
+import io.minchat.client.ui.dialog.AbstractModalDialog
 import io.minchat.client.ui.managers.*
 import io.minchat.common.MINCHAT_VERSION
 import io.minchat.rest.*
@@ -22,6 +26,8 @@ import mindustry.Vars
 import mindustry.game.EventType
 import mindustry.mod.Mod
 import mindustry.ui.Styles
+import java.io.File
+import java.net.URL
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
@@ -139,6 +145,46 @@ class MinchatMod : Mod(), CoroutineScope {
 				check("don't show again") {
 					dontShowInfoAgain = it
 				}.row()
+			}.show()
+
+			// TODO REMOVE AFTER TESTING
+			object : AbstractModalDialog() {
+				init {
+					header.addLabel("AsyncImage test").row()
+
+					val images = listOf(
+						"https://1000logos.net/wp-content/uploads/2021/05/Google-logo.png",
+						"file:///home/fox/Downloads/866054901817409567.png",
+						"file:///home/fox/Downloads/images.png",
+						"invalid image"
+					).map {
+						it to AsyncImage(this@MinchatMod).also {
+							body.add(it)
+								.minSize(48f)
+								.maxSize(512f)
+								.row()
+						}
+					}
+
+					action("refresh") {
+						images.forEach { (url, element) ->
+							if (url.startsWith("file://")) {
+								element.setFileAsync {
+									val data = File(url.substringAfter("//")).readBytes()
+									client.fileCache.getFileOrPut(url, "png") {
+										delay(Mathf.random(2000L))
+										data
+									}
+								}
+							} else {
+								element.setFileAsync {
+									val stream = URL(url).openStream()
+									client.fileCache.getFileOrPut(url, "png") { stream.readBytes() }
+								}
+							}
+						}
+					}
+				}
 			}.show()
 		}
 

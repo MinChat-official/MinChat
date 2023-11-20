@@ -5,8 +5,8 @@ import arc.scene.ui.*
 import arc.scene.ui.layout.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
+import io.minchat.client.misc.Log
 import kotlinx.coroutines.*
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Represents a reusable UI fragment.
@@ -21,7 +21,10 @@ import kotlin.coroutines.EmptyCoroutineContext
 abstract class Fragment<Parent: Table, Type: Element>(
 	parentScope: CoroutineScope
 ) : CoroutineScope {
-	override val coroutineContext = parentScope.newCoroutineContext(EmptyCoroutineContext)
+	override val coroutineContext = SupervisorJob() + CoroutineExceptionHandler { coroutineContext, throwable ->
+		Log.error(throwable) { "An exception has occurred in ${this@Fragment::class.simpleName}" }
+	}
+
 	/**
 	 * The current instance of this fragment.
 	 * Null if this fragment hasn't been applied anywhere.
@@ -30,7 +33,7 @@ abstract class Fragment<Parent: Table, Type: Element>(
 		private set
 
 	/** Whether this fragment is applied to any group */
-	val isApplied get() = instance.let { it != null && it.parent != null && it.scene != null }
+	val isApplied get() = instance.let { it?.parent != null && it.scene != null }
 
 	/**
 	 * Applies this fragment to the target table, building it if necessary.

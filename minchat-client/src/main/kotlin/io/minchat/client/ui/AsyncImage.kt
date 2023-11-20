@@ -129,3 +129,5 @@ class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 		}
 	}
 }
+
+fun CoroutineScope.asyncImage() = AsyncImage(this)
