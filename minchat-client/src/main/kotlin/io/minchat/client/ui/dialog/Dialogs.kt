@@ -236,8 +236,7 @@ object Dialogs : CoroutineScope {
 		val cancellable: Boolean,
 		val onSelect: (Int) -> Unit
 	) : AbstractModalDialog() {
-		override val addCloseAction get() = cancellable
-		override val closeButtonText get() = "Cancel"
+		override val addCloseAction get() = false
 
 		init {
 			if (message.isNotBlank()) header.addTable(Style.surfaceBackground) {
@@ -248,10 +247,18 @@ object Dialogs : CoroutineScope {
 					.minWidth(300f)
 			}
 
-			for (i in choices.indices) {
+			if (cancellable) {
+				nextActionRow()
+				action("Cancel") {
+					hide()
+				}
+			}
+
+			for (i in choices.indices.reversed()) {
 				nextActionRow()
 				action(choices[i]) {
 					onSelect(i)
+					hide()
 				}
 			}
 		}

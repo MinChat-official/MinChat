@@ -19,7 +19,7 @@ import kotlin.math.*
  *
  * Currently only supports PNG images.
  */
-class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
+open class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 	override val coroutineContext = SupervisorJob() + CoroutineExceptionHandler(::reportException)
 
 	private var fetcherJob: Job? = null

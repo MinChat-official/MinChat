@@ -1,18 +1,24 @@
 package io.minchat.client.ui.dialog
 
+import arc.Core
 import arc.graphics.Color
+import arc.scene.style.TextureRegionDrawable
 import arc.scene.ui.Label
-import arc.util.Align
+import arc.scene.ui.layout.Table
+import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
+import io.ktor.utils.io.jvm.javaio.*
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
 import io.minchat.client.ui.MinchatStyle.buttonMargin
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
+import io.minchat.client.ui.chat.UserAvatarElement
 import io.minchat.common.entity.*
 import io.minchat.rest.entity.MinchatUser
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import mindustry.Vars
 import java.time.Instant
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty0
@@ -119,10 +125,46 @@ abstract class UserDialog(
 
 	inner class UserEditDialog : AbstractModalDialog() {
 		val user = this@UserDialog.user!!
+		var newAvatar = user.avatar
+			set(value) {
+				field = value
+				avatarElement.avatar = value
+			}
+
+		lateinit var avatarElement: UserAvatarElement
 
 		init {
 			header.addLabel("Editing user ${user.tag} (${user.displayName}).", align = Align.left, wrap = true)
 				.fillX().row()
+
+			// Avatar preview & change button
+			body.addTable(Style.surfaceBackground) {
+				margin(layoutMargin)
+
+				add(UserAvatarElement(user.id, user.avatar, true))
+					.maxSize(128f)
+					.apply { avatarElement = get() }
+
+				// Actions - to the left of the avatar
+				addTable {
+					top()
+					textButton("Change", Style.InnerActionButton) {
+						Dialogs.choices(
+							"What to change your avatar to?",
+							"Mindustry icon" to { IconAvatarChangeDialog().show() },
+							"Image" to { Dialogs.TODO() },
+							"Nothing" to {
+								Dialogs.confirm("Are you sure you want to reset your avatar?") {
+									newAvatar = null
+								}
+							},
+							cancellable = true
+						)
+					}.margin(buttonMargin).growX()
+				}.growX()
+			}.pad(layoutPad).fillX()
+				.colspan(2)
+				.row()
 
 			val usernameField = inputField("New nickname", default = user.nickname ?: user.username) {
 				it.length in 3..40
@@ -131,11 +173,91 @@ abstract class UserDialog(
 			action("Confirm") {
 				hide()
 				launchSafeWithStatus("Editing user ${user.username}...") {
-					this@UserDialog.user = user.edit(
-						newNickname = usernameField.content
-					)
+					if (usernameField.content != user.nickname) {
+						this@UserDialog.user = user.edit(
+							newNickname = usernameField.content
+						)
+					}
+
+					if (newAvatar != user.avatar) when (val avatar = newAvatar) {
+						// If an icon avatar, call the icon avatar route.
+						// If a local one, call the image avatar route. Otherwise, it's an error.
+						null -> user.setIconAvatar(null)
+						is User.Avatar.IconAvatar -> user.setIconAvatar(avatar.iconName)
+						is User.Avatar.LocalAvatar -> {
+							Vars.ui.loadfrag.apply {
+								show("Uploading avatar...")
+								setButton { cancel(CancellationException("Avatar upload was cancelled.")) }
+
+								user.uploadAvatar(avatar.file.inputStream().toByteReadChannel()) {
+									setProgress(it)
+								}
+
+								hide()
+							}
+						}
+						is User.Avatar.ImageAvatar -> {
+							error("Cannot set avatar to a non-local image avatar!")
+						}
+					}
 				}
 			}.disabled { !usernameField.isValid }
+		}
+
+		inner class IconAvatarChangeDialog : AbstractModalDialog() {
+			lateinit var iconsTable: Table
+
+			init {
+				header.addLabel("Choose an icon.").fillX().row()
+
+				// A search bar
+				body.textField("", Style.TextInput) {
+					rebuildWithCriteria(it.trim().replace(' ', '-').takeIf { it.isNotEmpty() })
+				}.fillX()
+					.pad(layoutPad)
+					.apply { get().hint = "Type to search" }
+					.row()
+
+				body.addTable(Style.surfaceBackground) {
+					// The icon list
+					limitedScrollPane(limitW = false, limitH = true) {
+						margin(layoutMargin)
+						iconsTable = this
+					}.pad(layoutPad)
+						.fillX()
+						.height(Core.graphics.height / 3f)
+						.row()
+				}.margin(layoutMargin).pad(layoutPad)
+					.row()
+
+				rebuildWithCriteria(null)
+			}
+
+			fun rebuildWithCriteria(queryString: String?) {
+				iconsTable.clear()
+
+				val icons = Core.atlas.regions.toList().filter {
+					(it.name.endsWith("-full") || it.name.endsWith("-ui"))
+					&& (queryString == null || it.name.contains(queryString, true))
+				}.distinctBy {
+					// Prevent duplicates
+					it.name.removeSuffix("-ui").removeSuffix("-full")
+				}
+
+				val iconsPerRow = (Core.graphics.width / 64).coerceAtLeast(2);
+				for (icon in icons) {
+					val image = iconsTable.addImage(TextureRegionDrawable(icon), scaling = Scaling.fill)
+						.size(48f)
+						.pad(layoutPad)
+						.rowPer(iconsPerRow)
+						.get()
+
+					image.clicked {
+						newAvatar = User.Avatar.IconAvatar(icon.name)
+						hide()
+					}
+				}
+			}
 		}
 	}
 	
