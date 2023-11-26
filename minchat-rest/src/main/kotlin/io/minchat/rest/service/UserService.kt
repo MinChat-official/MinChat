@@ -52,12 +52,24 @@ class UserService(baseUrl: String, client: HttpClient) : AbstractRestService(bas
 			}
 		}.body<ByteArray>()
 
+	suspend fun setIconAvatar(
+		id: Long,
+		token: String,
+		iconName: String?
+	): User = run {
+		client.post(makeRouteUrl(Route.User.setIconAvatar, id)) {
+			contentType(ContentType.Application.Json)
+			authorizeBearer(token)
+			setBody(IconAvatarSetRequest(iconName))
+		}.body<User>()
+	}
+
 	suspend fun uploadImageAvatar(
 		id: Long,
 		token: String,
 		image: ByteReadChannel,
 		progressHandler: (Float) -> Unit
-	) {
+	): User = run {
 		client.post(makeRouteUrl(Route.User.uploadImageAvatar, id)) {
 			contentType(ContentType.Image.Any)
 			authorizeBearer(token)
@@ -65,7 +77,7 @@ class UserService(baseUrl: String, client: HttpClient) : AbstractRestService(bas
 			onUpload { bytesSentTotal, contentLength ->
 				progressHandler.invoke(bytesSentTotal.toFloat() / contentLength)
 			}
-		}
+		}.body<User>()
 	}
 
 	/** Modifies the punishments of the user with the specified id. Returns the updated user. Admin-only. */

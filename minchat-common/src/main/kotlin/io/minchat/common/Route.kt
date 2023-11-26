@@ -2,6 +2,7 @@ package io.minchat.common
 
 import io.minchat.common.event.Event
 import io.minchat.common.request.*
+import io.minchat.common.entity.*
 
 /** 
  * All offical MinChat server routes.
@@ -69,6 +70,12 @@ object Route {
 		 * Response: a raw file containing the avatar of the user.
 		 */
 		val getImageAvatar = to("image-avatar")
+		/**
+		 * POST. Requires authorization.
+		 * Body: [IconAvatarSetRequest].
+		 * Response: an updated [User] object.
+		 */
+		val setIconAvatar = to("set-icon-avatar")
 		/**
 		 * POST. Requires authorization.
 		 * Body: a raw file containing the avatar of the user.

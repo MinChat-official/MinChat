@@ -434,12 +434,20 @@ class MinchatRestClient(
 		return rootService.validateToken(account!!.user.username, account!!.token)
 	}
 
+	/** Makes the avatar of a user an icon avatar. Requires a logged-in account. */
+	suspend fun setIconAvatar(id: Long, iconName: String?) =
+		userService.setIconAvatar(id, account().token, iconName)
+			.also(cache::set)
+			.withClient(this)
+
 	/**
 	 * Uploads an image avatar to the server.
 	 * Requires a logged-in account.
 	 */
 	suspend fun uploadImageAvatar(id: Long, image: ByteReadChannel, progressHandler: (Float) -> Unit) =
 		userService.uploadImageAvatar(id, account().token, image, progressHandler)
+			.also(cache::set)
+			.withClient(this)
 
 	// Admin-only
 	/** Modifies the punishments of the user with the specified id. Returns the updated user. Requires admin rights. */

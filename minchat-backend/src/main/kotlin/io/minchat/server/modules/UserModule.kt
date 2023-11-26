@@ -152,6 +152,46 @@ class UserModule : AbstractMinchatServerModule() {
 				call.respondFile(targetFile)
 			}
 
+			post(Route.User.setIconAvatar) {
+				val userId = call.parameters.getOrFail<Long>("id")
+				val data = call.receive<IconAvatarSetRequest>()
+
+				if (data.iconName.let { it != null && it.length !in 3..128 }) {
+					illegalInput("Malformed icon name.")
+				}
+
+				lateinit var invokingUser: User
+				lateinit var targetUser: User
+				newSuspendedTransaction {
+					invokingUser = Users.getByToken(call.token())
+					invokingUser.checkAndUpdateUserPunishments(checkMute = false)
+
+					if (invokingUser.id == userId) {
+						targetUser = invokingUser
+					} else {
+						targetUser = Users.getById(userId)
+						if (!invokingUser.canEditUser(targetUser)) {
+							accessDenied("You are not allowed to edit this user.")
+						}
+					}
+
+					Users.update({ Users.id eq targetUser.id }) {
+						it[avatarIconName] = data.iconName
+						it[avatarType] = data.iconName?.let { User.Avatar.Type.ICON } // null for null icons
+						it[avatarHash] = null
+						it[avatarWidth] = 0
+						it[avatarHeight] = 0
+					}
+
+					val updatedUser = Users.getById(targetUser.id)
+					call.respond(updatedUser)
+					server.sendEvent(UserModifyEvent(updatedUser))
+
+					Log.info { "${targetUser.loggable()}'s icon avatar was set to ${data.iconName} by ${invokingUser.loggable()}" }
+				}
+
+			}
+
 			post(Route.User.uploadImageAvatar) {
 				val userId = call.parameters.getOrFail<Long>("id")
 				val contentLength = call.request.contentLength()
@@ -231,10 +271,11 @@ class UserModule : AbstractMinchatServerModule() {
 					}
 				}
 
-				Log.info { "Avatar update performed for user ${targetUser.loggable()} by ${invokingUser.loggable()}." }
+				Log.info { "Avatar update was performed for user ${targetUser.loggable()} by ${invokingUser.loggable()}." }
 
-				call.response.statusOk()
-				server.sendEvent(UserModifyEvent(Users.getById(userId)))
+				val updatedUser = Users.getById(userId)
+				call.respond(updatedUser)
+				server.sendEvent(UserModifyEvent(updatedUser))
 			}
 		}
 	}

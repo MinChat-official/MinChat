@@ -89,12 +89,16 @@ data class MinchatUser(
 		progressHandler: (Float) -> Unit = {}
 	): File? = avatar?.let { rest.getCacheableAvatar(id, it, full, progressHandler) }
 
+	/** Sets the avatar of this user to the specified icon, or resets it if the icon is null. */
+	suspend fun setIconAvatar(icon: String?) =
+		rest.setIconAvatar(id, icon)
+
 	/** Uploads the provided image avatar to the server. */
 	suspend fun uploadAvatar(image: ByteReadChannel, progressHandler: (Float) -> Unit = {}) =
 		rest.uploadImageAvatar(id, image, progressHandler)
 
 	/** Uploads the provided image avatar to the server. */
-	suspend fun uploadAvatar(image: ByteArray, progressHandler: (Float) -> Unit = {}): Unit =
+	suspend fun uploadAvatar(image: ByteArray, progressHandler: (Float) -> Unit = {}): MinchatUser =
 		uploadAvatar(ByteReadChannel(image), progressHandler)
 
 	/** Fetches all DM channels associated with this user. */
@@ -138,6 +142,7 @@ data class MinchatUser(
 		username: String = data.username,
 		nickname: String? = data.nickname,
 		discriminator: Int = data.discriminator,
+		avatar: User.Avatar? = data.avatar,
 		role: User.RoleBitSet = data.role,
 		mute: User.Punishment? = data.mute,
 		ban: User.Punishment? = data.ban,
@@ -148,6 +153,7 @@ data class MinchatUser(
 		username = username,
 		nickname = nickname,
 		discriminator = discriminator,
+		avatar = avatar,
 		role = role,
 		mute = mute,
 		ban = ban,

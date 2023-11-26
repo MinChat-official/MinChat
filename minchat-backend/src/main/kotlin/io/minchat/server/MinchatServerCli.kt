@@ -101,7 +101,7 @@ open class MinchatLauncher : Runnable {
 
 		transaction {
 			SchemaUtils.create(Channels, Messages, Users)
-			SchemaUtils.createMissingTablesAndColumns(Channels, Messages, Users)
+			SchemaUtils.createMissingTablesAndColumns(Channels, Messages, Users, ChannelGroups)
 		}
 
 		Log.lifecycle { "Loading the SSL key store." }

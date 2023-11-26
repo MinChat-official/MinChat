@@ -58,3 +58,7 @@ class UserPunishmentsModifyRequest(
 	val newMute: User.Punishment?,
 	val newBan: User.Punishment?
 )
+
+/** Request to set the avatar of a user to the given icon, or reset to default. */
+@Serializable
+class IconAvatarSetRequest(val iconName: String?)
