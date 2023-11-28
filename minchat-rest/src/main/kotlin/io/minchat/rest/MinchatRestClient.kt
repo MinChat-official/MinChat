@@ -434,7 +434,7 @@ class MinchatRestClient(
 		return rootService.validateToken(account!!.user.username, account!!.token)
 	}
 
-	/** Makes the avatar of a user an icon avatar. Requires a logged-in account. */
+	/** Changes the avatar of the user to an icon. */
 	suspend fun setIconAvatar(id: Long, iconName: String?) =
 		userService.setIconAvatar(id, account().token, iconName)
 			.also(cache::set)
