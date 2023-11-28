@@ -11,6 +11,7 @@ import com.github.mnemotechnician.mkui.extensions.elements.*
 import io.ktor.utils.io.jvm.javaio.*
 import io.minchat.client.Minchat
 import io.minchat.client.misc.*
+import io.minchat.client.ui.AsyncImage
 import io.minchat.client.ui.MinchatStyle.buttonMargin
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
@@ -19,6 +20,7 @@ import io.minchat.common.entity.*
 import io.minchat.rest.entity.MinchatUser
 import kotlinx.coroutines.*
 import mindustry.Vars
+import java.io.File
 import java.time.Instant
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty0
@@ -152,7 +154,7 @@ abstract class UserDialog(
 						Dialogs.choices(
 							"What to change your avatar to?",
 							"Mindustry icon" to { IconAvatarChangeDialog().show() },
-							"Image" to { Dialogs.TODO() },
+							"Image" to { ImageAvatarChangeDialog().show() },
 							"Nothing" to {
 								Dialogs.confirm("Are you sure you want to reset your avatar?") {
 									newAvatar = null
@@ -228,6 +230,7 @@ abstract class UserDialog(
 						.height(Core.graphics.height / 3f)
 						.row()
 				}.margin(layoutMargin).pad(layoutPad)
+					.fillX()
 					.row()
 
 				rebuildWithCriteria(null)
@@ -237,11 +240,10 @@ abstract class UserDialog(
 				iconsTable.clear()
 
 				val icons = Core.atlas.regions.toList().filter {
-					(it.name.endsWith("-full") || it.name.endsWith("-ui"))
+					it.name.endsWith("-ui")
 					&& (queryString == null || it.name.contains(queryString, true))
 				}.distinctBy {
-					// Prevent duplicates
-					it.name.removeSuffix("-ui").removeSuffix("-full")
+					it.name.removeSuffix("-ui")
 				}
 
 				val iconsPerRow = (Core.graphics.width / 64).coerceAtLeast(2);
@@ -256,6 +258,35 @@ abstract class UserDialog(
 						newAvatar = User.Avatar.IconAvatar(icon.name)
 						hide()
 					}
+				}
+			}
+		}
+
+		inner class ImageAvatarChangeDialog : AbstractModalDialog() {
+			var file: File? = null
+			lateinit var image: AsyncImage
+
+			init {
+				header.addLabel("Choose an new image.").fillX().row()
+
+				body.addTable(Style.surfaceBackground) {
+					margin(layoutMargin)
+					add(AsyncImage(this@UserDialog).also {
+						image = it
+						it.setFileAsync { user.getImageAvatar(true)!! }
+					})
+						.maxSize(256f)
+						.minSize(48f)
+						.apply { get() }
+				}.pad(layoutPad).row()
+
+				action("Confirm") {
+					newAvatar = User.Avatar.LocalAvatar(file!!)
+					hide()
+				}.disabled { file == null || !image.isLoaded }
+
+				nextActionRow()
+				action("Choose file") {
 				}
 			}
 		}

@@ -25,6 +25,8 @@ open class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 	private var fetcherJob: Job? = null
 	private var isFailed = true
 
+	val isLoaded get() = !isFailed && (drawable as? TextureRegionDrawable)?.let { Core.atlas.isFound(it.region) } == true
+
 	/** An optional image source string for debugging purposes. Must be set after [setImageAsync] has been called. */
 	var imageSource: String? = null
 
