@@ -156,8 +156,13 @@ class UserModule : AbstractMinchatServerModule() {
 				val userId = call.parameters.getOrFail<Long>("id")
 				val data = call.receive<IconAvatarSetRequest>()
 
-				if (data.iconName.let { it != null && it.length !in 3..128 }) {
-					illegalInput("Malformed icon name.")
+				val iconName = data.iconName
+				if (iconName != null) {
+					if (iconName.length !in 3..127) {
+						illegalInput("Malformed icon name.")
+					} else if (iconName.endsWith("-full")) {
+						illegalInput("Cannot use full-scale icons as avatars. Use a -ui variant instead.")
+					}
 				}
 
 				lateinit var invokingUser: User
