@@ -4,7 +4,7 @@ import io.minchat.client.*
 import io.minchat.client.plugin.impl.*
 import io.minchat.common.BaseLogger
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 
 object MinchatPluginHandler {
 	/** If true, a newly registered plugin will be initialised immediately, unless [hasLoaded] is also true. */
@@ -128,10 +128,10 @@ object MinchatPluginHandler {
 	 * The delegate will return null if:
 	 * - the plugin has failed to load or initialize due to an error
 	 * - [requireLoad] is true and the plugin failed to load.
-	 * - the plugin is not loaded at all.
+	 * - the plugin has not loaded yet or is not registered at all.
 	 */
 	inline fun <reified T : MinchatPlugin> getting(requireLoad: Boolean = true) =
-		PluginDelegate(getEntry<T>(), requireLoad)
+		PluginDelegate(T::class, requireLoad)
 
 	data class PluginLoadEntry(
 		val factory: () -> MinchatPlugin
@@ -152,13 +152,21 @@ object MinchatPluginHandler {
 		}
 	}
 
-	class PluginDelegate<T : MinchatPlugin>(private val plugin: LoadedPlugin<T>?, val requireLoad: Boolean) {
-		operator fun getValue(thisRef: Any?, property: KProperty<*>): T? {
-			if (plugin == null) return null
-			if (requireLoad && !plugin.isLoaded) return null
-			if (plugin.error != null) return null
+	class PluginDelegate<T : MinchatPlugin>(private val cls: KClass<T>, val requireLoad: Boolean) {
+		private var cachedValue: T? = null
 
-			return plugin.plugin
+		@Suppress("UNCHECKED_CAST")
+		operator fun getValue(thisRef: Any?, property: KProperty<*>): T? {
+			if (cachedValue != null) return cachedValue
+
+			val entry = loadedPlugins.find { cls.isInstance(it.plugin) } as LoadedPlugin<T>?
+
+			if (entry == null) return null
+			if (requireLoad && !entry.isLoaded) return null
+			if (entry.error != null) return null
+
+			cachedValue = entry.plugin
+			return entry.plugin
 		}
 	}
 }
