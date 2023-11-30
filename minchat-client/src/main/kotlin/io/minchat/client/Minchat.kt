@@ -17,7 +17,6 @@ import io.minchat.client.ui.*
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.client.ui.managers.*
 import io.minchat.common.*
-import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.*
 import io.minchat.rest.gateway.MinchatGateway
 import kotlinx.coroutines.*
@@ -96,6 +95,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	init {
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
+		LoggerManager.init()
 
 		Runtime.getRuntime().addShutdownHook(thread(start = false, block = ::onShutdown))
 
@@ -146,7 +146,6 @@ class MinchatMod : Mod(), CoroutineScope {
 			}.show()
 		}
 
-		LoggerManager.init()
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
 		UnreadsManager.load()

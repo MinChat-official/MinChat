@@ -4,8 +4,9 @@ import io.minchat.common.BaseLogger.LoggerSawmill
 import java.io.*
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.util.*
 
-typealias LogFormatter = (level: BaseLogger.LogLevel, timestamp: String, sawmill: BaseLogger.LoggerSawmill, message: String) -> String
+typealias LogHandler<T> = (level: BaseLogger.LogLevel, timestamp: String, sawmill: LoggerSawmill, message: String) -> T
 typealias SawmillFactory = (name: String) -> LoggerSawmill
 
 /**
@@ -20,9 +21,9 @@ typealias SawmillFactory = (name: String) -> LoggerSawmill
  */
 open class BaseLogger(
 	defaultLogFile: File?,
-	var stdoutFormatter: LogFormatter = { ll, time, sawmill, message -> "[$ll][$time][${sawmill.name}] $message" },
 	var sawmillFactory: SawmillFactory = { name -> LoggerSawmill(name) },
-	var postLogAction: ((String) -> Unit)? = null
+	var stdoutFormatter: LogHandler<String> = { ll, time, sawmill, message -> "[$ll][$time][${sawmill.name}] $message" },
+	var postLogAction: LogHandler<Unit>? = null
 ) {
 	private val sawmill by lazy { getSawmill("BASE LOGGER") }
 
@@ -36,7 +37,7 @@ open class BaseLogger(
 			if (value == null) error("Log file cannot be null")
 
 			field = value
-			printer = PrintWriter(value.outputStream()).apply {
+			printer = PrintWriter(value.outputStream(), true).apply {
 				println("=== MinChat log: ${currentTimestamp()} ===")
 				println("=== MinChat version: $MINCHAT_VERSION ===")
 				print("\n\n")
@@ -44,14 +45,14 @@ open class BaseLogger(
 
 			sawmill.info("Log file was set to $value.")
 
-			val lostLogs = sawmills.values.sumOf { it.logCount }
+			val lostLogs = sawmills.values.sumOf { it.logCount } - 1
 			if (lostLogs > 0) {
-				sawmill.warn("Log file was just changed but $lostLogs were already printed. They may have been lost.")
+				sawmill.warn("Log file was changed but $lostLogs logs were already printed. They may have been lost.")
 			}
 		}
 	private var printer: PrintWriter? = null
 
-	private val sawmills = mutableMapOf<String, LoggerSawmill>()
+	private val sawmills = Collections.synchronizedMap(WeakHashMap<String, LoggerSawmill>())
 
 	/** A java DateTimeFormatter used to format the log timestamps. */
 	val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
@@ -72,11 +73,11 @@ open class BaseLogger(
 		val formatted = stdoutFormatter(level, timestamp, sawmill, message)
 
 		println(formatted)
-		postLogAction?.invoke(formatted)
 
 		// File output format is strict. In addition to that, every trailing line is prefixed with a pipe.
 		val transformed = message.lineSequence().joinToString("\n|")
 		printer?.println("[$timestamp][$level][${sawmill.name}] $transformed") // File output is strict.
+		postLogAction?.invoke(level, timestamp, sawmill, message)
 	}
 
 	fun debug(sawmill: LoggerSawmill, message: String) = log(LogLevel.DEBUG, sawmill, message)
@@ -97,12 +98,21 @@ open class BaseLogger(
 
 	fun all(sawmill: LoggerSawmill, message: String) = log(LogLevel.ALL, sawmill, message)
 
+	/** Returns a sawmill for the given name. Creates one if needed. */
 	fun getSawmill(name: String): LoggerSawmill = sawmills.getOrPut(name) {
 		sawmillFactory(name)
 	}
 
-	inline fun <reified T : Any> T.getContextSawmill() =
-		getSawmill(T::class.java.simpleName)
+	/**
+	 * Returns a sawmill for the current class context. Creates one if needed.
+	 *
+	 * E.g. when invoked inside the class body of `class Cat` or its companion object,
+	 * returns a `LoggerSawmill("Cat")`.
+	 */
+	context(Any)
+	@Suppress("NOTHING_TO_INLINE")
+	inline fun getContextSawmill() =
+		getSawmill(this@Any.javaClass.name.removeSuffix("\$Companion").substringAfterLast('.'))
 
 	/** Parses a log file, assuming that no external modifications were made to it. */
 	fun parseLogFile(file: File) = buildList<LogEntry> {
@@ -207,7 +217,6 @@ open class BaseLogger(
 		inline fun all(message: () -> String) {
 			all(message())
 		}
-
 	}
 
 	data class LogEntry(

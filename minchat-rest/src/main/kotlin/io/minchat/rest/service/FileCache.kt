@@ -1,7 +1,6 @@
 package io.minchat.rest.service
 
 import io.minchat.common.BaseLogger
-import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
@@ -16,7 +15,7 @@ class FileCache(
 	val rest: MinchatRestClient
 ) {
 	val lock = Mutex()
-	val entries = Collections.synchronizedMap<Key, Entry>(mapOf())
+	val entries = Collections.synchronizedMap<Key, Entry>(mutableMapOf())
 
 	private val listingFileName = "listing.json"
 	private val json = Json {
