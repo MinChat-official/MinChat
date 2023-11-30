@@ -1,6 +1,7 @@
 package io.minchat.client.ui.managers
 
 
+import arc.util.Time
 import io.minchat.client.*
 import io.minchat.client.plugin.MinchatPluginHandler
 import io.minchat.client.plugin.impl.NewConsoleIntegrationPlugin
@@ -26,24 +27,18 @@ object LoggerManager {
 	fun init() {
 		BaseLogger.stdoutFormatter = { level, timestamp, sawmill, message ->
 			val prefix = sawmill.name
-			"[$level][$prefix][$timestamp]: $message"
+			"[$prefix][$level][$timestamp]: $message"
 		}
 		BaseLogger.logFile = logFile
 		BaseLogger.postLogAction = { level, timestamp, sawmill, rawMessage: String ->
 			val message = buildString {
-				val color = run {
-					val hash = sawmill.name.hashCode()
-					val r = ((hash and 0xff0000) ushr 16) / 2 + 127
-					val g = ((hash and 0x00ff00) ushr 8) / 2 + 127
-					val b = (hash and 0x0000ff) / 2 + 127
+				val color = getColorForName(sawmill.name)
 
-					(r shl 16) + (g shl 8) + b
-				}
-
-				append("[#${level.color.toString(16)}]")
+				append("[#${color.toString(16)}bb]")
+				append("[${sawmill.name}]")
+				append("[#${level.color.toString(16)}bb]")
 				append("[$level][]")
-				append("[#$color]")
-				append("[$timestamp][${sawmill.name}][]")
+				append("[$timestamp][]")
 				append(": ")
 				append(rawMessage)
 			}
@@ -66,15 +61,27 @@ object LoggerManager {
 		}
 
 		ClientEvents.subscribe<LoadEvent> {
-			loadingLogQueue?.forEach {
-				addUILogMessage(it)
+			Time.run(60f) {
+				// NC is trash and will try to erase the logs after the client load - hence the delay
+				loadingLogQueue?.forEach {
+					addUILogMessage(it)
+				}
+				loadingLogQueue = null
 			}
-			loadingLogQueue = null
 		}
 	}
 
 	fun addUILogMessage(message: String) {
 		ncPlugin?.addLog(message)
 		Vars.ui.consolefrag?.addMessage(message)
+	}
+
+	fun getColorForName(name: String): Int {
+		val hash = name.hashCode()
+		val r = ((hash and 0xff0000) ushr 16) % 128 + 127
+		val g = ((hash and 0x00ff00) ushr 8) % 128 + 127
+		val b = (hash and 0x0000ff) % 128 + 127
+
+		return (r shl 16) + (g shl 8) + b
 	}
 }
