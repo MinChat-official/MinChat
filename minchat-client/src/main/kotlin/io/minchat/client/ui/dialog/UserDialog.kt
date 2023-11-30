@@ -46,6 +46,20 @@ abstract class UserDialog(
 
 		header.addTable(Style.surfaceBackground) {
 			margin(Style.buttonMargin)
+
+			add(UserAvatarElement(
+				{ user?.id },
+				{ user?.avatar },
+				true
+			)).size(48f).padRight(layoutPad).apply {
+				get().clicked {
+					val name = user?.displayName ?: return@clicked
+					val avatar = get().drawable ?: return@clicked
+
+					Dialogs.imageView("Viewing avatar: $name", avatar)
+				}
+			}
+
 			addLabel({ user?.tag ?: "Invalid User" })
 				.with { userLabel = it }
 				.scaleFont(1.1f)

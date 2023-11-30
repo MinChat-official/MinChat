@@ -1,17 +1,25 @@
 package io.minchat.client.ui.dialog
 
+import arc.Core
 import arc.graphics.Color
 import arc.graphics.g2d.*
+import arc.input.KeyCode.scroll
 import arc.scene.Element
-import arc.util.Align
+import arc.scene.event.*
+import arc.scene.style.Drawable
+import arc.scene.ui.Image
+import arc.util.*
 import com.github.mnemotechnician.mkui.extensions.dsl.*
+import com.github.mnemotechnician.mkui.extensions.elements.updateLast
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.MinchatDispatcher
 import io.minchat.client.misc.userReadable
 import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.client.ui.MinchatStyle.layoutPad
+import io.minchat.client.ui.MinchatStyle.surfaceBackground
 import io.minchat.common.BaseLogger
-import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import kotlinx.coroutines.*
+import kotlin.math.*
 import io.minchat.client.ui.MinchatStyle as Style
 
 /**
@@ -106,6 +114,12 @@ object Dialogs : CoroutineScope {
 		}
 	}
 
+	fun imageView(message: String?, drawable: Drawable) {
+		runUi {
+			ImageViewDialog(message, drawable).show()
+		}
+	}
+
 	/** Equivalent to calling `info("This action is not implemented yet.")`. */
 	fun TODO() {
 		info("This action is not implemented yet.")
@@ -115,11 +129,11 @@ object Dialogs : CoroutineScope {
 		override val addCloseAction = false
 
 		init {
-			body.addTable(Style.surfaceBackground) {
+			body.addTable(surfaceBackground) {
 				margin(layoutMargin)
 
 				addLabel(text, wrap = true)
-					.fillX().pad(Style.layoutPad)
+					.fillX().pad(layoutPad)
 					.minWidth(300f)
 			}.fillX()
 
@@ -161,13 +175,13 @@ object Dialogs : CoroutineScope {
 				hide()
 			}
 
-			body.addTable(Style.surfaceBackground) {
+			body.addTable(surfaceBackground) {
 				margin(layoutMargin)
 
 				addLabel(message, wrap = true)
 					.growX()
-					.pad(Style.layoutPad).row()
-			}.minWidth(300f).pad(Style.layoutPad)
+					.pad(layoutPad).row()
+			}.minWidth(300f).pad(layoutPad)
 		}
 	}
 
@@ -176,15 +190,15 @@ object Dialogs : CoroutineScope {
 		val cancellable: Boolean = true,
 		val job: Job
 	) : AbstractModalDialog() {
-		override val addCloseAction = false
+		override val addCloseAction get() = false
 
 		init {
-			body.addTable(Style.surfaceBackground) {
+			body.addTable(surfaceBackground) {
 				margin(layoutMargin)
 
 				addLabel(message, wrap = true)
 					.growX()
-					.pad(Style.layoutPad).row()
+					.pad(layoutPad).row()
 
 				// Loading bar animation
 				val start = System.currentTimeMillis()
@@ -214,7 +228,7 @@ object Dialogs : CoroutineScope {
 							clipEnd()
 						}
 					}
-				}).growX().minHeight(50f).pad(Style.layoutPad)
+				}).growX().minHeight(50f).pad(layoutPad)
 
 				if (cancellable) {
 					action("Cancel") {
@@ -222,7 +236,7 @@ object Dialogs : CoroutineScope {
 						hide()
 					}
 				}
-			}.minWidth(300f).pad(Style.layoutPad)
+			}.minWidth(300f).pad(layoutPad)
 		}
 
 		override fun act(delta: Float) {
@@ -243,11 +257,11 @@ object Dialogs : CoroutineScope {
 		override val addCloseAction get() = false
 
 		init {
-			if (message.isNotBlank()) header.addTable(Style.surfaceBackground) {
+			if (message.isNotBlank()) header.addTable(surfaceBackground) {
 				margin(layoutMargin)
 
 				addLabel(message, wrap = true)
-					.fillX().pad(Style.layoutPad)
+					.fillX().pad(layoutPad)
 					.minWidth(300f)
 			}
 
@@ -264,6 +278,71 @@ object Dialogs : CoroutineScope {
 					onSelect(i)
 					hide()
 				}
+			}
+		}
+	}
+
+	class ImageViewDialog(
+		val message: String?,
+		val drawable: Drawable
+	) : AbstractModalDialog() {
+		lateinit var image: Image
+
+		var scaleSpeed: Double = 1 / 50.0
+		var currentScaleStep = 0
+		var minSize = 128f
+		var maxSize = min(Core.graphics.height, Core.graphics.width) / 1.5f
+		private var currentSize = drawable.imageSize().coerceIn(minSize..maxSize)
+		private val imageSize = drawable.imageSize().coerceIn(minSize, maxSize)
+
+		init {
+			if (!message.isNullOrBlank()) header.addTable(surfaceBackground) {
+				addLabel(message, wrap = true)
+					.growX()
+					.minWidth(100f)
+					.pad(layoutPad)
+			}.fillX().margin(layoutMargin)
+
+			body.addTable(surfaceBackground) {
+				touchable = Touchable.enabled
+
+				wrapper({ currentSize }, { currentSize }) {
+					addImage(drawable, scaling = Scaling.fill)
+						.grow()
+						.apply { image = get() }
+				}.grow()
+					.minSize(minSize)
+					.maxSize(maxSize)
+
+				// Zooming with the mouse wheel
+				updateLast {
+					val scroll = Core.input.axis(scroll)
+					if (scroll != 0f) {
+						resizeStep(scroll.toInt() * 2)
+					}
+				}
+
+				// Zooming with pinching
+				addListener(object : ElementGestureListener() {
+					override fun zoom(event: InputEvent?, initialDistance: Float, distance: Float) {
+						val zoom = (distance - initialDistance).toInt() / 20
+						resizeStep(zoom)
+					}
+				})
+			}.fillX().margin(layoutMargin)
+
+			nextActionRow()
+			action("+") { resizeStep(20) }
+			action("-") { resizeStep(-20) }
+		}
+
+		fun resizeStep(step: Int) {
+			val newStep = currentScaleStep + step
+			val newSize = (imageSize * exp(newStep * scaleSpeed)).toFloat().coerceIn(minSize, maxSize)
+
+			if (newSize != currentSize) {
+				currentScaleStep = (log(newSize.toDouble() / imageSize, Math.E) / scaleSpeed).toInt();
+				currentSize = newSize
 			}
 		}
 	}
