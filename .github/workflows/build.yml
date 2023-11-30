@@ -11,11 +11,12 @@ jobs:
       
       - name: Add build tools to the $PATH
         run: echo "${ANDROID_HOME}/build-tools/33.0.2" >> $GITHUB_PATH
-      
+
+      # The minchat-cli:shadowJar task is not run as minchat-cli is deprecated
       - name: Compile the mod
         run: |
           chmod +x ./gradlew
-          ./gradlew minchat-backend:jar minchat-cli:shadowJar minchat-client:release
+          ./gradlew minchat-backend:jar minchat-client:release
         
       - name: Upload the client artifact
         uses: actions/upload-artifact@v2
@@ -29,8 +30,8 @@ jobs:
           name: ${{ github.event.repository.name }}-backend-server
           path: minchat-backend/build/libs/*.jar
 
-      - name: Upload the cli client artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ github.event.repository.name }}-cli-client
-          path: minchat-cli/build/libs/*.jar
+#      - name: Upload the cli client artifact
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ github.event.repository.name }}-cli-client
+#          path: minchat-cli/build/libs/*.jar
