@@ -3,8 +3,8 @@ package io.minchat.client.plugin
 import io.minchat.client.*
 import io.minchat.client.plugin.impl.*
 import io.minchat.common.BaseLogger
-import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.reflect.KProperty
 
 object MinchatPluginHandler {
 	/** If true, a newly registered plugin will be initialised immediately, unless [hasLoaded] is also true. */
@@ -91,17 +91,17 @@ object MinchatPluginHandler {
 		val (toRetain, toLoad) = loadedPlugins.partition { it.isLoaded || it.error != null }
 		logger.info { "Loading MinChat plugins: ${toLoad.joinToString { it.plugin.name }}" }
 
-		val loaded = toLoad.map {
+		toLoad.forEach {
 			try {
 				it.plugin.onLoad()
-				it.copy(isLoaded = true)
+				it.isLoaded = true
 			} catch (e: Throwable) {
 				logger.error { "Could not load plugin ${it.plugin.name}" }
-				it.copy(error = e)
+				it.error = e
 			}
 		}
 
-		loadedPlugins = toRetain + loaded
+		loadedPlugins = toRetain + toLoad
 	}
 
 	internal suspend fun onConnect() {
@@ -123,13 +123,42 @@ object MinchatPluginHandler {
 	inline fun <reified T : MinchatPlugin> get(): T? =
 		getEntry<T>()?.takeIf { it.isLoaded }?.plugin
 
+	/**
+	 * Returns a delegate that returns the requested plugin.
+	 * The delegate will return null if:
+	 * - the plugin has failed to load or initialize due to an error
+	 * - [requireLoad] is true and the plugin failed to load.
+	 * - the plugin is not loaded at all.
+	 */
+	inline fun <reified T : MinchatPlugin> getting(requireLoad: Boolean = true) =
+		PluginDelegate(getEntry<T>(), requireLoad)
+
 	data class PluginLoadEntry(
 		val factory: () -> MinchatPlugin
 	)
 
-	data class LoadedPlugin<T : MinchatPlugin>(
+	class LoadedPlugin<T : MinchatPlugin>(
 		val plugin: T,
-		val error: Throwable?,
-		val isLoaded: Boolean
-	)
+		error: Throwable?,
+		isLoaded: Boolean
+	) {
+		var error = error
+			internal set
+		var isLoaded = isLoaded
+			internal set
+
+		override fun toString(): String {
+			return "LoadedPlugin(plugin=$plugin, error=$error, isLoaded=$isLoaded)"
+		}
+	}
+
+	class PluginDelegate<T : MinchatPlugin>(private val plugin: LoadedPlugin<T>?, val requireLoad: Boolean) {
+		operator fun getValue(thisRef: Any?, property: KProperty<*>): T? {
+			if (plugin == null) return null
+			if (requireLoad && !plugin.isLoaded) return null
+			if (plugin.error != null) return null
+
+			return plugin.plugin
+		}
+	}
 }
