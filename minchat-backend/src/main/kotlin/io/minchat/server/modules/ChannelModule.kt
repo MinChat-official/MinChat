@@ -110,7 +110,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 						it[lastMessageTimestamp] = message.timestamp
 					}
 
-					Log.lifecycle { "A new message was sent by ${user.loggable()} in ${channel.loggable()}: ${message.loggable()}" }
+					logger.lifecycle { "A new message was sent by ${user.loggable()} in ${channel.loggable()}: ${message.loggable()}" }
 					call.respond(message)
 
 					val event = MessageCreateEvent(message)
@@ -140,7 +140,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 					}.resultedValues!!.first()
 
 					val channel = Channels.createEntity(channelRow)
-					Log.info { "A new channel was created: ${channel.loggable()}" }
+					logger.info { "A new channel was created: ${channel.loggable()}" }
 
 					call.respond(channel)
 					server.sendEvent(ChannelCreateEvent(channel))
@@ -200,7 +200,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 					}.throwIfNotFound { "no such channel." }
 
 					val newChannel = Channels.getById(id)
-					Log.info { "${oldChannel.loggable()} was edited by ${invokingUser.loggable()}. Now: ${newChannel.loggable()}" }
+					logger.info { "${oldChannel.loggable()} was edited by ${invokingUser.loggable()}. Now: ${newChannel.loggable()}" }
 					call.respond(newChannel)
 
 					val event = ChannelModifyEvent(newChannel)
@@ -228,7 +228,7 @@ class ChannelModule : AbstractMinchatServerModule() {
 						it[isDeleted] = true
 					}
 
-					Log.info { "${oldChannel.loggable()} was deleted by ${invokingUser.loggable()}" }
+					logger.info { "${oldChannel.loggable()} was deleted by ${invokingUser.loggable()}" }
 
 					call.response.statusOk()
 

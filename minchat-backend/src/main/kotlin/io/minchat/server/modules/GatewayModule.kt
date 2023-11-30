@@ -11,7 +11,6 @@ import io.minchat.common.entity.User
 import io.minchat.common.event.Event
 import io.minchat.server.ServerContext
 import io.minchat.server.databases.Users
-import io.minchat.server.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -49,13 +48,13 @@ class GatewayModule : AbstractMinchatServerModule() {
 				val connection = Connection(this, version, user)
 					.also(connections::add)
 
-				Log.lifecycle { "Incoming: $connection" }
+				logger.lifecycle { "Incoming: $connection" }
 
 				try {
 					handleConnection(connection)
-					Log.lifecycle { "$connection has closed." }
+					logger.lifecycle { "$connection has closed." }
 				} catch (e: Exception) {
-					Log.error(e) { "$connection has been terminated" }
+					logger.error(e) { "$connection has been terminated" }
 					if (e is CancellationException) throw e
 				} finally {
 					connections -= connection
@@ -76,18 +75,18 @@ class GatewayModule : AbstractMinchatServerModule() {
 				}?.filterNotNull() ?: connections
 
 				if (recipients.isEmpty()) {
-					Log.lifecycle { "Skipping $event because there are no valid recipients." }
+					logger.lifecycle { "Skipping $event because there are no valid recipients." }
 					return@onEach
 				}
 
-				Log.lifecycle { "Sending $event to ${recipients.size} connections" }
+				logger.lifecycle { "Sending $event to ${recipients.size} connections" }
 
 				recipients.forEach {
 					it.frameQueue.add(event)
 				}
 			} catch (e: Exception) {
 				if (e is CancellationException) throw e
-				Log.error { "Failed to send an event! $e" }
+				logger.error { "Failed to send an event! $e" }
 			}
 		}.launchIn(server)
 	}
@@ -105,7 +104,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 				val frame = jsonConverter.serialize(event)
 				connection.session.outgoing.send(frame)
 			} catch (e: Exception) {
-				Log.error { "Failed to send $event to $connection! Message: ${e.message}" }
+				logger.error { "Failed to send $event to $connection! Message: ${e.message}" }
 				throw e // close the session
 			}
 		}
@@ -115,7 +114,7 @@ class GatewayModule : AbstractMinchatServerModule() {
 	fun send(event: Event) {
 		val result = pendingEvents.trySend(event)
 		if (result.isSuccess.not()) {
-			Log.error { "Count not send $event: buffer overflow! Is the event coroutine dead?!" }
+			logger.error { "Count not send $event: buffer overflow! Is the event coroutine dead?!" }
 		}
 	}
 

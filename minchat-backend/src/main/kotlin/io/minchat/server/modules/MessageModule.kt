@@ -61,7 +61,7 @@ class MessageModule : AbstractMinchatServerModule() {
 					}.throwIfNotFound { "A message matching the providen id-author pair does not exist." }
 
 					val newMessage = Messages.getById(id)
-					Log.info { "${oldMessage.loggable()} was edited by ${user.loggable()}. Now: ${newMessage.loggable()}" }
+					logger.info { "${oldMessage.loggable()} was edited by ${user.loggable()}. Now: ${newMessage.loggable()}" }
 					call.respond(newMessage)
 
 					val event = MessageModifyEvent(newMessage)
@@ -91,7 +91,7 @@ class MessageModule : AbstractMinchatServerModule() {
 						it[isDeleted] = true
 					}.throwIfNotFound { "the message does not exist or you lack the permission to delete it." }
 
-					Log.info { "Message $id was deleted." }
+					logger.info { "Message $id was deleted." }
 
 					val deletedMessage = Messages.select { Messages.id eq id }.single()
 					val event = MessageDeleteEvent(

@@ -17,6 +17,8 @@ import io.minchat.client.ui.*
 import io.minchat.client.ui.dialog.*
 import io.minchat.client.ui.managers.UnreadsManager
 import io.minchat.client.ui.tutorial.Tutorials
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.common.entity.Message
 import io.minchat.rest.entity.*
 import io.minchat.rest.event.*
@@ -60,6 +62,8 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 	private var lastChatUpdateJob: Job? = null
 	private var messageListenerJob: Job? = null
+
+	private val logger = BaseLogger.getContextSawmill()
 
 	override fun build() = createTable {
 		update(::tick)
@@ -276,7 +280,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 
 			Minchat.gateway.onFailure {
 				updateChatUi(notificationText = "An error has occurred. Reloading messages...")
-				Log.warn { "Chat ui reloading due to a gateway failure." }
+				logger.warn { "Chat ui reloading due to a gateway failure." }
 			}
 		}
 
@@ -598,7 +602,7 @@ class ChatFragment(parentScope: CoroutineScope) : Fragment<Table, Table>(parentS
 				sortMessageElements()
 
 				val anchor = anchorElement.takeIf { it.parent == chatContainer } ?: run {
-					Log.warn { "Chat fragment: anchor not found, falling back to last message" }
+					logger.warn { "Chat fragment: anchor not found, falling back to last message" }
 					if (before) oldChildren.first() else oldChildren.last()
 				}
 

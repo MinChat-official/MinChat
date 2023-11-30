@@ -1,6 +1,7 @@
 package io.minchat.server.modules
 
 import io.ktor.server.application.*
+import io.minchat.common.BaseLogger
 import io.minchat.common.entity.User
 import io.minchat.server.*
 import io.minchat.server.databases.Users
@@ -13,6 +14,7 @@ abstract class AbstractMinchatServerModule {
 	lateinit var server: ServerContext
 
 	val name = createServiceName()
+	val logger = BaseLogger.getSawmill(name)
 
 	private val illegalCharRegex = """[^a-zA-Z0-9\-_()\[\]#]""".toRegex()
 
@@ -20,7 +22,7 @@ abstract class AbstractMinchatServerModule {
 	fun onLoad(application: Application) {
 		require(::server.isInitialized.not()) { "Module '$name' has already been loaded!" }
 
-		Log.info { "Loading module '$name'." }
+		logger.info { "Loading module '$name'." }
 
 		with(application) { onLoad() }
 	}
@@ -30,7 +32,7 @@ abstract class AbstractMinchatServerModule {
 		require(::server.isInitialized.not()) { "Module '$name' has already been post-loaded!" }
 		this.server = context
 
-		Log.lifecycle { "After-loading module '$name'." }
+		logger.lifecycle { "After-loading module '$name'." }
 
 		with(context) { afterLoad() }
 	}

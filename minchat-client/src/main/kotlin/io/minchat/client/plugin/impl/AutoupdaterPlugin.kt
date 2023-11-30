@@ -17,6 +17,7 @@ import io.minchat.client.misc.*
 import io.minchat.client.plugin.MinchatPlugin
 import io.minchat.client.ui.dialog.*
 import io.minchat.common.*
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import kotlinx.coroutines.*
 import mindustry.Vars
 import java.io.RandomAccessFile
@@ -33,6 +34,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 			requestTimeout = 0 // Disabled
 		}
 	}
+	private val logger = BaseLogger.getContextSawmill()
 
 	override fun onLoad() {
 		Minchat.launch {
@@ -73,7 +75,7 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 				break
 			} catch (e: Exception) {
 				if (attempt++ == maxAttempts) {
-					Log.error(e) { "Failed to get latest version from GitHub after $maxAttempts attempts" }
+					logger.error(e) { "Failed to get latest version from GitHub after $maxAttempts attempts" }
 					return CheckResult.ERROR
 				}
 			}
@@ -81,13 +83,13 @@ class AutoupdaterPlugin : MinchatPlugin("autoupdater") {
 		val latestVersion = latestVersion ?: return CheckResult.ERROR
 
 		if (latestVersion <= MINCHAT_VERSION) {
-			Log.info { "Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION" }
+			logger.info { "Autoupdater: skipping. $latestVersion <= $MINCHAT_VERSION" }
 			return CheckResult.NO_UPDATE
 		}
 
-		Log.info { "Autoupdater: downloading the changelog..." }
+		logger.info { "Autoupdater: downloading the changelog..." }
 		val changelog = runCatching { Minchat.githubClient.getChangelog() }
-			.onFailure { Log.error { "Autoupdater: failed to get changelog: $it" } }
+			.onFailure { logger.error { "Autoupdater: failed to get changelog: $it" } }
 			.getOrNull()
 			?.filter { it.version > MINCHAT_VERSION }
 

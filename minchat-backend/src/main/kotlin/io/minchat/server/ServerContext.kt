@@ -1,9 +1,9 @@
 package io.minchat.server
 
 import io.ktor.server.engine.*
+import io.minchat.common.BaseLogger
 import io.minchat.common.event.Event
 import io.minchat.server.modules.*
-import io.minchat.server.util.Log
 import kotlinx.coroutines.*
 import java.io.File
 
@@ -11,12 +11,13 @@ class ServerContext(
 	val engine: ApplicationEngine,
 	val modules: List<AbstractMinchatServerModule>,
 	val dataDir: File,
-	val dbFile: File
+	val dbFile: File,
+	val globalLogger: BaseLogger.LoggerSawmill
 ) : CoroutineScope {
 	val application by engine::application
 
 	val exceptionHandler = CoroutineExceptionHandler { _, e -> 
- 		Log.error(e) { "An exception has occurred" }
+ 		globalLogger.error(e) { "An exception has occurred" }
 	}
 	override val coroutineContext = SupervisorJob() + exceptionHandler + Dispatchers.Default
 

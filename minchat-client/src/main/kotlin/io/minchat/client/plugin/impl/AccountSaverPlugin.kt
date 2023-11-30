@@ -3,14 +3,16 @@ package io.minchat.client.plugin.impl
 import com.github.mnemotechnician.mkui.delegates.setting
 import io.minchat.client.*
 import io.minchat.client.config.MinchatSettings
-import io.minchat.client.misc.Log
 import io.minchat.client.plugin.MinchatPlugin
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.MinchatAccount
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class AccountSaverPlugin : MinchatPlugin("account-saver") {
 	private var minchatAccountJson by setting<String>("", MinchatSettings.prefix)
+	private val logger = BaseLogger.getContextSawmill()
 
 	override fun onInit() {
 		subscribe<AuthorizationEvent> {
@@ -30,21 +32,21 @@ class AccountSaverPlugin : MinchatPlugin("account-saver") {
 
 		try {
 			val account = loadUserAccount() ?: return
-			Log.info { "Attempting to restore the logged-in MinChat account..." }
+			logger.info { "Attempting to restore the logged-in MinChat account..." }
 
 			client.account = account
 			if (client.validateCurrentAccount()) {
 				client.updateAccount()
-				Log.info { "Successfully logged-in as ${client.account?.user?.username}!" }
+				logger.info { "Successfully logged-in as ${client.account?.user?.username}!" }
 
 				ClientEvents.fire(AuthorizationEvent(Minchat.client, false))
 			} else {
-				Log.error { "The restored user account is not valid. Defaulting to anonymous." }
+				logger.error { "The restored user account is not valid. Defaulting to anonymous." }
 				client.account = null
 			}
 		} catch (e: Exception) {
-			Log.error { "Failed to restore user account: $e" }
-			Log.error { "Defaulting to anonymous" }
+			logger.error { "Failed to restore user account: $e" }
+			logger.error { "Defaulting to anonymous" }
 			client.account = null
 		}
 	}

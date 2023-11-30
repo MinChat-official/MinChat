@@ -8,7 +8,8 @@ import arc.math.Mathf
 import arc.scene.style.*
 import arc.scene.ui.Image
 import arc.util.Time
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import kotlinx.coroutines.*
 import java.io.File
 import kotlin.coroutines.CoroutineContext
@@ -29,6 +30,8 @@ open class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 
 	/** An optional image source string for debugging purposes. Must be set after [setImageAsync] has been called. */
 	var imageSource: String? = null
+
+	private val logger = BaseLogger.getContextSawmill()
 
 	override fun draw() {
 		if (isFailed && (drawable as? TextureRegionDrawable)?.name != "error") {
@@ -59,7 +62,7 @@ open class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 			}
 
 			if (radius < 5f) {
-				Log.warn { "AsyncImage's size is too small to draw a loading circle" }
+				logger.warn { "AsyncImage's size is too small to draw a loading circle" }
 			}
 		}
 
@@ -86,7 +89,7 @@ open class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 				}
 
 				task.errored = Cons { e ->
-					Log.error(e) { "Failed to load $file for AsyncImage" }
+					logger.error(e) { "Failed to load $file for AsyncImage" }
 					executor.cancel()
 				}
 
@@ -122,7 +125,7 @@ open class AsyncImage(parentScope: CoroutineScope) : Image(), CoroutineScope {
 	private fun reportException(coroutineContext: CoroutineContext, throwable: Throwable) {
 		isFailed = true
 
-		if (throwable !is CancellationException) Log.error(throwable) {
+		if (throwable !is CancellationException) logger.error(throwable) {
 			buildString {
 				append("An exception has occurred while trying to fetch ")
 				append(imageSource ?: "(unknown image)")

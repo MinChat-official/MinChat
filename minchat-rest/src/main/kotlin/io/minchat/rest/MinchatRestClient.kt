@@ -16,9 +16,6 @@ import io.minchat.rest.service.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 
-/** An [AbstractLogger] used by the rest module. Must be initialized on startup. */
-lateinit var MinchatRestLogger: AbstractLogger
-
 class MinchatRestClient(
 	val baseUrl: String,
 	val cacheDirectoryPath: String,

@@ -16,7 +16,8 @@ import io.minchat.client.plugin.impl.AccountSaverPlugin
 import io.minchat.client.ui.*
 import io.minchat.client.ui.chat.ChatFragment
 import io.minchat.client.ui.managers.*
-import io.minchat.common.MINCHAT_VERSION
+import io.minchat.common.*
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.*
 import io.minchat.rest.gateway.MinchatGateway
 import kotlinx.coroutines.*
@@ -42,7 +43,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	val rootJob = SupervisorJob()
 	val exceptionHandler = CoroutineExceptionHandler { _, e ->
 		if (e !is CancellationException) {
-			Log.error(e) { "An exception has occured in MinChat" }
+			logger.error(e) { "An exception has occured in MinChat" }
 		}
 	}
  	override val coroutineContext = rootJob + exceptionHandler + MinchatDispatcher
@@ -50,7 +51,10 @@ class MinchatMod : Mod(), CoroutineScope {
 	val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	val timezone: ZoneId = ZoneId.systemDefault()
 
-	var cacheDir = Vars.dataDirectory.file().resolve("cache/minchat/")
+	val dataDir = Vars.dataDirectory.file().resolve("minchat").also { it.mkdir() }
+	val cacheDir = dataDir.resolve("cache").also { it.mkdir() }
+
+	val logger = BaseLogger.getContextSawmill()
 
 	/**
 	 * The main Minchat client used across the mod.
@@ -92,8 +96,6 @@ class MinchatMod : Mod(), CoroutineScope {
 	init {
 		require(minchatInstance == null) { "Do not." }
 		minchatInstance = this
-
-		MinchatRestLogger = Log
 
 		Runtime.getRuntime().addShutdownHook(thread(start = false, block = ::onShutdown))
 
@@ -144,6 +146,7 @@ class MinchatMod : Mod(), CoroutineScope {
 			}.show()
 		}
 
+		LoggerManager.init()
 		MinchatKeybinds.registerDefaultKeybinds()
 		GuiChatButtonManager.init()
 		UnreadsManager.load()
@@ -202,13 +205,13 @@ class MinchatMod : Mod(), CoroutineScope {
 
 		val serverVersion = client.getServerVersion()
 		if (!serverVersion.isCompatibleWith(MINCHAT_VERSION)) {
-			Log.error { "'$url' uses an incompatible version of MinChat: $serverVersion. The client uses $MINCHAT_VERSION." }
+			logger.error { "'$url' uses an incompatible version of MinChat: $serverVersion. The client uses $MINCHAT_VERSION." }
 			throw VersionMismatchException(serverVersion, MINCHAT_VERSION)
 		}
 		if (!serverVersion.isInterchangeableWith(MINCHAT_VERSION)) {
 			val warning = "The version of '$url' may not be fully compatible with the client ($serverVersion vs $MINCHAT_VERSION)"
 
-			Log.warn { warning }
+			logger.warn { warning }
 			if (Vars.clientLoaded) {
 				Vars.ui.showInfoToast("[!] Minchat warning: $warning", 5f)
 			}
@@ -228,7 +231,7 @@ class MinchatMod : Mod(), CoroutineScope {
 	suspend fun connectToDefault() {
 		val url = when {
 			MinchatSettings.useCustomUrl -> {
-				Log.warn { "Connecting to a custom URL. Minchat developers are not responsible for any data sent to foreign servers." }
+				logger.warn { "Connecting to a custom URL. Minchat developers are not responsible for any data sent to foreign servers." }
 				MinchatSettings.customUrl
 			}
 			else -> githubClient.getDefaultUrl()

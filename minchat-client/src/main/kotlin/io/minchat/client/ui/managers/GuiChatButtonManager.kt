@@ -9,7 +9,8 @@ import com.github.mnemotechnician.mkui.extensions.elements.cell
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.Minchat
 import io.minchat.client.config.MinchatSettings
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import mindustry.Vars
 import mindustry.game.EventType
 import mindustry.ui.*
@@ -24,6 +25,7 @@ object GuiChatButtonManager {
 		}
 	}
 	private var lastPlacedContainer: Table? = null
+	private val logger = BaseLogger.getContextSawmill()
 
 	fun init() {
 		Events.on(EventType.WorldLoadEndEvent::class.java) {
@@ -34,7 +36,7 @@ object GuiChatButtonManager {
 					val target = Vars.ui.hudGroup.find<Table>("minimap/position")
 
 					if (target == null) {
-						Log.error {"Failed to find an appropriate table to place the MinChat chat button." }
+						logger.error {"Failed to find an appropriate table to place the MinChat chat button." }
 						return@runUi
 					}
 					// Now things get a little tricky: we need the button to be on the top,

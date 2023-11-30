@@ -89,7 +89,7 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 						it[order] = data.order
 					}.resultedValues!!.first().let { ChannelGroups.createEntity(it, listOf()) }
 
-					Log.info { "Channel group was created: #${group.name}." }
+					logger.info { "Channel group was created: #${group.name}." }
 
 					call.respond(group)
 					server.sendEvent(ChannelGroupCreateEvent(group))
@@ -123,7 +123,7 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 						}
 					}
 
-					Log.info { "Channel group was edited: #${id}." }
+					logger.info { "Channel group was edited: #${id}." }
 
 					val newGroup = ChannelGroups.getById(id)
 					call.respond(newGroup)
@@ -146,7 +146,7 @@ class ChannelGroupModule : AbstractMinchatServerModule() {
 
 					ChannelGroups.deleteWhere { ChannelGroups.id eq id }.throwIfNotFound { "no such group." }
 
-					Log.info { "Channel group was deleted: ${group.loggable()}." }
+					logger.info { "Channel group was deleted: ${group.loggable()}." }
 
 					server.sendEvent(ChannelGroupDeleteEvent(id))
 				}

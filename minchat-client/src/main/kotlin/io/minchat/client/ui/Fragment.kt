@@ -5,7 +5,8 @@ import arc.scene.ui.*
 import arc.scene.ui.layout.*
 import com.github.mnemotechnician.mkui.extensions.elements.*
 import com.github.mnemotechnician.mkui.extensions.groups.*
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import kotlinx.coroutines.*
 
 /**
@@ -21,8 +22,10 @@ import kotlinx.coroutines.*
 abstract class Fragment<Parent: Table, Type: Element>(
 	parentScope: CoroutineScope
 ) : CoroutineScope {
+	private val logger = BaseLogger.getContextSawmill()
+
 	override val coroutineContext = SupervisorJob() + CoroutineExceptionHandler { coroutineContext, throwable ->
-		Log.error(throwable) { "An exception has occurred in ${this@Fragment::class.simpleName}" }
+		logger.error(throwable) { "An exception has occurred in ${this@Fragment::class.simpleName}" }
 	}
 
 	/**

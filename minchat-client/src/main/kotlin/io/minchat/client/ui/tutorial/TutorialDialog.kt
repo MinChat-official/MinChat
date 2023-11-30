@@ -7,13 +7,14 @@ import arc.util.Time
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.elements.scaleFont
 import com.github.mnemotechnician.mkui.extensions.times
-import io.minchat.client.misc.*
 import io.minchat.client.ui.MinchatStyle
 import io.minchat.client.ui.MinchatStyle.ActionButton
 import io.minchat.client.ui.MinchatStyle.buttonMargin
 import io.minchat.client.ui.MinchatStyle.layoutMargin
 import io.minchat.client.ui.MinchatStyle.layoutPad
 import io.minchat.client.ui.MinchatStyle.surfaceBackground
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 
 class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 	var step = 0
@@ -25,6 +26,8 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 
 	/** Cooldown of the "next" button. Does not apply to the esc/enter/back keys. */
 	private var nextButtonCooldown = 60f
+
+	private val logger = BaseLogger.getContextSawmill()
 
 	init {
 		background = MinchatStyle.black(1)
@@ -95,7 +98,7 @@ class TutorialDialog(val tutorial: Tutorial) : Dialog() {
 					previous.remove(this, previousStepData)
 				}
 			} catch (e: Exception) {
-				Log.error(e) { "Step $step of tutorial ${tutorial.name} could no be un-applied" }
+				logger.error(e) { "Step $step of tutorial ${tutorial.name} could no be un-applied" }
 			}
 		}
 

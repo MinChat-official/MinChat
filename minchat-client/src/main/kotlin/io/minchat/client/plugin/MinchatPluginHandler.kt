@@ -1,8 +1,9 @@
 package io.minchat.client.plugin
 
 import io.minchat.client.*
-import io.minchat.client.misc.Log
 import io.minchat.client.plugin.impl.*
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import java.util.concurrent.ConcurrentLinkedQueue
 
 object MinchatPluginHandler {
@@ -25,6 +26,8 @@ object MinchatPluginHandler {
 	 */
 	var loadedPlugins: List<LoadedPlugin<out MinchatPlugin>> = listOf()
 		private set
+
+	private val logger = BaseLogger.getContextSawmill()
 
 	init {
 		register(::AutoupdaterPlugin)
@@ -67,7 +70,7 @@ object MinchatPluginHandler {
 			initPlugin(it.factory())
 		}
 
-		Log.info { "Initialized MinChat plugins: ${loadedPlugins.joinToString { it.plugin.name }}" }
+		logger.info { "Initialized MinChat plugins: ${loadedPlugins.joinToString { it.plugin.name }}" }
 	}
 
 	fun initPlugin(plugin: MinchatPlugin): LoadedPlugin<*> {
@@ -75,7 +78,7 @@ object MinchatPluginHandler {
 			plugin.onInit()
 			LoadedPlugin(plugin, null, false)
 		} catch (e: Throwable) {
-			Log.error(e) { "Could not initialise plugin ${plugin.name}" }
+			logger.error(e) { "Could not initialise plugin ${plugin.name}" }
 			LoadedPlugin(plugin, e, false)
 		}
 	}
@@ -86,14 +89,14 @@ object MinchatPluginHandler {
 
 		// Retain already-loaded (?) and failed plugins, load the rest
 		val (toRetain, toLoad) = loadedPlugins.partition { it.isLoaded || it.error != null }
-		Log.info { "Loading MinChat plugins: ${toLoad.joinToString { it.plugin.name }}" }
+		logger.info { "Loading MinChat plugins: ${toLoad.joinToString { it.plugin.name }}" }
 
 		val loaded = toLoad.map {
 			try {
 				it.plugin.onLoad()
 				it.copy(isLoaded = true)
 			} catch (e: Throwable) {
-				Log.error { "Could not load plugin ${it.plugin.name}" }
+				logger.error { "Could not load plugin ${it.plugin.name}" }
 				it.copy(error = e)
 			}
 		}
@@ -106,7 +109,7 @@ object MinchatPluginHandler {
 			try {
 				it.plugin.onConnect()
 			} catch (e: Throwable) {
-				Log.error(e) { "Plugin ${it.plugin.name} failed onConnect" }
+				logger.error(e) { "Plugin ${it.plugin.name} failed onConnect" }
 			}
 		}
 	}

@@ -57,7 +57,7 @@ class ChannelDialog(
 				when (val channel = channel) {
 					is NormalMinchatChannel -> {
 						groupName = when {
-							channel.groupId == null -> "<global>"
+							channel.groupId == ChannelGroup.GLOBAL.id -> "<global>"
 							else -> channel.getGroup()?.name ?: "<invalid>"
 						}
 					}

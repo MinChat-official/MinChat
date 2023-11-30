@@ -8,8 +8,8 @@ import io.ktor.serialization.*
 import io.ktor.util.reflect.*
 import io.ktor.websocket.*
 import io.minchat.common.*
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.common.event.Event
-import io.minchat.rest.MinchatRestLogger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.net.URL
@@ -51,6 +51,7 @@ class RawGateway(
 	val events = eventsMutable.asSharedFlow()
 
 	private var failureListener: ((Exception) -> Unit)? = null
+	private val logger = BaseLogger.getContextSawmill()
 
 	/**
 	 * Invokes [connect] if [isConnected] is false. Does nothing otherwise.
@@ -91,8 +92,7 @@ class RawGateway(
 					val converter = thisSession.converter!!
 
 					if (!converter.isApplicable(frame)) {
-						MinchatRestLogger.log("warn",
-							"Raw gateway received a frame of unapplicable type: ${frame.frameType.name}")
+						logger.warn("Received a frame of unapplicable type: ${frame.frameType.name}")
 						continue
 					}
 
@@ -110,18 +110,16 @@ class RawGateway(
 							?.let { "\nFrame text: $it" }
 							.orEmpty()
 
-						MinchatRestLogger.log("warn",
-							"Minchat gateway failed to decode an event: $e.$suffix")
+						logger.warn("Failed to decode an event: $e.$suffix")
 						failureListener?.invoke(e)
 						continue
 					}
 
 					eventsMutable.emit(event)
 				} catch (e: CancellationException) {
-					MinchatRestLogger.log("warn", "Raw gateway session was cancelled: $e")
 					return@launch
 				} catch (e: Exception) {
-					MinchatRestLogger.log("warn", "Closing current raw gateway session due to exception: $e")
+					logger.warn("Closing current gateway session due to exception: $e")
 					delay(100L)
 
 					failureListener?.invoke(e)

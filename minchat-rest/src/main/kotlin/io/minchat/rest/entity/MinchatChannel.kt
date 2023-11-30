@@ -10,7 +10,7 @@ sealed class MinchatChannel(
 	override val rest: MinchatRestClient
 ) : AbstractMinchatEntity<MinchatChannel>() {
 	override val id by data::id
-	/** ID of the [MinchatChannelGroup] this channel belongs to. May be null, which means this channel belongs to a global group. */
+	/** ID of the [MinchatChannelGroup] this channel belongs to. May be -1, which means this channel belongs to a global group. */
 	open val groupId by data::groupId
 
 	val name by data::name

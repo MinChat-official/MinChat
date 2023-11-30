@@ -1,5 +1,7 @@
 package io.minchat.rest.gateway
 
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.common.event.*
 import io.minchat.rest.*
 import io.minchat.rest.event.MinchatEvent
@@ -22,8 +24,9 @@ class MinchatGateway(
 	 * The underlying raw MinChat gateway.
 	 */
 	var rawGateway = RawGateway(client.baseUrl, client.httpClient, token = client.account?.token)
-
 	val isConnected by rawGateway::isConnected
+
+	private val logger = BaseLogger.getContextSawmill()
 	
 	/**
 	 * A hot flow of all events sent by the server to the client,
@@ -35,7 +38,7 @@ class MinchatGateway(
 
 			transformation?.run { transform(it, client) }
 				?: run {
-					MinchatRestLogger.log("warn", "No transformation found for event class ${it::class.qualifiedName}")
+					logger.warn("No transformation found for event class ${it::class.qualifiedName}")
 					null
 				}
 		}
@@ -43,7 +46,7 @@ class MinchatGateway(
 	init {
 		client.accountObservable.observe {
 			if (isConnected) {
-				MinchatRestLogger.log("lifecycle", "MinChat gateway: reconnecting due to account change.")
+				logger.lifecycle("MinChat gateway: reconnecting due to account change.")
 				disconnect()
 				client.launch {
 					connect()

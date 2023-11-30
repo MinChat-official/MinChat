@@ -64,7 +64,7 @@ class AuthModule : AbstractMinchatServerModule() {
 						token = userRow[Users.token],
 						user = Users.createEntity(userRow)
 					).let {	
-						Log.info { "A new user has been registered: ${it.user.loggable()}" }
+						logger.info { "A new user has been registered: ${it.user.loggable()}" }
 						call.respond(it)
 					}
 				}

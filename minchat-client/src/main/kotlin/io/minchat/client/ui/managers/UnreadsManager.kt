@@ -2,7 +2,8 @@ package io.minchat.client.ui.managers
 
 import com.github.mnemotechnician.mkui.delegates.setting
 import io.minchat.client.*
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.entity.MinchatChannel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.*
@@ -21,6 +22,8 @@ object UnreadsManager {
 
 	private var unreadsJson by setting("", "minchat")
 	private var cacheMaxSize by setting(50, "minchat")
+
+	private val logger = BaseLogger.getContextSawmill()
 
 	init {
 		ClientEvents.subscribe<ChannelChangeEvent> {
@@ -57,7 +60,7 @@ object UnreadsManager {
 				json.decodeFromString<CacheState>(it)
 			} ?: return
 		} catch (e: Exception) {
-			Log.error(e) { "Failed to load unreads cache" }
+			logger.error(e) { "Failed to load unreads cache" }
 			return
 		}
 

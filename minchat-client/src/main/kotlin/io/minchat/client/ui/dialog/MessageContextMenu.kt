@@ -9,6 +9,8 @@ import com.github.mnemotechnician.mkui.extensions.dsl.*
 import io.minchat.client.*
 import io.minchat.client.misc.*
 import io.minchat.client.ui.chat.*
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.entity.MinchatMessage
 import kotlinx.coroutines.*
 import mindustry.gen.Icon
@@ -25,6 +27,8 @@ class MessageContextMenu(
 ) : Dialog(), CoroutineScope by parentScope.fork() {
 	val messageElement = NormalMessageElement(chat, message, false)
 	lateinit var actionTable: Table
+
+	private val logger = BaseLogger.getContextSawmill()
 
 	init {
 		closeOnBack()
@@ -76,7 +80,7 @@ class MessageContextMenu(
 						messageElement.message.delete()
 						ClientEvents.fire(ClientMessageDeleteEvent(messageElement.message))
 					}.onFailure {
-						Log.error(it) { "Failed to delete message" }
+						logger.error(it) { "Failed to delete message" }
 					}
 				}
 				hide()

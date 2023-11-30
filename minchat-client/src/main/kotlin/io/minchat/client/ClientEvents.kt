@@ -2,7 +2,8 @@ package io.minchat.client
 
 import arc.Core
 import arc.struct.SnapshotSeq
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import io.minchat.rest.MinchatRestClient
 import io.minchat.rest.entity.*
 import kotlinx.coroutines.launch
@@ -12,6 +13,7 @@ object ClientEvents {
 
 	/** This debug setting allows to see all registered subscribers and fired events, but is only read during startup. */
 	private val eventDebug by lazy { Core.settings.getBool("minchat.enable-event-debug") }
+	private val logger = BaseLogger.getContextSawmill()
 
 	/**
 	 * Subscribes to the event type, [subscriber] gets invoked every time [eventType] is fired.
@@ -26,7 +28,7 @@ object ClientEvents {
 		}
 
 		if (eventDebug) {
-			Log.debug { "Client events: registered subscriber for $eventType at ${getStackElement("subscribe")}" }
+			logger.debug { "Client events: registered subscriber for $eventType at ${getStackElement("subscribe")}" }
 		}
 	}
 
@@ -41,7 +43,7 @@ object ClientEvents {
 	@Suppress("UNCHECKED_CAST")
 	suspend fun fire(event: Any) {
 		if (eventDebug) {
-			Log.debug { "Client events: fired $event at ${getStackElement("fire")}" }
+			logger.debug { "Client events: fired $event at ${getStackElement("fire")}" }
 		}
 
 		val subscriberList = synchronized(subscribers) {
@@ -53,7 +55,7 @@ object ClientEvents {
 				try {
 					(items[i] as Subscriber<Any>).receiveEvent(event)
 				} catch (e: Exception) {
-					Log.debug { "Subscriber of event ${event::class.java} failed with exception: $e" }
+					logger.debug { "Subscriber of event ${event::class.java} failed with exception: $e" }
 				}
 			}
 		}
@@ -63,7 +65,7 @@ object ClientEvents {
 	@Suppress("UNCHECKED_CAST")
 	fun fireAsync(event: Any) {
 		if (eventDebug) {
-			Log.debug { "Client events: fired async $event at ${getStackElement("fireAsync")}" }
+			logger.debug { "Client events: fired async $event at ${getStackElement("fireAsync")}" }
 		}
 
 		Minchat.launch {
@@ -76,7 +78,7 @@ object ClientEvents {
 					try {
 						(items[i] as Subscriber<Any>).receiveEvent(event)
 					} catch (e: Exception) {
-						Log.warn { "Subscriber of event ${event::class.java} failed with exception: $e" }
+						logger.warn { "Subscriber of event ${event::class.java} failed with exception: $e" }
 					}
 				}
 			}

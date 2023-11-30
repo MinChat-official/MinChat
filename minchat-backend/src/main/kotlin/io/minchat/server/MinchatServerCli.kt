@@ -74,27 +74,44 @@ open class MinchatLauncher : Runnable {
 	@Option(names = ["--credentials"], description = ["The file containing SSL keystore credentials. Defaults to ~/minchat/.credentials.txt."])
 	var credentialsFileOption: File? = null
 
-	@Option(names = ["--log-level", "l"], description = ["The log level to use. Valis options are: lifecycle, debug, info, error"])
+	@Option(names = ["--log-level", "l"], description = ["The log level to use. Val's options are: lifecycle, debug, info, error"])
 	var logLevel = "lifecycle"
 
 	override fun run() = runBlocking {
 		val context = launchServer()
 
 		Runtime.getRuntime().addShutdownHook(thread(start = false) {
-			Log.info { "Good night." }
+			context.globalLogger.info { "Good night." }
 		})
 
-		Log.info { "MinChat server is running. Awaiting termination." }
+		context.globalLogger.info { "MinChat server is running. Awaiting termination." }
 		context.engine.stopServerOnCancellation().join()
 	}
 
 	suspend fun launchServer(): ServerContext {
-		Log.baseLogDir = dataDir
-		Log.level = AbstractLogger.LogLevel.valueOf(logLevel.uppercase())
+		BaseLogger.logFile = dataDir.resolve("log/log-${BaseLogger.currentTimestamp()}.txt")
+		BaseLogger.minLevel = BaseLogger.LogLevel.valueOf(logLevel.uppercase())
+		BaseLogger.stdoutFormatter = { level, timestamp, prefix, message ->
+			buildString {
+				level.color.let {
+					// set the color
+					val r = (it and 0xff0000) shr 16
+					val g = (it and 0xff00) shr 8
+					val b = it and 0xff
+					append("\u001B[38;2;${r};${g};${b}m")
+				}
+				append("[$timestamp][$level]")
+				append("\u001B[38;2;113;60;186m")
+				append("[$prefix]")
+				append("\u001B[0m") // reset the color
+				append(": $message")
+			}
+		}
 
-		Log.lifecycle { "Data directory: ${dataDir.absolutePath}" }
-		Log.info { "Log level: ${Log.level}" }
-		Log.info { "Connecting to a database." }
+		val logger = BaseLogger.getSawmill("Server")
+		logger.lifecycle { "Data directory: ${dataDir.absolutePath}" }
+		logger.info { "Log level: ${logLevel}" }
+		logger.info { "Connecting to a database." }
 
 		val dbFile = dataDir.also { it.mkdirs() }.resolve("data")
 		Database.connect("jdbc:h2:${dbFile.absolutePath}", "org.h2.Driver")
@@ -104,7 +121,7 @@ open class MinchatLauncher : Runnable {
 			SchemaUtils.createMissingTablesAndColumns(Channels, Messages, Users, ChannelGroups)
 		}
 
-		Log.lifecycle { "Loading the SSL key store." }
+		logger.lifecycle { "Loading the SSL key store." }
 
 		// Array of [alias, password, privatePassword
 		val keystoreFile = dataDir.resolve("keystore.jks")
@@ -122,13 +139,13 @@ open class MinchatLauncher : Runnable {
 			}
 
 			if (!keystoreFile.exists() || keystoreFile.isDirectory()) {
-				Log.error { "SSL keystore file ($keystoreFile) could not be found." }
+				logger.error { "SSL keystore file ($keystoreFile) could not be found." }
 			} else if (credentials == null) {
 				val path = (credentialsFileOption ?: dataDir.resolve(".credentials.txt")).absolutePath
 
-				Log.error { "SSL certificate file is either absent or malformed. HTTPS will be unavailable." }
-				Log.error { "Make sure the file ($path) exists and contains the following 3 lines:" }
-				Log.error { "key alias, key store password, private key password." }
+				logger.error { "SSL certificate file is either absent or malformed. HTTPS will be unavailable." }
+				logger.error { "Make sure the file ($path) exists and contains the following 3 lines:" }
+				logger.error { "key alias, key store password, private key password." }
 			} else {
 				val keyStore = KeyStore.getInstance("JKS")
 				keyStore.load(keystoreFile.inputStream(), credentials[1].toCharArray())
@@ -145,7 +162,7 @@ open class MinchatLauncher : Runnable {
 			}
 		}
 
-		Log.info { "Launching a MinChat server. Ports: http=$port, https=$sslPort." }
+		logger.info { "Launching a MinChat server. Ports: http=$port, https=$sslPort." }
 
 		val modules = defaultModules.filter { it.name !in excludedModules }
 
@@ -175,7 +192,7 @@ open class MinchatLauncher : Runnable {
 								text = "Too many requests$message", status = HttpStatusCode.NotFound)
 
 							else -> {
-								Log.error(cause) { "Exception thrown when processing $call" }
+								logger.error(cause) { "Exception thrown when processing $call" }
 								call.respondText(text = "Server error (500): An abnormal exception was thrown while processing the request.",
 									status = HttpStatusCode.InternalServerError)
 							}
@@ -201,7 +218,8 @@ open class MinchatLauncher : Runnable {
 			engine = engine,
 			modules = modules,
 			dataDir = dataDir,
-			dbFile = dbFile
+			dbFile = dbFile,
+			globalLogger = logger
 		)
 
 		engine.start(wait = false)
@@ -256,7 +274,7 @@ open class DbManager : Runnable {
 						// if password generation was skipped, substitute the password hash in the db
 						if (password == null) {
 							Users.update({ Users.id eq row[Users.id] }) {
-								// this is an invalid hash, and therefore nobody can log into tnis account.
+								// this is an invalid hash, and therefore nobody can log into unis account.
 								it[Users.passwordHash] = "<no password hash>"
 							}
 						}

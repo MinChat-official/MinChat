@@ -6,13 +6,15 @@ import arc.input.KeyCode
 import arc.struct.ObjectMap
 import arc.util.Reflect
 import io.minchat.client.Minchat
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 
 object MinchatKeybinds {
 	val allBindings = mutableListOf<KeyBind>()
 
 	private val defaultsCache: ObjectMap<KeyBind, ObjectMap<DeviceType, KeyBinds.Axis>> =
 		Reflect.get(Core.keybinds, "defaultCache")
+	private val logger = BaseLogger.getContextSawmill()
 
 	val openFullscreen = KeyBind("minchat-open-fullscreen", KeyCode.backtick, "general") {
 		Minchat.showChatDialog()
@@ -37,7 +39,7 @@ object MinchatKeybinds {
 	fun register(keybinding: KeyBind) {
 		val bindings = Core.keybinds.sections[0].binds.get(DeviceType.keyboard)
 		if (bindings == null) {
-			Log.warn { "No keyboard device detected; Cannot register $keybinding" }
+			logger.warn { "No keyboard device detected; Cannot register $keybinding" }
 			return
 		}
 

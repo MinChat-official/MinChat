@@ -1,6 +1,8 @@
 package io.minchat.rest.service
 
-import io.minchat.rest.*
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
+import io.minchat.rest.MinchatRestClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlinx.serialization.*
@@ -126,13 +128,13 @@ class FileCache(
 				entries += listing
 
 				val totalSize = listing.values.sumOf { it.file.length() }
-				MinchatRestLogger.log("info", "Loaded ${entries.size} cache entries from the drive.")
-				MinchatRestLogger.log("info", "Total size: ${totalSize / 1024 / 1024} MB.")
+				logger.info("Loaded ${entries.size} cache entries from the drive.")
+				logger.info("Total size: ${totalSize / 1024 / 1024} MB.")
 			} catch (e: Exception) {
-				MinchatRestLogger.log("warn", "Failed to load cache entries from the drive due to exception: $e")
+				logger.warn("Failed to load cache entries from the drive due to exception: $e")
 			}
 		} else {
-			MinchatRestLogger.log("info", "No cache entries found on the drive.")
+			logger.info("No cache entries found on the drive.")
 		}
 	}
 
@@ -142,8 +144,7 @@ class FileCache(
 			listingFile.deleteRecursively()
 		}
 		listingFile.writeText(json.encodeToString(entries))
-
-		MinchatRestLogger.log("info", "Saved ${entries.size} cache entries to the drive.")
+		logger.info("Saved ${entries.size} cache entries to the drive.")
 	}
 
 	@Serializable
@@ -182,7 +183,7 @@ class FileCache(
 			return localLock.withLock {
 				file.takeIf { it.exists() }
 			} ?: run {
-				MinchatRestLogger.log("error", "Failed to load file $filepath due to missing data after awaiting.")
+				logger.error("Failed to load file $filepath due to missing data after awaiting.")
 				error("File $filepath is missing data after awaiting.")
 			}
 		}
@@ -205,7 +206,7 @@ class FileCache(
 				} catch (e: Exception) {
 					file.delete()
 
-					MinchatRestLogger.log("warn", "Failed to save file $file due to exception: $e")
+					logger.warn("Failed to save file $file due to exception: $e")
 
 					isFullyCreated = false
 				}
@@ -219,5 +220,6 @@ class FileCache(
 	companion object {
 		/** The time after which a cache entry can be safely deleted. 3 days. */
 		const val expirationTime = 1000L * 60 * 60 * 24 * 3
+		private val logger = BaseLogger.getContextSawmill()
 	}
 }

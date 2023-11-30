@@ -7,8 +7,10 @@ import arc.util.Align
 import com.github.mnemotechnician.mkui.extensions.dsl.*
 import com.github.mnemotechnician.mkui.extensions.runUi
 import io.minchat.client.MinchatDispatcher
-import io.minchat.client.misc.*
+import io.minchat.client.misc.userReadable
 import io.minchat.client.ui.MinchatStyle.layoutMargin
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import kotlinx.coroutines.*
 import io.minchat.client.ui.MinchatStyle as Style
 
@@ -21,6 +23,8 @@ import io.minchat.client.ui.MinchatStyle as Style
  */
 object Dialogs : CoroutineScope {
 	override val coroutineContext = SupervisorJob() + MinchatDispatcher + CoroutineExceptionHandler { _, _ -> }
+
+	val logger = BaseLogger.getContextSawmill()
 
 	fun info(message: String, onClose: () -> Unit = {}) {
 		runUi {
@@ -64,7 +68,7 @@ object Dialogs : CoroutineScope {
 			} catch (e: CancellationException) {
 				throw e
 			} catch (e: Exception) {
-				Log.error(e) { "Exception in AwaitActionDialog's action" }
+				logger.error(e) { "Exception in AwaitActionDialog's action" }
 				if (showError) {
 					error(e, "An error has occurred.".trimIndent())
 				}
@@ -123,7 +127,7 @@ object Dialogs : CoroutineScope {
 				try {
 					onClose()
 				} catch (e: Exception) {
-					Log.error(e) { "Exception in SimpleInfoDialog's close listener." }
+					logger.error(e) { "Exception in SimpleInfoDialog's close listener." }
 				}
 				hide()
 			}
@@ -144,7 +148,7 @@ object Dialogs : CoroutineScope {
 				try {
 					cancelListener()
 				} catch (e: Exception) {
-					Log.error(e) { "Exception in ConfirmDialog's cancel listener." }
+					logger.error(e) { "Exception in ConfirmDialog's cancel listener." }
 				}
 				hide()
 			}
@@ -152,7 +156,7 @@ object Dialogs : CoroutineScope {
 				try {
 					confirmListener()
 				} catch (e: Exception) {
-					Log.error(e) { "Exception in ConfirmDialog's confirm listener." }
+					logger.error(e) { "Exception in ConfirmDialog's confirm listener." }
 				}
 				hide()
 			}

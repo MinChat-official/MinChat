@@ -72,7 +72,7 @@ class UserModule : AbstractMinchatServerModule() {
 					val newUser = Users.getById(id)
 
 					call.respond(newUser)
-					Log.info { "${oldUser.loggable()} was edited by ${requestedBy.loggable()}. Now: ${newUser.loggable()}" }
+					logger.info { "${oldUser.loggable()} was edited by ${requestedBy.loggable()}. Now: ${newUser.loggable()}" }
 					server.sendEvent(UserModifyEvent(newUser))
 				}
 			}
@@ -91,15 +91,15 @@ class UserModule : AbstractMinchatServerModule() {
 					}
 
 					Users.update({ Users.id eq id }) {
-						it[Users.username] = Constants.deletedAccountName
+						it[username] = Constants.deletedAccountName
 						it[Users.token] = "" // token() will fail if an empty string is provided
-						it[Users.passwordHash] = Constants.deletedAccountPasswordHash
+						it[passwordHash] = Constants.deletedAccountPasswordHash
 
-						it[Users.discriminator] = 0
+						it[discriminator] = 0
 						it[Users.isDeleted] = true
 					}.throwIfNotFound { "user with the provide id-token pair does not exist." }
 
-					Log.info { "${oldUser.loggable()} was deleted by ${invokingUser.loggable()}" }
+					logger.info { "${oldUser.loggable()} was deleted by ${invokingUser.loggable()}" }
 				}
 				call.response.statusOk()
 
@@ -129,7 +129,7 @@ class UserModule : AbstractMinchatServerModule() {
 						it[muteReason] = request.newMute?.reason
 					} // hopefully no need to validate
 
-					Log.info { "${user.loggable()}'s punishments were modified by ${caller.loggable()}" }
+					logger.info { "${user.loggable()}'s punishments were modified by ${caller.loggable()}" }
 
 					val newUser = Users.getById(id)
 					call.respond(newUser)
@@ -192,7 +192,7 @@ class UserModule : AbstractMinchatServerModule() {
 					call.respond(updatedUser)
 					server.sendEvent(UserModifyEvent(updatedUser))
 
-					Log.info { "${targetUser.loggable()}'s icon avatar was set to ${data.iconName} by ${invokingUser.loggable()}" }
+					logger.info { "${targetUser.loggable()}'s icon avatar was set to ${data.iconName} by ${invokingUser.loggable()}" }
 				}
 
 			}
@@ -227,7 +227,7 @@ class UserModule : AbstractMinchatServerModule() {
 				val readChannel = call.receive<ByteReadChannel>()
 				val buffer = ByteArray(contentLength.toInt())
 
-				Log.lifecycle { "Avatar upload began for user ${targetUser.loggable()}." }
+				logger.lifecycle { "Avatar upload began for user ${targetUser.loggable()}." }
 
 				withContext(Dispatchers.IO) {
 					readChannel.readFully(buffer)
@@ -276,7 +276,7 @@ class UserModule : AbstractMinchatServerModule() {
 					}
 				}
 
-				Log.info { "Avatar update was performed for user ${targetUser.loggable()} by ${invokingUser.loggable()}." }
+				logger.info { "Avatar update was performed for user ${targetUser.loggable()} by ${invokingUser.loggable()}." }
 
 				val updatedUser = Users.getById(userId)
 				call.respond(updatedUser)

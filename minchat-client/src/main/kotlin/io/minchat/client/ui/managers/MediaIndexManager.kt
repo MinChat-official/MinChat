@@ -1,7 +1,8 @@
 package io.minchat.client.ui.managers
 
 import io.minchat.client.Minchat
-import io.minchat.client.misc.Log
+import io.minchat.common.BaseLogger
+import io.minchat.common.BaseLogger.Companion.getContextSawmill
 import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
 import mindustry.Vars
@@ -19,11 +20,13 @@ object MediaIndexManager {
 	val indexFile = Minchat.cacheDir.resolve("media-index.json")
 	val index = Index(mutableSetOf())
 
+	private val logger = BaseLogger.getContextSawmill()
+
 	fun saveIndex() {
 		try {
 			indexFile.writeText(Json.encodeToString(index))
 		} catch (e: Exception) {
-			Log.error(e) { "Failed to save media index" }
+			logger.error(e) { "Failed to save media index" }
 		}
 	}
 
@@ -33,7 +36,7 @@ object MediaIndexManager {
 
 			index.images.addAll(new.images)
 		} catch (e: Exception) {
-			Log.error(e) { "Failed to load media index" }
+			logger.error(e) { "Failed to load media index" }
 		}
 	}
 
@@ -59,7 +62,7 @@ object MediaIndexManager {
 		}
 
 		if (baseFolders.isEmpty()) {
-			Log.warn { "Media index: failed to find any base dirs to scan for media files." }
+			logger.warn { "Failed to find any base dirs to scan for media files." }
 		}
 
 		// Perform a recursive search, going up to 7 levels deep.
@@ -81,7 +84,7 @@ object MediaIndexManager {
 					}
 				}
 			} catch (e: Exception) {
-				Log.warn { "Media index: failed to recurse into $dir: ${e.message}" }
+				logger.warn { "Failed to recurse into $dir: ${e.message}" }
 			} finally {
 				level--
 			}
