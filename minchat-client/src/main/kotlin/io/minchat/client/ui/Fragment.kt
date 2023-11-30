@@ -24,8 +24,8 @@ abstract class Fragment<Parent: Table, Type: Element>(
 ) : CoroutineScope {
 	private val logger = BaseLogger.getContextSawmill()
 
-	override val coroutineContext = SupervisorJob() + CoroutineExceptionHandler { coroutineContext, throwable ->
-		logger.error(throwable) { "An exception has occurred in ${this@Fragment::class.simpleName}" }
+	override val coroutineContext = SupervisorJob(parentScope.coroutineContext[Job]) + CoroutineExceptionHandler { _, e ->
+		logger.error(e) { "An exception has occurred in ${this@Fragment::class.simpleName}" }
 	}
 
 	/**
